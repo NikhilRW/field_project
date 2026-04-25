@@ -1,0 +1,211 @@
+import { StyleSheet } from "react-native-unistyles";
+import { Colors } from "@/shared/constants/color";
+
+export const activityDetailStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: Colors.textPrimary,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    zIndex: 20,
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  titleActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  subtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  metaCard: {
+    marginTop: 18,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    gap: 12,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  metaLabel: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    width: 80,
+  },
+  metaValue: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  statusRow: {
+    marginTop: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  statusLabel: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+  },
+  statusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: Colors.primaryLight,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+  section: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: Colors.textPrimary,
+    marginBottom: 10,
+  },
+  volunteerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    marginBottom: 8,
+  },
+  volunteerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  volunteerInitials: {
+    color: "#fff",
+    fontWeight: "700" as const,
+    fontSize: 12,
+  },
+  volunteerInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  volunteerName: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.textPrimary,
+  },
+  volunteerMeta: {
+    marginTop: 2,
+    fontSize: 12,
+    color: Colors.textTertiary,
+  },
+  deleteIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: Colors.errorLight,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  deleteIconButtonDisabled: {
+    opacity: 0.6,
+  },
+  statusMenuWrap: {
+    position: "relative",
+  },
+  statusMenuTrigger: {
+    minWidth: 44,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: Colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    paddingHorizontal: 12,
+  },
+  statusMenuTriggerDisabled: {
+    opacity: 0.6,
+  },
+  statusMenuDropdown: {
+    position: "absolute",
+    top: 50,
+    right: 0,
+    width: 164,
+    borderRadius: 14,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    padding: 8,
+    gap: 4,
+    shadowColor: "#111827",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  statusMenuOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    minHeight: 40,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
+  statusMenuOptionActive: {
+    backgroundColor: Colors.primaryLight,
+  },
+  statusMenuOptionText: {
+    fontSize: 13,
+    color: Colors.textPrimary,
+    fontWeight: "600" as const,
+  },
+  statusMenuOptionTextActive: {
+    color: Colors.primary,
+  },
+  stateContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  stateText: {
+    marginTop: 12,
+    fontSize: 13,
+    color: Colors.textTertiary,
+    textAlign: "center",
+  },
+});

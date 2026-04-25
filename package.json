@@ -1,0 +1,12 @@
+{
+  "name": "field_project",
+  "private": true,
+  "workspaces":[
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+      "dev:android":"bun run --cwd frontend android",
+    "dev:backend":"bun run --cwd backend dev"
+  }
+}
