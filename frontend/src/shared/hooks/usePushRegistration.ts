@@ -1,27 +1,23 @@
 import { useEffect, useRef } from "react";
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
-import Constants from "expo-constants";
+import messaging from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { useAuthStore } from "@/shared/stores/authStore";
-import { ACTIVITY_NOTIFICATION_CHANNEL_ID } from "@/shared/constants/notifications";
 import { getAccessToken } from "@/shared/utils/secureStore";
+import { setNotificationChannelAsync } from "expo-notifications";
 
 const ensureNotificationChannel = async () => {
   if (Platform.OS !== "android") {
     return;
   }
 
-  await Notifications.setNotificationChannelAsync(
-    ACTIVITY_NOTIFICATION_CHANNEL_ID,
-    {
-      name: "Activity Updates",
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#1B6CA8",
-    },
-  );
+  // Create Android notification channel for FCM
+  await setNotificationChannelAsync("activity-updates", {
+    name: "Activity Updates",
+    importance: 5, // Max importance for heads-up notifications
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: "#FF231F7C",
+  });
 };
 
 export const usePushRegistration = () => {
@@ -64,51 +60,46 @@ export const usePushRegistration = () => {
     };
 
     const register = async () => {
-      if (!Device.isDevice) {
-        return;
+      try {
+        await ensureNotificationChannel();
+
+        // Request notification permission (required for FCM on Android 13+)
+        const permission = await messaging().requestPermission();
+
+        // Permission levels: 0=disabled, 1=provisional, 2=denied, 3=allowed
+        if (permission !== 1 && permission !== 3) {
+          return;
+        }
+
+        // Get FCM token
+        const token = await messaging().getToken();
+        if (!token) {
+          return;
+        }
+
+        await registerToken(token);
+      } catch (error: any) {
+        if (__DEV__) {
+          console.warn(
+            "[FCM Registration] Error during FCM setup",
+            error?.message ?? error,
+          );
+        }
       }
-
-      await ensureNotificationChannel();
-
-      const permission = await Notifications.getPermissionsAsync();
-      let status = permission.status;
-
-      if (status !== "granted") {
-        const request = await Notifications.requestPermissionsAsync();
-        status = request.status;
-      }
-
-      if (status !== "granted") {
-        return;
-      }
-
-      const projectId =
-        Constants.easConfig?.projectId ??
-        Constants.expoConfig?.extra?.eas?.projectId;
-
-      const tokenResponse = projectId
-        ? await Notifications.getExpoPushTokenAsync({ projectId })
-        : await Notifications.getExpoPushTokenAsync();
-
-      const token = tokenResponse.data;
-      if (!token) {
-        return;
-      }
-
-      await registerToken(token);
     };
 
     const handleRegistrationError = (error: any) => {
       if (__DEV__) {
         console.warn(
-          "[Push Registration] Unable to register Expo push token",
+          "[FCM Registration] Unable to register FCM token",
           error?.message ?? error,
         );
       }
     };
 
-    const tokenSubscription = Notifications.addPushTokenListener((token) => {
-      void registerToken(token.data).catch(handleRegistrationError);
+    // Listen for FCM token refreshes
+    const tokenSubscription = messaging().onTokenRefresh((token) => {
+      void registerToken(token).catch(handleRegistrationError);
     });
 
     if (lastRegisteredUserId.current !== userId) {
@@ -119,7 +110,7 @@ export const usePushRegistration = () => {
 
     return () => {
       isActive = false;
-      tokenSubscription.remove();
+      tokenSubscription();
     };
   }, [isHydrated, isAuthenticated, userId]);
 };

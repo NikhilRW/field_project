@@ -61,7 +61,7 @@ export const donationCategoryEnum = pgEnum("donation_category", [
 ]);
 export const donationVerificationStatusEnum = pgEnum(
   "donation_verification_status",
-  ["unverified", "verified"],
+  ["unverified", "verified", "rejected"],
 );
 export const donationPaymentStatusEnum = pgEnum("donation_payment_status", [
   "not_applicable",

@@ -159,4 +159,19 @@ export const activitiesStyles = StyleSheet.create({
     backgroundColor: Colors.borderLight,
     marginHorizontal: 10,
   },
+  emptyCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.35)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 28,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 19,
+  },
 });

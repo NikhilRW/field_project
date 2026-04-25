@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 import { router } from "expo-router";
 import { BASE_URI } from "@/shared/constants/uri";
@@ -48,11 +48,9 @@ http.interceptors.request.use(
   async (config) => {
     const token = await getAccessToken();
     if (token) {
-      // TODO: solve this typescript error.
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      const headers = AxiosHeaders.from(config.headers);
+      headers.set("Authorization", `Bearer ${token}`);
+      config.headers = headers;
     }
 
     if (__DEV__) {
@@ -98,10 +96,9 @@ http.interceptors.response.use(
       refreshPromise = null;
 
       if (newToken) {
-        originalRequest.headers = {
-          ...originalRequest.headers,
-          Authorization: `Bearer ${newToken}`,
-        };
+        const headers = AxiosHeaders.from(originalRequest.headers);
+        headers.set("Authorization", `Bearer ${newToken}`);
+        originalRequest.headers = headers;
         return http(originalRequest);
       }
 

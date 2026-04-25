@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Clock, Plus, Users } from "lucide-react-native";
@@ -19,8 +20,14 @@ import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 export default function ActivitiesScreen() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ActivityFilterTab>("All");
-  const { data: activityItems = [] } = useActivities();
+  const { data: activityItems = [], refetch } = useActivities();
   const isAdmin = useAuthStore((state) => state.isAdmin);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const filtered = activityItems.filter(
     (a) => activeTab === "All" || a.status === activeTab,
@@ -197,6 +204,15 @@ export default function ActivitiesScreen() {
               </View>
             </TouchableOpacity>
           ))}
+          {filtered.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>
+                {activityItems.length === 0
+                  ? "No activities are available yet."
+                  : "No activities match this filter."}
+              </Text>
+            </View>
+          ) : null}
           <View style={{ height: 24 }} />
         </ScrollView>
       </View>

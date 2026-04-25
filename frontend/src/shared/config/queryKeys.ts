@@ -1,0 +1,1 @@
+export const activityDetailQueryKey = (id: string) => ["activities", id];

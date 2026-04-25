@@ -12,38 +12,15 @@ import {
   volunteerProfiles,
 } from "../config/databaseSetup";
 import { formatDate } from "../utils/date";
+import { sendActivityNotification, sendUserNotification } from "../utils/sendNotification";
+import { storeNotification } from "./notificationController";
 
-const expoPushUrl = "https://exp.host/--/api/v2/push/send";
 const activityNotificationChannelId = "activity-updates";
 
-const isExpoPushToken = (token: string) =>
-  /^(ExponentPushToken|ExpoPushToken)\[[^\]]+\]$/.test(token);
-
-const sendPushNotifications = async (
-  tokens: string[],
-  title: string,
-  body: string,
-  data?: Record<string, string>,
-) => {
-  const validTokens = tokens.filter((token) => isExpoPushToken(token));
-  if (validTokens.length === 0) return;
-
-  try {
-    await axios.post(
-      expoPushUrl,
-      validTokens.map((token) => ({
-        to: token,
-        title,
-        body,
-        data,
-        channelId: activityNotificationChannelId,
-      })),
-    );
-  } catch (error) {
-    console.error("Failed to send push notifications:", error);
-  }
-};
-
+/**
+ * Send notifications to volunteers about activity updates
+ * Uses FCM instead of Expo push tokens
+ */
 const notifyUsersAboutActivity = async (
   activityId: string,
   activityName: string,
@@ -66,6 +43,7 @@ const notifyUsersAboutActivity = async (
   );
   const generalRecipients = userRows.filter((row) => !assignedIdSet.has(row.id));
 
+  // Store notifications in database
   const notificationRows = [
     ...generalRecipients.map((row) => ({
       userId: row.id,
@@ -85,27 +63,41 @@ const notifyUsersAboutActivity = async (
     await db.insert(notifications).values(notificationRows);
   }
 
-  const generalTokens = generalRecipients
-    .map((row) => row.expoPushToken)
-    .filter((token): token is string => Boolean(token));
+  // Send FCM to assigned volunteers
   const assignedTokens = assignedRecipients
     .map((row) => row.expoPushToken)
     .filter((token): token is string => Boolean(token));
+  
+  if (assignedTokens.length > 0) {
+    try {
+      await sendActivityNotification({
+        title: "New Activity Assigned",
+        body: `You have been assigned to ${activityName}.`,
+        activityId,
+        volunteerIds: assignedRecipients.map((r) => r.id),
+      });
+    } catch (error) {
+      console.error("Failed to send assigned notification:", error);
+    }
+  }
 
-  await Promise.all([
-    sendPushNotifications(
-      generalTokens,
-      "New Activity Added",
-      `${activityName} has been added. Check the activity details in the app.`,
-      { activityId },
-    ),
-    sendPushNotifications(
-      assignedTokens,
-      "New Activity Assigned",
-      `You have been assigned to ${activityName}.`,
-      { activityId },
-    ),
-  ]);
+  // Send FCM to all other users
+  const generalTokens = generalRecipients
+    .map((row) => row.expoPushToken)
+    .filter((token): token is string => Boolean(token));
+
+  if (generalTokens.length > 0) {
+    try {
+      await sendActivityNotification({
+        title: "New Activity Added",
+        body: `${activityName} has been added. Check the activity details in the app.`,
+        activityId,
+        volunteerIds: generalRecipients.map((r) => r.id),
+      });
+    } catch (error) {
+      console.error("Failed to send general notification:", error);
+    }
+  }
 };
 
 export const getActivities = async (req: AuthRequest, res: Response) => {
@@ -393,6 +385,22 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Get current activity details before updating
+    const [currentActivity] = await db
+      .select({
+        id: activities.id,
+        name: activities.name,
+        status: activities.status,
+      })
+      .from(activities)
+      .where(eq(activities.id, id));
+
+    if (!currentActivity) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Activity not found." });
+    }
+
     const [updatedActivity] = await db
       .update(activities)
       .set({
@@ -413,6 +421,48 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
       return res
         .status(404)
         .json({ success: false, error: "Activity not found." });
+    }
+
+    // Send notification about status change
+    try {
+      let title = "";
+      let body = "";
+
+      if (currentActivity.status === "Upcoming" && status === "Ongoing") {
+        title = "🔴 Activity Started";
+        body = `${updatedActivity.name} has started now! Check in to participate.`;
+      } else if (status === "Completed") {
+        title = "✅ Activity Completed";
+        body = `${updatedActivity.name} has been marked as completed.`;
+      } else if (status === "Upcoming") {
+        title = "📅 Activity Scheduled";
+        body = `${updatedActivity.name} is coming up soon!`;
+      }
+
+      if (title && body) {
+        await sendActivityNotification({
+          title,
+          body,
+          activityId: id,
+          allVolunteers: true,
+        });
+
+        // Also store in DB for history
+        const volunteers = await db.select({ id: users.id }).from(users);
+        const notificationRows = volunteers.map((v) => ({
+          userId: v.id,
+          title,
+          body,
+          data: JSON.stringify({ activityId: id, type: "activity_status_change" }),
+        }));
+
+        if (notificationRows.length > 0) {
+          await db.insert(notifications).values(notificationRows);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to send status update notification:", error);
+      // Continue - don't fail the status update if notification fails
     }
 
     return res.status(200).json({

@@ -1,21 +1,14 @@
 import { useEffect, useRef } from "react";
-import * as Notifications from "expo-notifications";
+import messaging, {
+  FirebaseMessagingTypes,
+} from "@react-native-firebase/messaging";
 import { router } from "expo-router";
 import { useAuthStore } from "@/shared/stores/authStore";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
-
-const getActivityIdFromNotification = (
-  notification: Notifications.Notification,
+const getActivityIdFromMessage = (
+  message: FirebaseMessagingTypes.RemoteMessage,
 ) => {
-  const activityId = notification.request.content.data?.activityId;
+  const activityId = message.data?.activityId;
   return typeof activityId === "string" && activityId.length > 0
     ? activityId
     : null;
@@ -25,43 +18,63 @@ export const useNotificationObserver = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const pendingActivityIdRef = useRef<string | null>(null);
-  const handledResponseIdsRef = useRef(new Set<string>());
+  const handledMessageIdsRef = useRef(new Set<string>());
 
+  // Set message handler for when app is in foreground
+  useEffect(() => {
+    const unsubscribeForeground = messaging().onMessage(async (message) => {
+      console.log("Foreground message received:", message);
+
+      const activityId = getActivityIdFromMessage(message);
+      if (activityId) {
+        pendingActivityIdRef.current = activityId;
+      }
+    });
+
+    return unsubscribeForeground;
+  }, []);
+
+  // Handle notification taps and app launch from notification
   useEffect(() => {
     let isMounted = true;
 
-    const stashResponse = (response: Notifications.NotificationResponse) => {
-      const identifier = response.notification.request.identifier;
-
-      if (handledResponseIdsRef.current.has(identifier)) {
+    const handleNotificationOpen = async (
+      message: FirebaseMessagingTypes.RemoteMessage | null,
+    ) => {
+      if (!isMounted || !message) {
         return;
       }
 
-      handledResponseIdsRef.current.add(identifier);
-      pendingActivityIdRef.current = getActivityIdFromNotification(
-        response.notification,
-      );
+      const messageId = message.messageId;
+      if (!messageId || handledMessageIdsRef.current.has(messageId)) {
+        return;
+      }
+
+      handledMessageIdsRef.current.add(messageId);
+      const activityId = getActivityIdFromMessage(message);
+
+      if (activityId) {
+        pendingActivityIdRef.current = activityId;
+      }
     };
 
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (!isMounted || !response) {
-        return;
-      }
-
-      stashResponse(response);
-    });
-
-    const responseSubscription =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        stashResponse(response);
+    // Get initial notification that opened the app
+    messaging()
+      .getInitialNotification()
+      .then((message) => {
+        handleNotificationOpen(message);
       });
 
-    return () => {
-      isMounted = false;
-      responseSubscription.remove();
-    };
+    // Handle notification when app is in background and user taps it
+    const unsubscribeNotificationOpened =
+      messaging().onNotificationOpenedApp((message) => {
+        handleNotificationOpen(message);
+      });
+
+    return unsubscribeNotificationOpened;
   }, []);
 
+  // Navigate to activity when authenticated and have pending activity ID
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !pendingActivityIdRef.current) {
       return;

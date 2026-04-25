@@ -6,8 +6,8 @@ import type { ActivityStatus } from "@/shared/types/mock";
 import { fetchActivityById } from "../utils/api";
 import { useDeleteActivity } from "./useDeleteActivity";
 import { useUpdateActivityStatus } from "./useUpdateActivityStatus";
+import { activityDetailQueryKey } from "@/shared/config/queryKeys";
 
-export const activityDetailQueryKey = (id: string) => ["activities", id];
 
 export const useActivity = (id: string) => {
 

@@ -1,16 +1,18 @@
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowUpRight, ArrowDownLeft } from "lucide-react-native";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import AppHeader from "@/shared/components/AppHeader";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
-import { useDonations, useMonthlyDonations } from "../hooks/useDonations";
+import { useAuthStore } from "@/shared/stores/authStore";
 import { MAX_CHART_HEIGHT } from "../constants/chart";
-import { getDonationTotals, getMonthlyMaxValue } from "../utils/aggregates";
+import { useDonations, useMonthlyDonations } from "../hooks/useDonations";
 import { donationsStyles as styles } from "../styles/donationsStyles";
+import { getDonationTotals, getMonthlyMaxValue } from "../utils/aggregates";
+import {UserDonationsScreen} from "./UserDonationsScreen";
 
-export default function DonationsScreen() {
+function AdminFundsScreen() {
   const insets = useSafeAreaInsets();
   const { data: donationItems = [] } = useDonations();
   const { data: monthlyItems = [] } = useMonthlyDonations();
@@ -24,7 +26,11 @@ export default function DonationsScreen() {
       <View
         style={[
           styles.container,
-          { paddingTop: insets.top,paddingBottom:insets.bottom + 20, backgroundColor: "transparent" },
+          {
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom + 20,
+            backgroundColor: "transparent",
+          },
         ]}
       >
         <AppHeader />
@@ -35,7 +41,7 @@ export default function DonationsScreen() {
         >
           <View style={styles.titleSection}>
             <Text style={styles.title}>Funds</Text>
-            <Text style={styles.titleSub}>Track all donations & expenses</Text>
+            <Text style={styles.titleSub}>Track donations and expenses</Text>
           </View>
 
           <View style={styles.summaryRow}>
@@ -68,6 +74,7 @@ export default function DonationsScreen() {
                 ₹{totalReceived.toLocaleString("en-IN")}
               </Text>
             </View>
+
             <View
               style={[
                 styles.summaryCard,
@@ -134,6 +141,7 @@ export default function DonationsScreen() {
               {monthlyItems.map((m, i) => {
                 const receivedH = (m.received / maxVal) * MAX_CHART_HEIGHT;
                 const spentH = (m.spent / maxVal) * MAX_CHART_HEIGHT;
+
                 return (
                   <View key={i} style={styles.barGroup}>
                     <View style={styles.bars}>
@@ -163,6 +171,7 @@ export default function DonationsScreen() {
 
           {donationItems.map((d) => {
             const isIncoming = d.type === "incoming";
+
             return (
               <View
                 key={d.id}
@@ -225,4 +234,10 @@ export default function DonationsScreen() {
       </View>
     </MeshGradientBackground>
   );
+}
+
+export default function DonationsScreen() {
+  const isAdmin = useAuthStore((state) => state.isAdmin);
+
+  return isAdmin ? <AdminFundsScreen /> : <UserDonationsScreen />;
 }

@@ -64,7 +64,12 @@ export const useAuthGuard = () => {
 
     if (!isAdmin) {
       if (isInTabsGroup) {
-        const allowedTabs = new Set(["dashboard", "activities", "profile"]);
+        const allowedTabs = new Set([
+          "dashboard",
+          "activities",
+          "donations",
+          "profile",
+        ]);
         if (tabSegment && !allowedTabs.has(tabSegment)) {
           router.replace(defaultRoute);
         }

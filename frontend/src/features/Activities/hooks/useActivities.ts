@@ -7,4 +7,6 @@ export const useActivities = () =>
   useQuery({
     queryKey: activitiesQueryKey,
     queryFn: fetchActivities,
+    staleTime: 0,
+    refetchOnMount: "always",
   });

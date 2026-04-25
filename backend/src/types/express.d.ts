@@ -8,6 +8,8 @@ declare global {
         email: string;
         role: "Admin" | "Volunteer" | "Donor";
       };
+      cloudinaryUrl?: string;
+      cloudinaryPublicId?: string;
     }
   }
 }

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateActivityStatusMutationKey } from "@/shared/config/tanstack";
 import type { ActivityStatus } from "@/shared/types/mock";
 import type { ActivityDetail } from "../utils/api";
-import { activityDetailQueryKey } from "./useActivity";
+import { activityDetailQueryKey } from "@/shared/config/queryKeys";
 
 type UpdateActivityStatusVariables = {
   id: string;

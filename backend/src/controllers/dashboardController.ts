@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
   activities,
   beneficiaries,
@@ -32,7 +32,12 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
             total: sql<number>`coalesce(sum(${donations.amount}), 0)`,
           })
           .from(donations)
-          .where(eq(donations.type, "incoming"))
+          .where(
+            and(
+              eq(donations.type, "incoming"),
+              eq(donations.verificationStatus, "verified"),
+            ),
+          )
       : [{ total: 0 }];
 
     const activityRows = await db

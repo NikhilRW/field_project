@@ -15,7 +15,9 @@ import { useAuthGuard } from "@/shared/hooks/useAuthGuard";
 import { useNotificationObserver } from "@/shared/hooks/useNotificationObserver";
 import { useDeepLinkBootstrap } from "@/shared/hooks/useDeepLinkBootstrap";
 import { usePushRegistration } from "@/shared/hooks/usePushRegistration";
+import { useNotificationBootstrap } from "@/shared/hooks/useNotificationBootstrap";
 import { useAuthStore } from "@/shared/stores/authStore";
+import { setupFCM } from "@/shared/utils/fcm";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -76,6 +78,18 @@ function RootLayoutNav() {
           headerTitleStyle: { fontWeight: "600" as const, color: "#1C1C2E" },
         }}
       />
+      <Stack.Screen
+        name="(main)/verify-items"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="(main)/verify-item/[id]"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
@@ -83,6 +97,7 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const hydrate = useAuthStore((state) => state.hydrate);
   const isHydrated = useAuthStore((state) => state.isHydrated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const pathname = usePathname();
   const { bottom } = useSafeAreaInsets();
   const [hasRootLayoutMounted, setHasRootLayoutMounted] = useState(false);
@@ -91,6 +106,16 @@ export default function RootLayout() {
   useDeepLinkBootstrap();
   useNotificationObserver();
   usePushRegistration();
+  useNotificationBootstrap();
+
+  // Initialize FCM when user logs in
+  useEffect(() => {
+    if (isAuthenticated && isHydrated) {
+      setupFCM().catch((error) => {
+        console.error("Failed to setup FCM:", error);
+      });
+    }
+  }, [isAuthenticated, isHydrated]);
 
   useEffect(() => {
     hydrate();

@@ -84,24 +84,18 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="donations"
-        options={
-          isUser
-            ? hiddenTabOptions
-            : {
-                title: "Funds",
-                tabBarIcon: ({ color, focused }) => (
-                  <View
-                    style={[styles.iconWrap, focused && styles.iconWrapActive]}
-                  >
-                    <HandCoins
-                      size={20}
-                      color={color}
-                      strokeWidth={focused ? 2.2 : 1.6}
-                    />
-                  </View>
-                ),
-              }
-        }
+        options={{
+          title: isAdmin ? "Funds" : "Donate",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <HandCoins
+                size={20}
+                color={color}
+                strokeWidth={focused ? 2.2 : 1.6}
+              />
+            </View>
+          ),
+        }}
       />
       <Tabs.Screen
         name="profile"

@@ -5,8 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  Linking,
 } from "react-native";
 import Animated, {
   FadeInDown,
@@ -26,11 +24,11 @@ import {
   ChevronRight,
   Clock,
   ArrowUpRight,
+  PackageCheck,
 } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import AppHeader from "@/shared/components/AppHeader";
 import { Colors } from "@/shared/constants/color";
-import { buildDonationUpiUri } from "@/shared/constants/uri";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { useDashboard } from "../hooks/useDashboard";
 import {
@@ -64,9 +62,10 @@ export default function DashboardScreen() {
     donations: 0,
   };
   const recentActivities = data?.recentActivities ?? [];
+  const donationTotal = stats.donations ?? 0;
 
   const donationLabel =
-    stats.donations > 0 ? `₹${(stats.donations / 100000).toFixed(2)}L` : "₹0";
+    donationTotal > 0 ? `₹${(donationTotal / 100000).toFixed(2)}L` : "₹0";
   const greetingName = isAdmin ? "Admin" : getFirstName(user?.name);
 
   const meshColors: IMeshGradientColor[] = [
@@ -76,17 +75,8 @@ export default function DashboardScreen() {
     { r: 0.96, g: 0.94, b: 1.0 },
   ];
 
-  const handleDonate = async () => {
-    const donationUri = buildDonationUpiUri();
-
-    try {
-      await Linking.openURL(donationUri);
-    } catch {
-      Alert.alert(
-        "Payment app unavailable",
-        "Install or enable a UPI payment app to continue with the donation.",
-      );
-    }
+  const handleDonate = () => {
+    router.push("/donations");
   };
 
   return (
@@ -204,10 +194,10 @@ export default function DashboardScreen() {
             >
               <View>
                 <Text style={styles.donateEyebrow}>Support Helping Hands</Text>
-                <Text style={styles.donateTitle}>Donate using any UPI app</Text>
+                <Text style={styles.donateTitle}>Donate money or items</Text>
                 <Text style={styles.donateBody}>
-                  Tap Donate to continue in your payment app. The UPI ID is a
-                  placeholder for now and can be updated later.
+                  Give through Razorpay or submit books, clothes, and other
+                  items for NGO verification.
                 </Text>
               </View>
               <TouchableOpacity
@@ -262,7 +252,7 @@ export default function DashboardScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickAction}
-                onPress={() => router.push("/(tabs)/donations" as any)}
+                onPress={() => router.push("/donations")}
                 activeOpacity={0.7}
               >
                 <View
@@ -274,6 +264,25 @@ export default function DashboardScreen() {
                   <HandCoins size={22} color={Colors.error} strokeWidth={2} />
                 </View>
                 <Text style={styles.quickActionLabel}>Funds</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => router.push("/(main)/verify-items" as any)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    { backgroundColor: Colors.secondaryLight },
+                  ]}
+                >
+                  <PackageCheck
+                    size={22}
+                    color={Colors.secondary}
+                    strokeWidth={2}
+                  />
+                </View>
+                <Text style={styles.quickActionLabel}>Verify Items</Text>
               </TouchableOpacity>
             </Animated.View>
           ) : (
