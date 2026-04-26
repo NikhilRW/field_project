@@ -90,6 +90,18 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="(main)/donatedItems"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="(main)/donatedItem/[id]"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

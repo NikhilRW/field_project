@@ -7,6 +7,7 @@ import {
 import {
   createItemDonation,
   createMoneyDonationOrder,
+  fetchDonatedItemDonations,
   fetchDonations,
   fetchItemDonationById,
   fetchMonthlyDonations,
@@ -25,6 +26,7 @@ export const donationsQueryKey = ["donations"];
 export const monthlyDonationsQueryKey = ["donations", "monthly"];
 export const myDonationsQueryKey = ["donations", "mine", "paginated"];
 export const pendingItemDonationsQueryKey = ["donations", "items", "pending"];
+export const donatedItemDonationsQueryKey = ["donations", "items", "donated"];
 export const itemDonationQueryKey = (id: string) => ["donations", "items", id];
 export const myDonationsPageSize = 7;
 
@@ -59,6 +61,14 @@ export const usePendingItemDonations = () =>
   useQuery({
     queryKey: pendingItemDonationsQueryKey,
     queryFn: fetchPendingItemDonations,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
+export const useDonatedItemDonations = () =>
+  useQuery({
+    queryKey: donatedItemDonationsQueryKey,
+    queryFn: fetchDonatedItemDonations,
     staleTime: 0,
     refetchOnMount: "always",
   });
@@ -131,6 +141,9 @@ export const useVerifyItemDonation = () => {
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: pendingItemDonationsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: donatedItemDonationsQueryKey,
         }),
         queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
       ]);

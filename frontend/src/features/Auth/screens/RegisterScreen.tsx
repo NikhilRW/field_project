@@ -55,7 +55,7 @@ export default function RegisterScreen() {
 
       Alert.alert(
         "Account created",
-        "Please check your email to verify your account, then sign in.",
+        "Your account is ready. Please sign in.",
       );
       router.replace("/(auth)/login" as any);
     } catch (error: any) {

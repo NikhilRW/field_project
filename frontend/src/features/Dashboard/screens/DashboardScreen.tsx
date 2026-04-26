@@ -324,6 +324,25 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={styles.quickActionLabel}>Profile</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => router.push("/(main)/donatedItems" as any)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    { backgroundColor: Colors.accentLight },
+                  ]}
+                >
+                  <PackageCheck
+                    size={22}
+                    color={Colors.accent}
+                    strokeWidth={2}
+                  />
+                </View>
+                <Text style={styles.quickActionLabel}>Donated Items</Text>
+              </TouchableOpacity>
             </Animated.View>
           )}
 

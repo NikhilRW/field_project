@@ -104,6 +104,13 @@ export const fetchPendingItemDonations = async () => {
   return response.data.data;
 };
 
+export const fetchDonatedItemDonations = async () => {
+  const response = await http.get<{ success: boolean; data: MyDonation[] }>(
+    "/api/donations/items/donated",
+  );
+  return response.data.data;
+};
+
 export const fetchItemDonationById = async (id: string) => {
   const response = await http.get<{ success: boolean; data: MyDonation }>(
     `/api/donations/items/${id}`,

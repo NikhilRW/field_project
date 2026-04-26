@@ -8,11 +8,23 @@ import {
   scheduleNotificationAsync,
   addNotificationResponseReceivedListener,
   getLastNotificationResponseAsync,
+  type NotificationResponse,
 } from "expo-notifications";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { createNotificationStore } from "@/shared/stores/notificationStore";
 
 const ACTIVITY_NOTIFICATION_CHANNEL_ID = "activity-updates";
+
+const getStringDataValue = (
+  data: Record<string, unknown> | undefined,
+  key: string,
+) => {
+  const value = data?.[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+const getActivityIdFromData = (data: Record<string, unknown> | undefined) =>
+  getStringDataValue(data, "activityId");
 
 /**
  * Complete notification bootstrap hook
@@ -27,8 +39,10 @@ const ACTIVITY_NOTIFICATION_CHANNEL_ID = "activity-updates";
  */
 export const useNotificationBootstrap = () => {
   const isHydrated = useAuthStore((state) => state.isHydrated);
-  const { hasHandledKilledStateNotification, setHasHandledKilledStateNotification } =
-    createNotificationStore();
+  const {
+    hasHandledKilledStateNotification,
+    setHasHandledKilledStateNotification,
+  } = createNotificationStore();
 
   // Prevent duplicate handling of killed-state notifications
   const killedStateHandledRef = useRef(false);
@@ -59,16 +73,16 @@ export const useNotificationBootstrap = () => {
 
         // 2️⃣ SET UP BACKGROUND MESSAGE HANDLER
         // Called when app is backgrounded and message arrives
-        const unsubscribeBackground = messaging().setBackgroundMessageHandler(
+        messaging().setBackgroundMessageHandler(
           async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
             console.log("📱 Background message received:", {
               title: remoteMessage.notification?.title,
               body: remoteMessage.notification?.body,
-              activityId: remoteMessage.data?.activityId,
+              activityId: getActivityIdFromData(remoteMessage.data),
             });
 
             // Don't show notifications for "ended" events
-            if (remoteMessage.data?.ended === "true") {
+            if (getStringDataValue(remoteMessage.data, "ended") === "true") {
               return;
             }
 
@@ -79,14 +93,12 @@ export const useNotificationBootstrap = () => {
                 body: remoteMessage.notification?.body ?? "",
                 sound: "default",
                 badge: 1,
-                data: remoteMessage.data,
+                data: remoteMessage.data ?? {},
               },
               trigger: null, // Show immediately
             });
           }
         );
-
-        cleanupFunctions.push(unsubscribeBackground);
 
         // 3️⃣ HANDLE FOREGROUND MESSAGES
         // Called when app is open and message arrives
@@ -94,10 +106,10 @@ export const useNotificationBootstrap = () => {
           console.log("🔴 Foreground message received:", {
             title: remoteMessage.notification?.title,
             body: remoteMessage.notification?.body,
-            activityId: remoteMessage.data?.activityId,
+            activityId: getActivityIdFromData(remoteMessage.data),
           });
 
-          if (remoteMessage.data?.ended === "true") {
+          if (getStringDataValue(remoteMessage.data, "ended") === "true") {
             return;
           }
 
@@ -108,7 +120,7 @@ export const useNotificationBootstrap = () => {
               body: remoteMessage.notification?.body ?? "",
               sound: "default",
               badge: 1,
-              data: remoteMessage.data,
+              data: remoteMessage.data ?? {},
             },
             trigger: null, // Show immediately
           });
@@ -133,7 +145,7 @@ export const useNotificationBootstrap = () => {
         const unsubscribeNotificationOpened = messaging().onNotificationOpenedApp(
           (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
             console.log("🔔 App opened from background notification");
-            navigateToActivity(remoteMessage.data?.activityId);
+            navigateToActivity(getActivityIdFromData(remoteMessage.data));
           }
         );
 
@@ -141,31 +153,39 @@ export const useNotificationBootstrap = () => {
 
         // 6️⃣ HANDLE APP OPENED FROM KILLED STATE
         // Called once when app is completely closed and user taps notification
-        if (!killedStateHandledRef.current) {
+        if (
+          !killedStateHandledRef.current &&
+          !hasHandledKilledStateNotification
+        ) {
           killedStateHandledRef.current = true;
+          setHasHandledKilledStateNotification(true);
 
           // Get Firebase initial notification (has priority)
           messaging()
             .getInitialNotification()
             .then((remoteMessage) => {
-              if (remoteMessage?.data?.activityId) {
+              const activityId = getActivityIdFromData(remoteMessage?.data);
+
+              if (activityId) {
                 console.log(
                   "🚀 App opened from killed state (Firebase notification)"
                 );
-                navigateToActivity(remoteMessage.data.activityId);
+                navigateToActivity(activityId);
                 return;
               }
 
               // Fallback: Check Expo scheduled notifications
               getLastNotificationResponseAsync()
                 .then((response) => {
-                  if (response?.notification?.request?.content?.data?.activityId) {
+                  const expoActivityId = getActivityIdFromData(
+                    response?.notification?.request?.content?.data,
+                  );
+
+                  if (expoActivityId) {
                     console.log(
                       "🚀 App opened from killed state (Expo notification)"
                     );
-                    navigateToActivity(
-                      response.notification.request.content.data.activityId as string
-                    );
+                    navigateToActivity(expoActivityId);
                   }
                 })
                 .catch((error) => {
@@ -185,30 +205,25 @@ export const useNotificationBootstrap = () => {
       clearTimeout(timeoutId);
       cleanupFunctions.forEach((cleanup) => cleanup());
     };
-  }, [isHydrated]);
+  }, [
+    hasHandledKilledStateNotification,
+    isHydrated,
+    setHasHandledKilledStateNotification,
+  ]);
 };
 
 /**
  * Handle notification click - navigate to activity
  */
-const handleNotificationClick = (
-  response: {
-    actionIdentifier: string;
-    notification: {
-      request: {
-        content: {
-          data: Record<string, any>;
-        };
-      };
-    };
-  }
-) => {
+const handleNotificationClick = (response: NotificationResponse) => {
   // Check if it's a default action (user tapped notification)
   if (
     response?.actionIdentifier ===
     "expo.modules.notifications.actions.DEFAULT"
   ) {
-    const activityId = response?.notification?.request?.content?.data?.activityId;
+    const activityId = getActivityIdFromData(
+      response?.notification?.request?.content?.data,
+    );
     if (activityId) {
       navigateToActivity(activityId);
     }

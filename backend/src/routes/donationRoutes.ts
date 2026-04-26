@@ -3,6 +3,7 @@ import {
   createItemDonation,
   createMoneyDonationOrder,
   getDonations,
+  getDonatedItemDonations,
   getItemDonation,
   getMonthlyDonations,
   getMyDonations,
@@ -31,9 +32,15 @@ router.get(
   getPendingItemDonations,
 );
 router.get(
+  "/items/donated",
+  authenticate,
+  authorizeRoles("Admin", "Volunteer", "Donor"),
+  getDonatedItemDonations,
+);
+router.get(
   "/items/:id",
   authenticate,
-  authorizeRoles("Admin"),
+  authorizeRoles("Admin", "Volunteer", "Donor"),
   getItemDonation,
 );
 router.patch(

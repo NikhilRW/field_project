@@ -83,7 +83,8 @@ export const register = async (req: Request, res: Response) => {
         email: normalizedEmail,
         passwordHash,
         role: role ?? "Volunteer",
-        isEmailVerified: false,
+        // TODO: restore email verification before production signups.
+        isEmailVerified: true,
       })
       .returning({
         id: users.id,
@@ -110,19 +111,10 @@ export const register = async (req: Request, res: Response) => {
       });
     }
 
-    const { token, tokenHash } = generateTokenPair();
-    await db.insert(emailVerificationTokens).values({
-      userId: created.id,
-      tokenHash,
-      expiresAt: addMinutes(60),
-    });
-
-    await sendVerificationEmailMessage(created.email, token);
-
     return res.status(201).json({
       success: true,
       data: buildAuthResponse(created),
-      message: "Account created. Verification email sent.",
+      message: "Account created.",
     });
   } catch (error) {
     console.error("Register error:", error);

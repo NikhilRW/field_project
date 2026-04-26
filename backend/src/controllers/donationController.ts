@@ -258,6 +258,35 @@ export const getPendingItemDonations = async (_req: AuthRequest, res: Response) 
   }
 };
 
+export const getDonatedItemDonations = async (
+  _req: AuthRequest,
+  res: Response,
+) => {
+  try {
+    const rows = await db
+      .select()
+      .from(donations)
+      .where(
+        and(
+          ne(donations.category, "money"),
+          eq(donations.verificationStatus, "verified"),
+        ),
+      )
+      .orderBy(desc(donations.date));
+
+    return res.status(200).json({
+      success: true,
+      data: rows.map(mapDonationRow),
+    });
+  } catch (error) {
+    console.error("Failed to fetch donated item donations", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch donated items.",
+    });
+  }
+};
+
 export const getItemDonation = async (req: AuthRequest, res: Response) => {
   try {
     const id = String(req.params.id);
@@ -268,6 +297,15 @@ export const getItemDonation = async (req: AuthRequest, res: Response) => {
       .where(and(eq(donations.id, id), ne(donations.category, "money")));
 
     if (!donation) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Item donation not found." });
+    }
+
+    if (
+      req.user?.role !== "Admin" &&
+      donation.verificationStatus !== "verified"
+    ) {
       return res
         .status(404)
         .json({ success: false, error: "Item donation not found." });

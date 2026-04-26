@@ -78,8 +78,15 @@ export const useAuthGuard = () => {
       if (isInMainGroup) {
         const isActivityDetailsRoute =
           segments[1] === "activity" && Boolean(segments[2]);
+        const isDonatedItemsRoute = segments[1] === "donatedItems";
+        const isDonatedItemDetailsRoute =
+          segments[1] === "donatedItem" && Boolean(segments[2]);
 
-        if (!isActivityDetailsRoute) {
+        if (
+          !isActivityDetailsRoute &&
+          !isDonatedItemsRoute &&
+          !isDonatedItemDetailsRoute
+        ) {
           router.replace(defaultRoute);
         }
       }
