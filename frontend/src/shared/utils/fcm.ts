@@ -1,8 +1,18 @@
-import messaging from "@react-native-firebase/messaging";
+import {
+  AuthorizationStatus,
+  deleteToken,
+  getMessaging,
+  getToken,
+  requestPermission,
+  subscribeToTopic as subscribeToFirebaseTopic,
+  unsubscribeFromTopic as unsubscribeFromFirebaseTopic,
+} from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { getAccessToken } from "@/shared/utils/secureStore";
 import { setNotificationChannelAsync } from "expo-notifications";
+
+const firebaseMessaging = getMessaging();
 
 /**
  * Create Android notification channel for FCM
@@ -35,14 +45,11 @@ export const createNotificationChannel = async () => {
  */
 export const requestNotificationPermission = async (): Promise<boolean> => {
   try {
-    const permission = await messaging().requestPermission();
-
-    // Permission levels:
-    // 0 = disabled
-    // 1 = provisional (iOS)
-    // 2 = denied
-    // 3 = allowed
-    const isGranted = permission === 1 || permission === 3;
+    const permission = await requestPermission(firebaseMessaging);
+    const isGranted =
+      permission === AuthorizationStatus.AUTHORIZED ||
+      permission === AuthorizationStatus.PROVISIONAL ||
+      permission === AuthorizationStatus.EPHEMERAL;
 
     if (isGranted) {
       console.log("✅ Notification permission granted");
@@ -62,7 +69,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
  */
 export const getFCMToken = async (): Promise<string | null> => {
   try {
-    const token = await messaging().getToken();
+    const token = await getToken(firebaseMessaging);
 
     if (token) {
       console.log("✅ FCM token obtained:", token.substring(0, 20) + "...");
@@ -116,7 +123,7 @@ export const registerFCMToken = async (): Promise<boolean> => {
  */
 export const subscribeToTopic = async (topic: string): Promise<boolean> => {
   try {
-    await messaging().subscribeToTopic(topic);
+    await subscribeToFirebaseTopic(firebaseMessaging, topic);
     console.log(`✅ Subscribed to topic: ${topic}`);
     return true;
   } catch (error) {
@@ -130,7 +137,7 @@ export const subscribeToTopic = async (topic: string): Promise<boolean> => {
  */
 export const unsubscribeFromTopic = async (topic: string): Promise<boolean> => {
   try {
-    await messaging().unsubscribeFromTopic(topic);
+    await unsubscribeFromFirebaseTopic(firebaseMessaging, topic);
     console.log(`✅ Unsubscribed from topic: ${topic}`);
     return true;
   } catch (error) {
@@ -175,7 +182,7 @@ export const setupFCM = async (): Promise<void> => {
  */
 export const deleteFCMToken = async (): Promise<void> => {
   try {
-    await messaging().deleteToken();
+    await deleteToken(firebaseMessaging);
     console.log("✅ FCM token deleted");
   } catch (error) {
     console.error("Error deleting FCM token:", error);

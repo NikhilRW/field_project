@@ -1,10 +1,18 @@
 import { useEffect, useRef } from "react";
-import messaging from "@react-native-firebase/messaging";
+import {
+  AuthorizationStatus,
+  getMessaging,
+  getToken,
+  onTokenRefresh,
+  requestPermission,
+} from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { getAccessToken } from "@/shared/utils/secureStore";
 import { setNotificationChannelAsync } from "expo-notifications";
+
+const firebaseMessaging = getMessaging();
 
 const ensureNotificationChannel = async () => {
   if (Platform.OS !== "android") {
@@ -63,16 +71,17 @@ export const usePushRegistration = () => {
       try {
         await ensureNotificationChannel();
 
-        // Request notification permission (required for FCM on Android 13+)
-        const permission = await messaging().requestPermission();
+        const permission = await requestPermission(firebaseMessaging);
 
-        // Permission levels: 0=disabled, 1=provisional, 2=denied, 3=allowed
-        if (permission !== 1 && permission !== 3) {
+        if (
+          permission !== AuthorizationStatus.AUTHORIZED &&
+          permission !== AuthorizationStatus.PROVISIONAL &&
+          permission !== AuthorizationStatus.EPHEMERAL
+        ) {
           return;
         }
 
-        // Get FCM token
-        const token = await messaging().getToken();
+        const token = await getToken(firebaseMessaging);
         if (!token) {
           return;
         }
@@ -98,7 +107,7 @@ export const usePushRegistration = () => {
     };
 
     // Listen for FCM token refreshes
-    const tokenSubscription = messaging().onTokenRefresh((token) => {
+    const tokenSubscription = onTokenRefresh(firebaseMessaging, (token) => {
       void registerToken(token).catch(handleRegistrationError);
     });
 

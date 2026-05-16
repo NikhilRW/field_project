@@ -76,10 +76,12 @@ export const users = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
     email: text("email").notNull(),
-    passwordHash: text("password_hash").notNull(),
+    passwordHash: text("password_hash"),
     role: userRoleEnum("role").notNull(),
     isEmailVerified: boolean("is_email_verified").notNull().default(false),
     refreshTokenHash: text("refresh_token_hash"),
+    oauthProvider: text("oauth_provider"),
+    oauthId: text("oauth_id"),
     expoPushToken: text("expo_push_token"),
     phone: text("phone"),
     avatarUrl: text("avatar_url"),
@@ -92,6 +94,10 @@ export const users = pgTable(
   },
   (table) => ({
     emailUniqueIdx: uniqueIndex("users_email_unique").on(table.email),
+    oauthProviderIdUniqueIdx: uniqueIndex("users_oauth_provider_id_unique").on(
+      table.oauthProvider,
+      table.oauthId,
+    ),
   }),
 );
 

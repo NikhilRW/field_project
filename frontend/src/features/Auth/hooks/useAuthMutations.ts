@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/shared/stores/authStore";
 import {
   forgotPasswordRequest,
+  googleLoginRequest,
   loginRequest,
   logoutRequest,
   registerRequest,
@@ -29,6 +30,21 @@ export const useRegisterMutation = () =>
   useMutation({
     mutationFn: registerRequest,
   });
+
+export const useGoogleLoginMutation = () => {
+  const login = useAuthStore((state) => state.login);
+
+  return useMutation({
+    mutationFn: googleLoginRequest,
+    onSuccess: async (data) => {
+      await login({
+        user: data.user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      });
+    },
+  });
+};
 
 export const useSendVerificationEmailMutation = () =>
   useMutation({

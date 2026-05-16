@@ -13,9 +13,17 @@ import { router } from "expo-router";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import BrandLogo from "@/shared/components/BrandLogo";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import { useRegisterForm } from "../hooks/useRegisterForm";
-import { useRegisterMutation } from "../hooks/useAuthMutations";
+import {
+  useGoogleLoginMutation,
+  useRegisterMutation,
+} from "../hooks/useAuthMutations";
 import { loginStyles as styles } from "../styles/loginStyles";
+import {
+  getGoogleIdToken,
+  getGoogleSignInErrorMessage,
+} from "../utils/googleAuth";
 
 // TODO: use react hook form for all forms in the app
 
@@ -34,6 +42,7 @@ export default function RegisterScreen() {
   } = useRegisterForm();
 
   const registerMutation = useRegisterMutation();
+  const googleLoginMutation = useGoogleLoginMutation();
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -65,6 +74,24 @@ export default function RegisterScreen() {
       );
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const idToken = await getGoogleIdToken();
+
+      if (!idToken) {
+        return;
+      }
+
+      await googleLoginMutation.mutateAsync({ idToken });
+      router.replace("/(tabs)/dashboard" as any);
+    } catch (error: any) {
+      Alert.alert("Google sign-in failed", getGoogleSignInErrorMessage(error));
+    }
+  };
+
+  const isAuthLoading =
+    registerMutation.isPending || googleLoginMutation.isPending;
 
   return (
     <KeyboardAvoidingView
@@ -162,12 +189,24 @@ export default function RegisterScreen() {
             onPress={handleRegister}
             activeOpacity={0.8}
             testID="register-btn"
-            disabled={registerMutation.isPending}
+            disabled={isAuthLoading}
           >
             <Text style={styles.loginBtnText}>
               {registerMutation.isPending ? "Creating..." : "Create Account"}
             </Text>
           </TouchableOpacity>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <GoogleAuthButton
+            onPress={handleGoogleSignIn}
+            testID="google-register-btn"
+            disabled={isAuthLoading}
+            isLoading={googleLoginMutation.isPending}
+          />
 
           <View
             style={{

@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
-import messaging, {
+import {
   FirebaseMessagingTypes,
+  getInitialNotification,
+  getMessaging,
+  onMessage,
+  onNotificationOpenedApp,
+  setBackgroundMessageHandler,
 } from "@react-native-firebase/messaging";
 import { router } from "expo-router";
 import {
@@ -14,6 +19,7 @@ import { useAuthStore } from "@/shared/stores/authStore";
 import { createNotificationStore } from "@/shared/stores/notificationStore";
 
 const ACTIVITY_NOTIFICATION_CHANNEL_ID = "activity-updates";
+const firebaseMessaging = getMessaging();
 
 const getStringDataValue = (
   data: Record<string, unknown> | undefined,
@@ -73,7 +79,8 @@ export const useNotificationBootstrap = () => {
 
         // 2️⃣ SET UP BACKGROUND MESSAGE HANDLER
         // Called when app is backgrounded and message arrives
-        messaging().setBackgroundMessageHandler(
+        setBackgroundMessageHandler(
+          firebaseMessaging,
           async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
             console.log("📱 Background message received:", {
               title: remoteMessage.notification?.title,
@@ -97,34 +104,37 @@ export const useNotificationBootstrap = () => {
               },
               trigger: null, // Show immediately
             });
-          }
+          },
         );
 
         // 3️⃣ HANDLE FOREGROUND MESSAGES
         // Called when app is open and message arrives
-        const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
-          console.log("🔴 Foreground message received:", {
-            title: remoteMessage.notification?.title,
-            body: remoteMessage.notification?.body,
-            activityId: getActivityIdFromData(remoteMessage.data),
-          });
+        const unsubscribeForeground = onMessage(
+          firebaseMessaging,
+          async (remoteMessage) => {
+            console.log("🔴 Foreground message received:", {
+              title: remoteMessage.notification?.title,
+              body: remoteMessage.notification?.body,
+              activityId: getActivityIdFromData(remoteMessage.data),
+            });
 
-          if (getStringDataValue(remoteMessage.data, "ended") === "true") {
-            return;
-          }
+            if (getStringDataValue(remoteMessage.data, "ended") === "true") {
+              return;
+            }
 
-          // Show notification banner even if app is open
-          await scheduleNotificationAsync({
-            content: {
-              title: remoteMessage.notification?.title ?? "Helping Hands",
-              body: remoteMessage.notification?.body ?? "",
-              sound: "default",
-              badge: 1,
-              data: remoteMessage.data ?? {},
-            },
-            trigger: null, // Show immediately
-          });
-        });
+            // Show notification banner even if app is open
+            await scheduleNotificationAsync({
+              content: {
+                title: remoteMessage.notification?.title ?? "Helping Hands",
+                body: remoteMessage.notification?.body ?? "",
+                sound: "default",
+                badge: 1,
+                data: remoteMessage.data ?? {},
+              },
+              trigger: null, // Show immediately
+            });
+          },
+        );
 
         cleanupFunctions.push(unsubscribeForeground);
 
@@ -142,11 +152,12 @@ export const useNotificationBootstrap = () => {
 
         // 5️⃣ HANDLE APP OPENED FROM BACKGROUND NOTIFICATION
         // Called when user taps notification and app transitions from background
-        const unsubscribeNotificationOpened = messaging().onNotificationOpenedApp(
+        const unsubscribeNotificationOpened = onNotificationOpenedApp(
+          firebaseMessaging,
           (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
             console.log("🔔 App opened from background notification");
             navigateToActivity(getActivityIdFromData(remoteMessage.data));
-          }
+          },
         );
 
         cleanupFunctions.push(unsubscribeNotificationOpened);
@@ -161,8 +172,7 @@ export const useNotificationBootstrap = () => {
           setHasHandledKilledStateNotification(true);
 
           // Get Firebase initial notification (has priority)
-          messaging()
-            .getInitialNotification()
+          getInitialNotification(firebaseMessaging)
             .then((remoteMessage) => {
               const activityId = getActivityIdFromData(remoteMessage?.data);
 

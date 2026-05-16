@@ -121,10 +121,56 @@ export const loginStyles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600" as const,
   },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 18,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    fontWeight: "500" as const,
+  },
+  googleBtn: {
+    height: 50,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  googleGradient: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 15,
+    paddingHorizontal: 14,
+  },
+  googleMark: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  googleBtnText: {
+    color: "#2B2B2B",
+    fontSize: 14,
+    fontWeight: "600" as const,
+  },
   footer: {
     textAlign: "center",
     fontSize: 12,
     color: Colors.textTertiary,
     marginTop: 24,
+  },
+  googleImage: {
+    width: 24,
+    height: 24,
   },
 });

@@ -1,6 +1,6 @@
 import http from "@/shared/utils/http";
 import type { AuthRole, AuthUser } from "@/shared/stores/authStore";
-
+// TODO: move types to separate types folder.
 type AuthPayload = {
   user: AuthUser;
   accessToken: string;
@@ -20,6 +20,10 @@ export type RegisterRequest = {
   role?: AuthRole;
 };
 
+export type GoogleLoginRequest = {
+  idToken: string;
+};
+
 export const loginRequest = async (payload: LoginRequest) => {
   const response = await http.post<{ success: boolean; data: AuthPayload }>(
     "/api/auth/login",
@@ -34,6 +38,14 @@ export const registerRequest = async (payload: RegisterRequest) => {
     data: AuthUser;
     message?: string;
   }>("/api/auth/register", payload);
+  return response.data.data;
+};
+
+export const googleLoginRequest = async (payload: GoogleLoginRequest) => {
+  const response = await http.post<{ success: boolean; data: AuthPayload }>(
+    "/api/auth/google",
+    payload,
+  );
   return response.data.data;
 };
 

@@ -8,6 +8,7 @@ import {
   setAccessToken,
   setRefreshToken,
 } from "@/shared/utils/secureStore";
+import { signOutFromGoogle } from "../utils/google";
 
 export type AuthRole = "Admin" | "Volunteer" | "Donor";
 
@@ -78,6 +79,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         await clearTokens();
+        await signOutFromGoogle();
         set({
           user: null,
           role: null,

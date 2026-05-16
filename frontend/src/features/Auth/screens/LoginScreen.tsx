@@ -13,9 +13,17 @@ import { router } from "expo-router";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import BrandLogo from "@/shared/components/BrandLogo";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import { useLoginForm } from "../hooks/useLoginForm";
-import { useLoginMutation } from "../hooks/useAuthMutations";
+import {
+  useGoogleLoginMutation,
+  useLoginMutation,
+} from "../hooks/useAuthMutations";
 import { loginStyles as styles } from "../styles/loginStyles";
+import {
+  getGoogleIdToken,
+  getGoogleSignInErrorMessage,
+} from "../utils/googleAuth";
 
 // TODO: glassy vibes same as our app in all auth screens.
 export default function LoginScreen() {
@@ -29,6 +37,7 @@ export default function LoginScreen() {
   } = useLoginForm();
 
   const loginMutation = useLoginMutation();
+  const googleLoginMutation = useGoogleLoginMutation();
 
   const handleLogin = async () => {
     try {
@@ -42,6 +51,24 @@ export default function LoginScreen() {
       Alert.alert("Login failed", message);
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const idToken = await getGoogleIdToken();
+      console.log("idtoken : "+idToken);
+      
+      if (!idToken) {
+        return;
+      }
+
+      await googleLoginMutation.mutateAsync({ idToken });
+      router.replace("/(tabs)/dashboard" as any);
+    } catch (error: any) {
+      Alert.alert("Google sign-in failed", getGoogleSignInErrorMessage(error));
+    }
+  };
+
+  const isAuthLoading = loginMutation.isPending || googleLoginMutation.isPending;
 
   return (
     <KeyboardAvoidingView
@@ -118,12 +145,25 @@ export default function LoginScreen() {
             onPress={handleLogin}
             activeOpacity={0.8}
             testID="login-btn"
-            disabled={loginMutation.isPending}
+            disabled={isAuthLoading}
           >
             <Text style={styles.loginBtnText}>
               {loginMutation.isPending ? "Signing In..." : "Sign In"}
             </Text>
           </TouchableOpacity>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <GoogleAuthButton
+            onPress={handleGoogleSignIn}
+            testID="google-login-btn"
+            disabled={isAuthLoading}
+            isLoading={googleLoginMutation.isPending}
+          />
 
           <View
             style={{

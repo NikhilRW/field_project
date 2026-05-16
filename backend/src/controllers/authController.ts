@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthRequest } from "../types/auth";
 import { and, eq, gt, isNull } from "drizzle-orm";
+import { OAuth2Client } from "google-auth-library";
 import {
   db,
   emailVerificationTokens,
@@ -23,13 +24,27 @@ import { getColorFromName, getInitials } from "../utils/beneficiary";
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
-const buildAuthResponse = (user: {
+type AuthResponseUser = {
   id: string;
   name: string;
   email: string;
   role: "Admin" | "Volunteer" | "Donor";
   isEmailVerified: boolean;
-}) => ({
+};
+
+const googleClient = new OAuth2Client();
+
+const getGoogleClientIds = () =>
+  [
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.GOOGLE_WEB_CLIENT_ID,
+    process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID,
+  ]
+    .flatMap((value) => value?.split(",") ?? [])
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+const buildAuthResponse = (user: AuthResponseUser) => ({
   id: user.id,
   name: user.name,
   email: user.email,
@@ -163,6 +178,12 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    if (!user.passwordHash) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials." });
+    }
+
     const passwordMatches = await comparePassword(password, user.passwordHash);
 
     if (!passwordMatches) {
@@ -191,6 +212,172 @@ export const login = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ success: false, error: "Unable to login." });
+  }
+};
+
+export const googleLogin = async (req: Request, res: Response) => {
+  try {
+    const { idToken } = req.body as { idToken?: string };
+
+    if (!idToken) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Google idToken is required." });
+    }
+
+    const audience = getGoogleClientIds();
+
+    if (!audience.length) {
+      return res.status(500).json({
+        success: false,
+        error: "Google OAuth client ID is not configured on the server.",
+      });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload?.sub || !payload.email) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid Google token." });
+    }
+
+    if (!payload.email_verified) {
+      return res
+        .status(403)
+        .json({ success: false, error: "Google email is not verified." });
+    }
+
+    const normalizedEmail = normalizeEmail(payload.email);
+    const provider = "google";
+    const googleUserId = payload.sub;
+    const displayName =
+      payload.name?.trim() || normalizedEmail.split("@")[0] || "Google User";
+
+    const [oauthUser] = await db
+      .select()
+      .from(users)
+      .where(
+        and(eq(users.oauthProvider, provider), eq(users.oauthId, googleUserId)),
+      );
+
+    const [emailUser] = oauthUser
+      ? [oauthUser]
+      : await db.select().from(users).where(eq(users.email, normalizedEmail));
+
+    const user = oauthUser ?? emailUser;
+    let sessionUser: AuthResponseUser;
+
+    if (user) {
+      if (
+        user.oauthProvider &&
+        user.oauthProvider !== provider &&
+        user.oauthId &&
+        user.oauthId !== googleUserId
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: "This email is already linked to another sign-in provider.",
+        });
+      }
+
+      const [updated] = await db
+        .update(users)
+        .set({
+          name: user.name || displayName,
+          email: normalizedEmail,
+          oauthProvider: provider,
+          oauthId: googleUserId,
+          avatarUrl: payload.picture ?? user.avatarUrl,
+          isEmailVerified: true,
+        })
+        .where(eq(users.id, user.id))
+        .returning({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          isEmailVerified: users.isEmailVerified,
+        });
+
+      sessionUser = updated ?? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      };
+    } else {
+      const [created] = await db
+        .insert(users)
+        .values({
+          name: displayName,
+          email: normalizedEmail,
+          passwordHash: null,
+          role: "Volunteer",
+          isEmailVerified: true,
+          oauthProvider: provider,
+          oauthId: googleUserId,
+          avatarUrl: payload.picture,
+        })
+        .returning({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          isEmailVerified: users.isEmailVerified,
+        });
+
+      if (!created) {
+        return res
+          .status(500)
+          .json({ success: false, error: "Failed to create user." });
+      }
+
+      await db.insert(volunteerProfiles).values({
+        userId: created.id,
+        roleTitle: "Volunteer",
+        skill: "General",
+        available: true,
+        initials: getInitials(created.name),
+        color: getColorFromName(created.name),
+      });
+
+      sessionUser = created;
+    }
+
+    const tokenPayload = {
+      sub: sessionUser.id,
+      email: sessionUser.email,
+      role: sessionUser.role,
+    };
+    const accessToken = signAccessToken(tokenPayload);
+    const refreshToken = signRefreshToken(tokenPayload);
+
+    await db
+      .update(users)
+      .set({ refreshTokenHash: hashToken(refreshToken) })
+      .where(eq(users.id, sessionUser.id));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: buildAuthResponse(sessionUser),
+        accessToken,
+        refreshToken,
+      },
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    return res.status(401).json({
+      success: false,
+      error: "Unable to verify Google sign-in.",
+    });
   }
 };
 

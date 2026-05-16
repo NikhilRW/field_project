@@ -1,0 +1,1 @@
+export const GOOGLE_IMAGE_SOURCE = require("../../../../assets/google_icon.png")

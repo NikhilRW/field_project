@@ -1,9 +1,15 @@
 import { useEffect, useRef } from "react";
-import messaging, {
+import {
   FirebaseMessagingTypes,
+  getInitialNotification,
+  getMessaging,
+  onMessage,
+  onNotificationOpenedApp,
 } from "@react-native-firebase/messaging";
 import { router } from "expo-router";
 import { useAuthStore } from "@/shared/stores/authStore";
+
+const firebaseMessaging = getMessaging();
 
 const getActivityIdFromMessage = (
   message: FirebaseMessagingTypes.RemoteMessage,
@@ -22,7 +28,7 @@ export const useNotificationObserver = () => {
 
   // Set message handler for when app is in foreground
   useEffect(() => {
-    const unsubscribeForeground = messaging().onMessage(async (message) => {
+    const unsubscribeForeground = onMessage(firebaseMessaging, async (message) => {
       console.log("Foreground message received:", message);
 
       const activityId = getActivityIdFromMessage(message);
@@ -59,17 +65,17 @@ export const useNotificationObserver = () => {
     };
 
     // Get initial notification that opened the app
-    messaging()
-      .getInitialNotification()
-      .then((message) => {
-        handleNotificationOpen(message);
-      });
+    getInitialNotification(firebaseMessaging).then((message) => {
+      handleNotificationOpen(message);
+    });
 
     // Handle notification when app is in background and user taps it
-    const unsubscribeNotificationOpened =
-      messaging().onNotificationOpenedApp((message) => {
+    const unsubscribeNotificationOpened = onNotificationOpenedApp(
+      firebaseMessaging,
+      (message) => {
         handleNotificationOpen(message);
-      });
+      },
+    );
 
     return unsubscribeNotificationOpened;
   }, []);
