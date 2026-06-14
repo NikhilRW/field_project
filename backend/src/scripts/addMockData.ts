@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import {
   activityStatusEnum,
-  activityVolunteers,
   activities,
   beneficiaryCategoryEnum,
   beneficiaries,
@@ -13,7 +12,6 @@ import {
   surveys,
   userRoleEnum,
   users,
-  volunteerProfiles,
 } from "../config/databaseSetup";
 import { hashPassword } from "../utils/password";
 
@@ -111,14 +109,12 @@ const beneficiariesData: Array<{
 const activitiesData: Array<{
   name: string;
   date: string;
-  volunteers: number;
   status: ActivityStatus;
   description: string;
 }> = [
   {
     name: "Study Kit Distribution",
     date: "Feb 25, 2026",
-    volunteers: 14,
     status: "Upcoming",
     description:
       "Distribution of study kits including notebooks, stationery, and school bags to underprivileged children.",
@@ -126,7 +122,6 @@ const activitiesData: Array<{
   {
     name: "Sanitary Pad Drive",
     date: "Feb 20, 2026",
-    volunteers: 8,
     status: "Completed",
     description:
       "Hygiene awareness and free sanitary pad distribution for women and adolescent girls.",
@@ -134,7 +129,6 @@ const activitiesData: Array<{
   {
     name: "Health Checkup Camp",
     date: "Mar 3, 2026",
-    volunteers: 6,
     status: "Upcoming",
     description:
       "Free health checkup camp for elderly beneficiaries with basic medicine distribution.",
@@ -142,7 +136,6 @@ const activitiesData: Array<{
   {
     name: "Donation Drive",
     date: "Feb 10, 2026",
-    volunteers: 20,
     status: "Completed",
     description:
       "Collection and distribution of clothes, food items, and essential supplies to needy families.",
@@ -150,7 +143,6 @@ const activitiesData: Array<{
   {
     name: "Youth Awareness Workshop",
     date: "Mar 12, 2026",
-    volunteers: 10,
     status: "Upcoming",
     description:
       "Workshop on career guidance, digital literacy, and health awareness for youth aged 15-24.",
@@ -158,7 +150,6 @@ const activitiesData: Array<{
   {
     name: "Senior Citizen Meet",
     date: "Feb 14, 2026",
-    volunteers: 5,
     status: "Completed",
     description:
       "Social gathering and recreational activities for elderly beneficiaries with basic health monitoring.",
@@ -230,63 +221,6 @@ const donationsData: Array<{
   },
 ];
 
-const volunteersData = [
-  {
-    name: "Nikhil Wankhede",
-    role: "Medical",
-    skill: "First Aid",
-    assignedActivity: "Health Checkup Camp",
-    available: true,
-    initials: "NW",
-    color: "#1B6CA8",
-  },
-  {
-    name: "Mamta Mirani",
-    role: "Logistics",
-    skill: "Event Management",
-    assignedActivity: "Study Kit Distribution",
-    available: true,
-    initials: "MM",
-    color: "#27AE60",
-  },
-  {
-    name: "Kangana Menghani",
-    role: "Technical",
-    skill: "IT Support",
-    assignedActivity: "Youth Awareness Workshop",
-    available: false,
-    initials: "KM",
-    color: "#F39C12",
-  },
-  {
-    name: "Jiya Tarwani",
-    role: "Social Work",
-    skill: "Counseling",
-    assignedActivity: "Senior Citizen Meet",
-    available: true,
-    initials: "JT",
-    color: "#9B59B6",
-  },
-  {
-    name: "Vikram Desai",
-    role: "Medical",
-    skill: "Pharmacist",
-    assignedActivity: "Health Checkup Camp",
-    available: true,
-    initials: "VD",
-    color: "#E74C3C",
-  },
-  {
-    name: "Sneha Kulkarni",
-    role: "Education",
-    skill: "Teacher",
-    assignedActivity: "Study Kit Distribution",
-    available: false,
-    initials: "SK",
-    color: "#00ACC1",
-  },
-];
-
 const surveysData = [
   {
     date: "Feb 18, 2026",
@@ -334,12 +268,7 @@ const monthlyDonationsData = [
   { month: "Feb", monthIndex: 14, received: 228000, spent: 23700 },
 ];
 
-const toEmail = (name: string) =>
-  `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@example.com`;
-
 const main = async () => {
-  await db.delete(activityVolunteers);
-  await db.delete(volunteerProfiles);
   await db.delete(donations);
   await db.delete(surveys);
   await db.delete(beneficiaries);
@@ -348,110 +277,67 @@ const main = async () => {
   await db.delete(users);
 
   const adminUserId = randomUUID();
-  const adminPasswordHash = await hashPassword("Admin@123");
-  const volunteerPasswordHash = await hashPassword("Volunteer@123");
+  const adminPasswordHash = await hashPassword("#Nikhil009");
 
   await db.insert(users).values({
     id: adminUserId,
-    name: "Admin",
-    email: "admin@example.com",
+    name: "Nikhil Ramesh Wankhede",
+    email: "nikhilwankhede0707@gmail.com",
     passwordHash: adminPasswordHash,
-    role: "Admin" as UserRole,
+    role: "Admin",
     isEmailVerified: true,
   });
 
-  const volunteerUsers = volunteersData.map((volunteer) => ({
-    id: randomUUID(),
-    name: volunteer.name,
-    email: toEmail(volunteer.name),
-    passwordHash: volunteerPasswordHash,
-    role: "Volunteer" as UserRole,
-    isEmailVerified: true,
-  }));
+  // const activitiesWithIds = activitiesData.map((activity) => ({
+  //   id: randomUUID(),
+  //   name: activity.name,
+  //   date: parseDate(activity.date),
+  //   status: activity.status,
+  //   description: activity.description,
+  // }));
 
-  await db.insert(users).values(volunteerUsers);
+  // await db.insert(activities).values(activitiesWithIds);
 
-  const volunteerProfilesData = volunteersData.map((volunteer, index) => ({
-    userId: volunteerUsers[index].id,
-    roleTitle: volunteer.role,
-    skill: volunteer.skill,
-    available: volunteer.available,
-    initials: volunteer.initials,
-    color: volunteer.color,
-  }));
+  // await db.insert(beneficiaries).values(
+  //   beneficiariesData.map((beneficiary) => ({
+  //     id: randomUUID(),
+  //     ...beneficiary,
+  //   })),
+  // );
 
-  await db.insert(volunteerProfiles).values(volunteerProfilesData);
+  // await db.insert(donations).values(
+  //   donationsData.map((donation) => ({
+  //     id: randomUUID(),
+  //     donorName: donation.donor,
+  //     purpose: donation.purpose,
+  //     amount: String(donation.amount),
+  //     type: donation.type,
+  //     date: parseDate(donation.date),
+  //   })),
+  // );
 
-  const activitiesWithIds = activitiesData.map((activity) => ({
-    id: randomUUID(),
-    name: activity.name,
-    date: parseDate(activity.date),
-    volunteersCount: activity.volunteers,
-    status: activity.status,
-    description: activity.description,
-  }));
+  // await db.insert(surveys).values(
+  //   surveysData.map((survey) => ({
+  //     id: randomUUID(),
+  //     date: parseDate(survey.date),
+  //     location: survey.location,
+  //     note: survey.note,
+  //     beneficiariesCovered: survey.beneficiariesCovered,
+  //     imageUrl: survey.imageUrl,
+  //     geoTag: survey.geoTag,
+  //     createdByUserId: adminUserId,
+  //   })),
+  // );
 
-  await db.insert(activities).values(activitiesWithIds);
-
-  const activityByName = new Map(
-    activitiesWithIds.map((activity) => [activity.name, activity.id]),
-  );
-
-  const activityAssignments = volunteersData
-    .map((volunteer, index) => {
-      const activityId = activityByName.get(volunteer.assignedActivity);
-      if (!activityId) return null;
-      return {
-        activityId,
-        volunteerId: volunteerUsers[index].id,
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
-
-  if (activityAssignments.length > 0) {
-    await db.insert(activityVolunteers).values(activityAssignments);
-  }
-
-  await db.insert(beneficiaries).values(
-    beneficiariesData.map((beneficiary) => ({
-      id: randomUUID(),
-      ...beneficiary,
-    })),
-  );
-
-  await db.insert(donations).values(
-    donationsData.map((donation) => ({
-      id: randomUUID(),
-      donorName: donation.donor,
-      purpose: donation.purpose,
-      amount: String(donation.amount),
-      type: donation.type,
-      date: parseDate(donation.date),
-    })),
-  );
-
-  await db.insert(surveys).values(
-    surveysData.map((survey) => ({
-      id: randomUUID(),
-      date: parseDate(survey.date),
-      location: survey.location,
-      note: survey.note,
-      beneficiariesCovered: survey.beneficiariesCovered,
-      imageUrl: survey.imageUrl,
-      geoTag: survey.geoTag,
-      createdByUserId: adminUserId,
-    })),
-  );
-
-  await db.insert(monthlyDonations).values(
-    monthlyDonationsData.map((month) => ({
-      id: randomUUID(),
-      month: month.month,
-      monthIndex: month.monthIndex,
-      received: String(month.received),
-      spent: String(month.spent),
-    })),
-  );
+  // await db.insert(monthlyDonations).values(
+  //   monthlyDonationsData.map((month) => ({
+  //     id: randomUUID(),
+  //     month: month.month,
+  //     monthIndex: month.monthIndex,
+  //     received: String(month.received),
+  //     spent: String(month.spent),
+  //   })),
+  // );
 };
 
 main()

@@ -13,14 +13,14 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  authorizeRoles("Admin", "Volunteer", "Donor"),
+  authorizeRoles("Admin", "User"),
   getActivities,
 );
 
 router.get(
   "/:id",
   authenticate,
-  authorizeRoles("Admin", "Volunteer", "Donor"),
+  authorizeRoles("Admin", "User"),
   getActivityById,
 );
 

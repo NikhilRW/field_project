@@ -7,7 +7,7 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  authorizeRoles("Admin", "Volunteer", "Donor"),
+  authorizeRoles("Admin", "User"),
   getDashboard,
 );
 

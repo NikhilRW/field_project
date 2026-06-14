@@ -28,7 +28,7 @@ export const authenticate = (
 };
 
 export const authorizeRoles =
-  (...roles: Array<"Admin" | "Volunteer" | "Donor">) =>
+  (...roles: Array<"Admin" | "User">) =>
   (req: AuthRequest, res: Response, next: NextFunction) => {
     const role = req.user?.role;
 

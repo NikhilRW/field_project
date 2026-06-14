@@ -1,30 +1,19 @@
-import axios from "axios";
 import type { Response } from "express";
 import { desc, eq, sql } from "drizzle-orm";
 import type { AuthRequest } from "../types/auth";
 import {
   activityStatusEnum,
-  activityVolunteers,
   activities,
   db,
   notifications,
   users,
-  volunteerProfiles,
 } from "../config/databaseSetup";
 import { formatDate } from "../utils/date";
-import { sendActivityNotification, sendUserNotification } from "../utils/sendNotification";
-import { storeNotification } from "./notificationController";
+import { sendActivityNotification } from "../utils/sendNotification";
 
-const activityNotificationChannelId = "activity-updates";
-
-/**
- * Send notifications to volunteers about activity updates
- * Uses FCM instead of Expo push tokens
- */
 const notifyUsersAboutActivity = async (
   activityId: string,
   activityName: string,
-  assignedVolunteerIds: string[],
 ) => {
   const userRows = await db
     .select({
@@ -37,66 +26,30 @@ const notifyUsersAboutActivity = async (
     return;
   }
 
-  const assignedIdSet = new Set(assignedVolunteerIds);
-  const assignedRecipients = userRows.filter((row) =>
-    assignedIdSet.has(row.id),
-  );
-  const generalRecipients = userRows.filter((row) => !assignedIdSet.has(row.id));
+  const tokenRows = userRows.filter((row) => Boolean(row.expoPushToken));
 
-  // Store notifications in database
-  const notificationRows = [
-    ...generalRecipients.map((row) => ({
-      userId: row.id,
-      title: "New Activity Added",
-      body: `${activityName} has been added. Check the activity details in the app.`,
-      data: JSON.stringify({ activityId }),
-    })),
-    ...assignedRecipients.map((row) => ({
-      userId: row.id,
-      title: "New Activity Assigned",
-      body: `You have been assigned to ${activityName}.`,
-      data: JSON.stringify({ activityId }),
-    })),
-  ];
-
-  if (notificationRows.length > 0) {
-    await db.insert(notifications).values(notificationRows);
-  }
-
-  // Send FCM to assigned volunteers
-  const assignedTokens = assignedRecipients
-    .map((row) => row.expoPushToken)
-    .filter((token): token is string => Boolean(token));
-  
-  if (assignedTokens.length > 0) {
-    try {
-      await sendActivityNotification({
-        title: "New Activity Assigned",
-        body: `You have been assigned to ${activityName}.`,
-        activityId,
-        volunteerIds: assignedRecipients.map((r) => r.id),
-      });
-    } catch (error) {
-      console.error("Failed to send assigned notification:", error);
-    }
-  }
-
-  // Send FCM to all other users
-  const generalTokens = generalRecipients
-    .map((row) => row.expoPushToken)
-    .filter((token): token is string => Boolean(token));
-
-  if (generalTokens.length > 0) {
+  if (tokenRows.length > 0) {
     try {
       await sendActivityNotification({
         title: "New Activity Added",
         body: `${activityName} has been added. Check the activity details in the app.`,
         activityId,
-        volunteerIds: generalRecipients.map((r) => r.id),
+        userIds: tokenRows.map((r) => r.id),
       });
     } catch (error) {
-      console.error("Failed to send general notification:", error);
+      console.error("Failed to send activity notification:", error);
     }
+  }
+
+  const notificationRows = userRows.map((row) => ({
+    userId: row.id,
+    title: "New Activity Added",
+    body: `${activityName} has been added. Check the activity details in the app.`,
+    data: JSON.stringify({ activityId }),
+  }));
+
+  if (notificationRows.length > 0) {
+    await db.insert(notifications).values(notificationRows);
   }
 };
 
@@ -106,7 +59,6 @@ export const getActivities = async (req: AuthRequest, res: Response) => {
       id: activities.id,
       name: activities.name,
       date: activities.date,
-      volunteersCount: activities.volunteersCount,
       status: activities.status,
       description: activities.description,
     };
@@ -120,7 +72,6 @@ export const getActivities = async (req: AuthRequest, res: Response) => {
       id: row.id,
       name: row.name,
       date: formatDate(row.date),
-      volunteers: row.volunteersCount,
       status: row.status,
       description: row.description,
     }));
@@ -149,7 +100,6 @@ export const getActivityById = async (req: AuthRequest, res: Response) => {
         id: activities.id,
         name: activities.name,
         date: activities.date,
-        volunteersCount: activities.volunteersCount,
         status: activities.status,
         description: activities.description,
       })
@@ -162,43 +112,14 @@ export const getActivityById = async (req: AuthRequest, res: Response) => {
         .json({ success: false, error: "Activity not found." });
     }
 
-    const volunteers =
-      req.user?.role === "Admin"
-        ? await db
-            .select({
-              id: volunteerProfiles.userId,
-              name: users.name,
-              roleTitle: volunteerProfiles.roleTitle,
-              skill: volunteerProfiles.skill,
-              initials: volunteerProfiles.initials,
-              color: volunteerProfiles.color,
-            })
-            .from(activityVolunteers)
-            .innerJoin(
-              volunteerProfiles,
-              eq(activityVolunteers.volunteerId, volunteerProfiles.userId),
-            )
-            .innerJoin(users, eq(volunteerProfiles.userId, users.id))
-            .where(eq(activityVolunteers.activityId, id))
-        : [];
-
     return res.status(200).json({
       success: true,
       data: {
         id: activity.id,
         name: activity.name,
         date: formatDate(activity.date),
-        volunteers: activity.volunteersCount,
         status: activity.status,
         description: activity.description,
-        assignedVolunteers: volunteers.map((volunteer) => ({
-          id: volunteer.id,
-          name: volunteer.name ?? "Unknown",
-          role: volunteer.roleTitle,
-          skill: volunteer.skill,
-          initials: volunteer.initials,
-          color: volunteer.color,
-        })),
       },
     });
   } catch (error) {
@@ -211,14 +132,12 @@ export const getActivityById = async (req: AuthRequest, res: Response) => {
 
 export const createActivity = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, date, description, status, volunteerIds } =
-      req.body as {
-        name?: string;
-        date?: string;
-        description?: string;
-        status?: string;
-        volunteerIds?: string[];
-      };
+    const { name, date, description, status } = req.body as {
+      name?: string;
+      date?: string;
+      description?: string;
+      status?: string;
+    };
 
     if (!name || !date || !description) {
       return res.status(400).json({
@@ -243,10 +162,6 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const assignedVolunteerIds = Array.isArray(volunteerIds)
-      ? volunteerIds.filter((id) => typeof id === "string" && id.length > 0)
-      : [];
-
     const [created] = await db
       .insert(activities)
       .values({
@@ -254,13 +169,11 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         date: parsedDate,
         description,
         status: statusValue as any,
-        volunteersCount: assignedVolunteerIds.length,
       })
       .returning({
         id: activities.id,
         name: activities.name,
         date: activities.date,
-        volunteersCount: activities.volunteersCount,
         status: activities.status,
         description: activities.description,
       });
@@ -271,20 +184,7 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         .json({ success: false, error: "Failed to create activity." });
     }
 
-    if (assignedVolunteerIds.length > 0) {
-      await db.insert(activityVolunteers).values(
-        assignedVolunteerIds.map((volunteerId) => ({
-          activityId: created.id,
-          volunteerId,
-        })),
-      );
-    }
-
-    await notifyUsersAboutActivity(
-      created.id,
-      created.name,
-      assignedVolunteerIds,
-    );
+    await notifyUsersAboutActivity(created.id, created.name);
 
     return res.status(201).json({
       success: true,
@@ -292,7 +192,6 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         id: created.id,
         name: created.name,
         date: formatDate(created.date),
-        volunteers: created.volunteersCount,
         status: created.status,
         description: created.description,
       },
@@ -385,7 +284,6 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Get current activity details before updating
     const [currentActivity] = await db
       .select({
         id: activities.id,
@@ -412,7 +310,6 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
         id: activities.id,
         name: activities.name,
         date: activities.date,
-        volunteersCount: activities.volunteersCount,
         status: activities.status,
         description: activities.description,
       });
@@ -423,7 +320,6 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
         .json({ success: false, error: "Activity not found." });
     }
 
-    // Send notification about status change
     try {
       let title = "";
       let body = "";
@@ -444,16 +340,17 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
           title,
           body,
           activityId: id,
-          allVolunteers: true,
         });
 
-        // Also store in DB for history
-        const volunteers = await db.select({ id: users.id }).from(users);
-        const notificationRows = volunteers.map((v) => ({
+        const allUsers = await db.select({ id: users.id }).from(users);
+        const notificationRows = allUsers.map((v) => ({
           userId: v.id,
           title,
           body,
-          data: JSON.stringify({ activityId: id, type: "activity_status_change" }),
+          data: JSON.stringify({
+            activityId: id,
+            type: "activity_status_change",
+          }),
         }));
 
         if (notificationRows.length > 0) {
@@ -462,7 +359,6 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
       }
     } catch (error) {
       console.error("Failed to send status update notification:", error);
-      // Continue - don't fail the status update if notification fails
     }
 
     return res.status(200).json({
@@ -471,7 +367,6 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
         id: updatedActivity.id,
         name: updatedActivity.name,
         date: formatDate(updatedActivity.date),
-        volunteers: updatedActivity.volunteersCount,
         status: updatedActivity.status,
         description: updatedActivity.description,
       },

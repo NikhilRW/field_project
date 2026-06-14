@@ -163,11 +163,6 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.impactDivider} />
               <View style={styles.impactItem}>
-                <Text style={styles.impactValue}>64</Text>
-                <Text style={styles.impactLabel}>Volunteers</Text>
-              </View>
-              <View style={styles.impactDivider} />
-              <View style={styles.impactItem}>
                 <Text style={styles.impactValue}>18</Text>
                 <Text style={styles.impactLabel}>Programs</Text>
               </View>

@@ -12,12 +12,11 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Check, ChevronDown, Plus } from "lucide-react-native";
+import { ChevronDown } from "lucide-react-native";
 import { showMessage } from "react-native-flash-message";
 import NetInfo from "@react-native-community/netinfo";
 import { Colors } from "@/shared/constants/color";
-import { useVolunteers } from "@/features/Volunteers/hooks/useVolunteers";
-import type { ActivityStatus, Volunteer } from "@/shared/types/mock";
+import type { ActivityStatus } from "@/shared/types/mock";
 import { useActivityDraftStore } from "../hooks/useActivityDraftStore";
 import { useCreateActivity } from "../hooks/useCreateActivity";
 import { formatActivityDate, formatActivityDateLabel } from "../utils/date";
@@ -29,7 +28,6 @@ const statusOptions: ActivityStatus[] = ["Upcoming", "Ongoing", "Completed"];
 
 export default function AddActivityScreen() {
   const insets = useSafeAreaInsets();
-  const { data: volunteers = [] } = useVolunteers();
   const createActivityMutation = useCreateActivity();
 
   const {
@@ -37,19 +35,15 @@ export default function AddActivityScreen() {
     date,
     description,
     status,
-    volunteerIds,
     setName,
     setDate,
 
     setDescription,
     setStatus,
-    toggleVolunteer,
     resetDraft,
   } = useActivityDraftStore();
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const selectedCount = volunteerIds.length;
 
   const isDisabled = useMemo(
     () =>
@@ -75,7 +69,6 @@ export default function AddActivityScreen() {
       date: formatActivityDate(date!),
       description: description.trim(),
       status,
-      volunteerIds,
     };
 
     const netState = await NetInfo.fetch();
@@ -98,7 +91,7 @@ export default function AddActivityScreen() {
 
       showMessage({
         message: "Activity created",
-        description: "Volunteers have been assigned successfully.",
+        description: "The activity has been created successfully.",
         type: "success",
       });
       resetDraft();
@@ -120,7 +113,6 @@ export default function AddActivityScreen() {
     if (isWeb()) {
       // TODO: fix the any stuff here.
       setDate(new Date((event as any).target.value))
-      
     }
 
     if (Platform.OS !== "ios") {
@@ -235,61 +227,6 @@ export default function AddActivityScreen() {
           </View>
         )}
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Assign Volunteers</Text>
-          <Text style={styles.sectionSub}>{selectedCount} selected</Text>
-        </View>
-
-        <View style={styles.volunteerList}>
-          {volunteers.map((volunteer: Volunteer) => {
-            const isSelected = volunteerIds.includes(volunteer.id);
-            return (
-              <TouchableOpacity
-                key={volunteer.id}
-                style={[
-                  styles.volunteerRow,
-                  isSelected && styles.volunteerRowActive,
-                ]}
-                onPress={() => toggleVolunteer(volunteer.id)}
-                testID={`assign-${volunteer.id}`}
-              >
-                <View
-                  style={[
-                    styles.volunteerAvatar,
-                    { backgroundColor: volunteer.color },
-                  ]}
-                >
-                  <Text style={styles.volunteerInitials}>
-                    {volunteer.initials}
-                  </Text>
-                </View>
-                <View style={styles.volunteerInfo}>
-                  <Text style={styles.volunteerName}>{volunteer.name}</Text>
-                  <Text style={styles.volunteerMeta}>
-                    {volunteer.role} · {volunteer.skill}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.selectBadge,
-                    isSelected && styles.selectBadgeActive,
-                  ]}
-                >
-                  {isSelected ? (
-                    <Check size={14} color="#fff" strokeWidth={2.4} />
-                  ) : (
-                    <Plus
-                      size={14}
-                      color={Colors.textTertiary}
-                      strokeWidth={2}
-                    />
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
         <View style={{ height: 120 }} />
       </ScrollView>
 
@@ -306,7 +243,7 @@ export default function AddActivityScreen() {
           <Text style={styles.saveBtnText}>
             {createActivityMutation.isPending
               ? "Saving..."
-              : "Save Activity & Assign"}
+              : "Save Activity"}
           </Text>
         </TouchableOpacity>
       </View>

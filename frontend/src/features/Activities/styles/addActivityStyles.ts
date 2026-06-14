@@ -24,22 +24,6 @@ export const addActivityStyles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 4,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 18,
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.textPrimary,
-  },
-  sectionSub: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-  },
   label: {
     fontSize: 13,
     color: Colors.textSecondary,
@@ -103,72 +87,6 @@ export const addActivityStyles = StyleSheet.create({
   pickerOptionTextActive: {
     color: Colors.primary,
     fontWeight: "600" as const,
-  },
-  volunteerList: {
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    overflow: "hidden",
-  },
-  volunteerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  volunteerRowActive: {
-    backgroundColor: Colors.primaryLight,
-  },
-  volunteerInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  volunteerRowLast: {
-    borderBottomWidth: 0,
-  },
-  volunteerLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  volunteerAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  volunteerInitials: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700" as const,
-  },
-  volunteerName: {
-    fontSize: 14,
-    color: Colors.textPrimary,
-    fontWeight: "600" as const,
-  },
-  volunteerMeta: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-    marginTop: 2,
-  },
-  selectBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selectBadgeActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   saveContainer: {
     position: "absolute",

@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native-unistyles";
 import { Colors } from "@/shared/constants/color";
 
-export const editNameModalStyles = StyleSheet.create({
+export const deleteActivityModalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -21,7 +21,7 @@ export const editNameModalStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   closeBtn: {
     width: 36,
@@ -29,7 +29,7 @@ export const editNameModalStyles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.transparent,
+    backgroundColor: "transparent",
   },
   title: {
     fontSize: 17,
@@ -37,26 +37,10 @@ export const editNameModalStyles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   body: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
     marginBottom: 24,
-  },
-  input: {
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: Colors.background,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: Colors.textPrimary,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  inputError: {
-    borderColor: Colors.error,
-  },
-  errorText: {
-    fontSize: 12,
-    color: Colors.error,
-    marginTop: 6,
-    paddingLeft: 4,
   },
   footer: {
     flexDirection: "row",
@@ -77,18 +61,20 @@ export const editNameModalStyles = StyleSheet.create({
     fontWeight: "600" as const,
     color: Colors.textSecondary,
   },
-  updateBtn: {
+  deleteBtn: {
     flex: 1,
     height: 48,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.error,
+    flexDirection: "row",
+    gap: 6,
   },
-  updateBtnDisabled: {
+  deleteBtnDisabled: {
     opacity: 0.6,
   },
-  updateText: {
+  deleteText: {
     fontSize: 14,
     fontWeight: "700" as const,
     color: "#fff",

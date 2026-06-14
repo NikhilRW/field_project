@@ -3,9 +3,8 @@ import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Clock, Plus, Users } from "lucide-react-native";
+import { Clock, Plus } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
-import AppHeader from "@/shared/components/AppHeader";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { useActivities } from "../hooks/useActivities";
 import { activityFilterTabs } from "../constants/filterTabs";
@@ -192,19 +191,6 @@ export default function ActivitiesScreen() {
               <Text style={styles.description} numberOfLines={2}>
                 {activity.description}
               </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.footerItem}>
-                  <Users size={12} color={Colors.primary} strokeWidth={1.6} />
-                  <Text
-                    style={[
-                      styles.footerText,
-                      { color: Colors.primary, fontWeight: "600" as const },
-                    ]}
-                  >
-                    {activity.volunteers}
-                  </Text>
-                </View>
-              </View>
             </TouchableOpacity>
           )}
           contentContainerStyle={styles.listContent}

@@ -6,23 +6,11 @@ type ActivitiesResponse = {
   data: Activity[];
 };
 
-export type ActivityDetail = Activity & {
-  assignedVolunteers: Array<{
-    id: string;
-    name: string;
-    role: string;
-    skill: string;
-    initials: string;
-    color: string;
-  }>;
-};
-
 export type CreateActivityPayload = {
   name: string;
   date: string;
   description: string;
   status?: "Upcoming" | "Completed" | "Ongoing";
-  volunteerIds?: string[];
 };
 
 export const fetchActivities = async () => {
@@ -39,7 +27,7 @@ export const createActivity = async (payload: CreateActivityPayload) => {
 };
 
 export const fetchActivityById = async (id: string) => {
-  const response = await http.get<{ success: boolean; data: ActivityDetail }>(
+  const response = await http.get<{ success: boolean; data: Activity }>(
     `/api/activities/${id}`,
   );
   return response.data.data;

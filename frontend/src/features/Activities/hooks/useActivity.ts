@@ -1,15 +1,17 @@
-import { Alert } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { showMessage } from "react-native-flash-message";
 import type { ActivityStatus } from "@/shared/types/mock";
 import { fetchActivityById } from "../utils/api";
 import { useDeleteActivity } from "./useDeleteActivity";
 import { useUpdateActivityStatus } from "./useUpdateActivityStatus";
+import { activitiesQueryKey } from "./useActivities";
 import { activityDetailQueryKey } from "@/shared/config/queryKeys";
 
-
 export const useActivity = (id: string) => {
+  const queryClient = useQueryClient();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const activityQuery = useQuery({
     queryKey: activityDetailQueryKey(id),
@@ -20,46 +22,36 @@ export const useActivity = (id: string) => {
   const deleteActivityMutation = useDeleteActivity();
   const updateActivityStatusMutation = useUpdateActivityStatus();
 
-  const handleDelete = () => {
+  const openDeleteModal = () => setDeleteModalVisible(true);
+  const closeDeleteModal = () => setDeleteModalVisible(false);
+
+  const handleDelete = async () => {
     const activityId = activityQuery.data?.id;
 
     if (!activityId || deleteActivityMutation.isPending) {
       return;
     }
 
-    Alert.alert(
-      "Delete activity?",
-      "This will permanently remove the activity and its volunteer assignments.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteActivityMutation.mutateAsync(activityId);
-              showMessage({
-                message: "Activity deleted",
-                description: "The activity has been removed successfully.",
-                type: "success",
-              });
-              router.back();
-            } catch (error: any) {
-              showMessage({
-                message: "Unable to delete activity",
-                description:
-                  error?.message ??
-                  "Please try again once your connection is stable.",
-                type: "danger",
-              });
-            }
-          },
-        },
-      ],
-    );
+    try {
+      await deleteActivityMutation.mutateAsync(activityId);
+      closeDeleteModal();
+      queryClient.invalidateQueries({ queryKey: activitiesQueryKey });
+      queryClient.removeQueries({ queryKey: activityDetailQueryKey(id) });
+      showMessage({
+        message: "Activity deleted",
+        description: "The activity has been removed successfully.",
+        type: "success",
+      });
+      router.push("/(tabs)/activities");
+    } catch (error: any) {
+      showMessage({
+        message: "Unable to delete activity",
+        description:
+          error?.message ??
+          "Please try again once your connection is stable.",
+        type: "danger",
+      });
+    }
   };
 
   const handleStatusChange = async (status: ActivityStatus) => {
@@ -97,6 +89,9 @@ export const useActivity = (id: string) => {
 
   return {
     ...activityQuery,
+    deleteModalVisible,
+    openDeleteModal,
+    closeDeleteModal,
     handleDelete,
     handleStatusChange,
     isDeleting: deleteActivityMutation.isPending,

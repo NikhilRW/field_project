@@ -5,7 +5,6 @@ import {
   beneficiaries,
   db,
   donations,
-  volunteerProfiles,
 } from "../config/databaseSetup";
 import type { AuthRequest } from "../types/auth";
 import { formatDate } from "../utils/date";
@@ -21,10 +20,6 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
     const [activityCount] = await db
       .select({ count: sql<number>`count(*)` })
       .from(activities);
-
-    const [volunteerCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(volunteerProfiles);
 
     const [donationTotals] = isAdmin
       ? await db
@@ -45,7 +40,6 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
         id: activities.id,
         name: activities.name,
         date: activities.date,
-        volunteersCount: activities.volunteersCount,
         status: activities.status,
       })
       .from(activities)
@@ -56,14 +50,12 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       id: activity.id,
       name: activity.name,
       date: formatDate(activity.date),
-      volunteers: activity.volunteersCount,
       status: activity.status,
     }));
 
     const stats = {
       beneficiaries: Number(beneficiaryCount?.count ?? 0),
       activities: Number(activityCount?.count ?? 0),
-      volunteers: Number(volunteerCount?.count ?? 0),
       ...(isAdmin
         ? { donations: Number(donationTotals?.total ?? 0) }
         : {}),

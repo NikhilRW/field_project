@@ -225,9 +225,4 @@ export const dashboardStyles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textSecondary,
   },
-  assignmentLabel: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
 });

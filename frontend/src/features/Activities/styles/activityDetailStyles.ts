@@ -85,51 +85,6 @@ export const activityDetailStyles = StyleSheet.create({
     fontWeight: "600" as const,
     color: Colors.primary,
   },
-  section: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.textPrimary,
-    marginBottom: 10,
-  },
-  volunteerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    marginBottom: 8,
-  },
-  volunteerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  volunteerInitials: {
-    color: "#fff",
-    fontWeight: "700" as const,
-    fontSize: 12,
-  },
-  volunteerInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  volunteerName: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.textPrimary,
-  },
-  volunteerMeta: {
-    marginTop: 2,
-    fontSize: 12,
-    color: Colors.textTertiary,
-  },
   deleteIconButton: {
     width: 42,
     height: 42,

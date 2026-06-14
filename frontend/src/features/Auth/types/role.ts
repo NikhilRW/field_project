@@ -1,3 +1,3 @@
-export type Role = "Admin" | "Volunteer" | "Donor";
+export type Role = "Admin" | "User";
 export type LoginRole = Role;
-export type RegisterRole = "Admin" | "Volunteer";
+export type RegisterRole = "Admin" | "User";

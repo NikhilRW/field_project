@@ -22,11 +22,7 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is not set");
 }
 
-export const userRoleEnum = pgEnum("user_role", [
-  "Admin",
-  "Volunteer",
-  "Donor",
-]);
+export const userRoleEnum = pgEnum("user_role", ["Admin", "User"]);
 export const beneficiaryCategoryEnum = pgEnum("beneficiary_category", [
   "Elderly",
   "Children",
@@ -166,23 +162,6 @@ export const notifications = pgTable(
   }),
 );
 
-export const volunteerProfiles = pgTable(
-  "volunteer_profiles",
-  {
-    userId: uuid("user_id")
-      .references(() => users.id, { onDelete: "cascade" })
-      .primaryKey(),
-    roleTitle: text("role_title").notNull(),
-    skill: text("skill").notNull(),
-    available: boolean("available").notNull().default(true),
-    initials: text("initials").notNull(),
-    color: text("color").notNull(),
-  },
-  (table) => ({
-    userIdIdx: index("volunteer_profiles_user_id_idx").on(table.userId),
-  }),
-);
-
 export const beneficiaries = pgTable(
   "beneficiaries",
   {
@@ -213,7 +192,6 @@ export const activities = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
     date: timestamp("date", { withTimezone: true, mode: "date" }).notNull(),
-    volunteersCount: integer("volunteers_count").notNull().default(0),
     status: activityStatusEnum("status").notNull(),
     description: text("description").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -226,28 +204,6 @@ export const activities = pgTable(
   (table) => ({
     statusIdx: index("activities_status_idx").on(table.status),
     dateIdx: index("activities_date_idx").on(table.date),
-  }),
-);
-
-export const activityVolunteers = pgTable(
-  "activity_volunteers",
-  {
-    activityId: uuid("activity_id")
-      .references(() => activities.id, { onDelete: "cascade" })
-      .notNull(),
-    volunteerId: uuid("volunteer_id")
-      .references(() => volunteerProfiles.userId, { onDelete: "cascade" })
-      .notNull(),
-    assignedAt: timestamp("assigned_at", { withTimezone: true, mode: "date" })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.activityId, table.volunteerId] }),
-    activityIdx: index("activity_volunteers_activity_idx").on(table.activityId),
-    volunteerIdx: index("activity_volunteers_volunteer_idx").on(
-      table.volunteerId,
-    ),
   }),
 );
 
@@ -344,43 +300,11 @@ export const surveys = pgTable(
 );
 
 export const usersRelations = relations(users, ({ one, many }) => ({
-  volunteerProfile: one(volunteerProfiles, {
-    fields: [users.id],
-    references: [volunteerProfiles.userId],
-  }),
   donations: many(donations),
   surveysCreated: many(surveys),
-  activityAssignments: many(activityVolunteers),
 }));
 
-export const volunteerProfilesRelations = relations(
-  volunteerProfiles,
-  ({ one, many }) => ({
-    user: one(users, {
-      fields: [volunteerProfiles.userId],
-      references: [users.id],
-    }),
-    activityAssignments: many(activityVolunteers),
-  }),
-);
-
-export const activitiesRelations = relations(activities, ({ many }) => ({
-  assignments: many(activityVolunteers),
-}));
-
-export const activityVolunteersRelations = relations(
-  activityVolunteers,
-  ({ one }) => ({
-    activity: one(activities, {
-      fields: [activityVolunteers.activityId],
-      references: [activities.id],
-    }),
-    volunteerProfile: one(volunteerProfiles, {
-      fields: [activityVolunteers.volunteerId],
-      references: [volunteerProfiles.userId],
-    }),
-  }),
-);
+export const activitiesRelations = relations(activities, () => ({}));
 
 export const donationsRelations = relations(donations, ({ one }) => ({
   donor: one(users, {
@@ -398,10 +322,8 @@ export const surveysRelations = relations(surveys, ({ one }) => ({
 
 export const schema = {
   users,
-  volunteerProfiles,
   beneficiaries,
   activities,
-  activityVolunteers,
   donations,
   monthlyDonations,
   surveys,

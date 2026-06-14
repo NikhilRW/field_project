@@ -18,7 +18,6 @@ export interface Activity {
   id: string;
   name: string;
   date: string;
-  volunteers: number;
   status: ActivityStatus;
   description: string;
 }
@@ -30,17 +29,6 @@ export interface Donation {
   amount: number;
   type: DonationType;
   date: string;
-}
-
-export interface Volunteer {
-  id: string;
-  name: string;
-  role: string;
-  skill: string;
-  assignedActivity: string;
-  available: boolean;
-  initials: string;
-  color: string;
 }
 
 export interface Survey {

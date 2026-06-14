@@ -20,7 +20,6 @@ import {
   Users,
   CalendarDays,
   HandCoins,
-  HeartHandshake,
   ChevronRight,
   Clock,
   ArrowUpRight,
@@ -58,7 +57,6 @@ export default function DashboardScreen() {
   const stats = data?.stats ?? {
     beneficiaries: 0,
     activities: 0,
-    volunteers: 0,
     donations: 0,
   };
   const recentActivities = data?.recentActivities ?? [];
@@ -150,30 +148,6 @@ export default function DashboardScreen() {
               <Text style={styles.statValue}>{stats.activities}</Text>
               <Text style={styles.statLabel}>Programs</Text>
             </Animated.View>
-            {isAdmin && (
-              <Animated.View
-                entering={ZoomIn.delay(400).springify()}
-                style={styles.statCard}
-              >
-                <View
-                  style={[
-                    styles.statIconWrap,
-                    { backgroundColor: Colors.accentLight },
-                  ]}
-                >
-                  <HeartHandshake
-                    size={20}
-                    color={Colors.accent}
-                    strokeWidth={2}
-                  />
-                </View>
-                <Text style={styles.statValue}>{stats.volunteers}</Text>
-                <Text style={styles.statLabel}>
-                  {isAdmin ? "Volunteers" : "Field Team"}
-                </Text>
-              </Animated.View>
-            )}
-
             {isAdmin ? (
               <Animated.View
                 entering={ZoomIn.delay(500).springify()}
@@ -404,11 +378,6 @@ export default function DashboardScreen() {
                       <Text style={styles.metaText}>{activity.date}</Text>
                     </View>
                   </View>
-                  <Text style={styles.assignmentLabel}>
-                    {activity.volunteers}{" "}
-                    {isAdmin ? "volunteer" : "team member"}
-                    {activity.volunteers !== 1 ? "s" : ""} assigned
-                  </Text>
                 </View>
                 <ChevronRight
                   size={18}

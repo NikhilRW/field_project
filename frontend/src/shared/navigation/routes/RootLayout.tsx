@@ -72,16 +72,6 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
-        name="(main)/volunteers"
-        options={{
-          headerShown: true,
-          title: "Volunteers",
-          headerStyle: { backgroundColor: "#FFFFFF" },
-          headerTintColor: "#1B6CA8",
-          headerTitleStyle: { fontWeight: "600" as const, color: "#1C1C2E" },
-        }}
-      />
-      <Stack.Screen
         name="(main)/verify-items"
         options={{
           headerShown: false,

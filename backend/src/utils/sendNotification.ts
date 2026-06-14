@@ -7,45 +7,29 @@ interface SendActivityNotificationParams {
   title: string;
   body: string;
   activityId: string;
-  volunteerIds?: string[];
-  allVolunteers?: boolean;
+  userIds?: string[];
 }
 
 /**
- * Send FCM notification to specific volunteers about an activity
- * Similar to Attenex's sendNotification but tailored for activities
+ * Send FCM notification to users about an activity
  */
 export const sendActivityNotification = async ({
   title,
   body,
   activityId,
-  volunteerIds = [],
-  allVolunteers = false,
+  userIds = [],
 }: SendActivityNotificationParams) => {
   try {
     let tokens: string[] = [];
 
-    if (allVolunteers) {
-      // Send to all volunteers
-      const volunteers = await db
+    if (userIds.length > 0) {
+      const userRows = await db
         .select({ fcmToken: users.expoPushToken })
-        .from(users)
-        .where(eq(users.role, "Volunteer"));
+        .from(users);
 
-      tokens = volunteers
-        .filter((v) => v.fcmToken != undefined && v.fcmToken != null)
-        .map((v) => v.fcmToken)
-      log("All volunteers tokens : ", volunteers)
-    } else if (volunteerIds.length > 0) {
-      // Send to specific volunteers
-      const volunteers = await db
-        .select({ fcmToken: users.expoPushToken })
-        .from(users)
-        .where(eq(users.role, "Volunteer"));
-
-      tokens = volunteers
-        .filter((v) => v.fcmToken != undefined && v.fcmToken != null)
-        .map((v) => v.fcmToken)
+      tokens = userRows
+        .filter((u) => u.fcmToken != undefined && u.fcmToken != null)
+        .map((u) => u.fcmToken)
     } else {
       return;
     }
@@ -67,6 +51,7 @@ export const sendActivityNotification = async ({
         notification: {
           priority: "max",
           channelId: "activity-updates",
+          // TODO: see this how flutter FLUTTER_NOTIFICATION_CLICK 
           clickAction: "FLUTTER_NOTIFICATION_CLICK",
         },
       },

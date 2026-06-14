@@ -34,13 +34,13 @@ router.get(
 router.get(
   "/items/donated",
   authenticate,
-  authorizeRoles("Admin", "Volunteer", "Donor"),
+  authorizeRoles("Admin", "User"),
   getDonatedItemDonations,
 );
 router.get(
   "/items/:id",
   authenticate,
-  authorizeRoles("Admin", "Volunteer", "Donor"),
+  authorizeRoles("Admin", "User"),
   getItemDonation,
 );
 router.patch(
@@ -58,13 +58,13 @@ router.patch(
 router.get(
   "/mine",
   authenticate,
-  authorizeRoles("Volunteer", "Donor"),
+  authorizeRoles("User"),
   getMyDonations,
 );
 router.post(
   "/item",
   authenticate,
-  authorizeRoles("Volunteer", "Donor"),
+  authorizeRoles("User"),
   upload.single("itemImage"),
   uploadDonationImage,
   createItemDonation,
@@ -72,19 +72,19 @@ router.post(
 router.post(
   "/money/order",
   authenticate,
-  authorizeRoles("Volunteer", "Donor"),
+  authorizeRoles("User"),
   createMoneyDonationOrder,
 );
 router.post(
   "/money/verify",
   authenticate,
-  authorizeRoles("Volunteer", "Donor"),
+  authorizeRoles("User"),
   verifyMoneyDonation,
 );
 router.post(
   "/money/failure",
   authenticate,
-  authorizeRoles("Volunteer", "Donor"),
+  authorizeRoles("User"),
   markMoneyDonationFailed,
 );
 

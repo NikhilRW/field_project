@@ -1,11 +1,11 @@
 import React from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Users, CalendarDays } from "lucide-react-native";
+import { Trash2, CalendarDays } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
-import ActivityDeleteAction from "../components/ActivityDeleteAction";
 import ActivityStatusMenu from "../components/ActivityStatusMenu";
+import DeleteActivityModal from "../components/DeleteActivityModal";
 import { useActivity } from "../hooks/useActivity";
 import { activityDetailStyles } from "../styles/activityDetailStyles";
 import {
@@ -21,6 +21,9 @@ export default function ActivityDetailScreen() {
     data: activity,
     isLoading,
     isError,
+    deleteModalVisible,
+    openDeleteModal,
+    closeDeleteModal,
     handleDelete,
     handleStatusChange,
     isDeleting,
@@ -59,10 +62,20 @@ export default function ActivityDetailScreen() {
           </View>
           {isAdmin ? (
             <View style={styles.titleActions}>
-              <ActivityDeleteAction
-                isDeleting={isDeleting}
-                onDelete={handleDelete}
-              />
+              <TouchableOpacity
+                style={[
+                  styles.deleteIconButton,
+                  isDeleting && styles.deleteIconButtonDisabled,
+                ]}
+                onPress={openDeleteModal}
+                activeOpacity={0.85}
+                disabled={isDeleting}
+                testID="delete-activity-btn"
+                accessibilityRole="button"
+                accessibilityLabel="Delete activity"
+              >
+                <Trash2 size={18} color={Colors.error} strokeWidth={2.2} />
+              </TouchableOpacity>
               <ActivityStatusMenu
                 status={activity.status}
                 isUpdating={isUpdatingStatus}
@@ -78,13 +91,6 @@ export default function ActivityDetailScreen() {
             <CalendarDays size={16} color={Colors.primary} strokeWidth={1.8} />
             <Text style={styles.metaLabel}>Date</Text>
             <Text style={styles.metaValue}>{activity.date}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <Users size={16} color={Colors.primary} strokeWidth={1.8} />
-            <Text style={styles.metaLabel}>
-              {isAdmin ? "Volunteers" : "Team Members"}
-            </Text>
-            <Text style={styles.metaValue}>{activity.volunteers}</Text>
           </View>
           <View style={styles.statusRow}>
             <Text style={styles.statusLabel}>Status</Text>
@@ -110,34 +116,15 @@ export default function ActivityDetailScreen() {
           </View>
         </View>
 
-        {isAdmin && activity.assignedVolunteers?.length ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Assigned Volunteers</Text>
-            {activity.assignedVolunteers.map((volunteer) => (
-              <View key={volunteer.id} style={styles.volunteerRow}>
-                <View
-                  style={[
-                    styles.volunteerAvatar,
-                    { backgroundColor: volunteer.color },
-                  ]}
-                >
-                  <Text style={styles.volunteerInitials}>
-                    {volunteer.initials}
-                  </Text>
-                </View>
-                <View style={styles.volunteerInfo}>
-                  <Text style={styles.volunteerName}>{volunteer.name}</Text>
-                  <Text style={styles.volunteerMeta}>
-                    {volunteer.role} · {volunteer.skill}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : null}
-
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      <DeleteActivityModal
+        visible={deleteModalVisible}
+        isDeleting={isDeleting}
+        onDelete={handleDelete}
+        onClose={closeDeleteModal}
+      />
     </View>
   );
 }

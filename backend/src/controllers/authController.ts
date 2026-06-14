@@ -7,7 +7,6 @@ import {
   emailVerificationTokens,
   passwordResetTokens,
   users,
-  volunteerProfiles,
 } from "../config/databaseSetup";
 import { comparePassword, hashPassword } from "../utils/password";
 import {
@@ -20,7 +19,7 @@ import {
   sendPasswordResetEmail,
   sendVerificationEmail as sendVerificationEmailMessage,
 } from "../utils/email";
-import { getColorFromName, getInitials } from "../utils/beneficiary";
+
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -28,7 +27,7 @@ type AuthResponseUser = {
   id: string;
   name: string;
   email: string;
-  role: "Admin" | "Volunteer" | "Donor";
+  role: "Admin" | "User";
   isEmailVerified: boolean;
 };
 
@@ -59,20 +58,13 @@ export const register = async (req: Request, res: Response) => {
       name?: string;
       email?: string;
       password?: string;
-      role?: "Admin" | "Volunteer" | "Donor";
+      role?: "Admin" | "User";
     };
 
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
         error: "Name, email, and password are required.",
-      });
-    }
-
-    if (role === "Donor") {
-      return res.status(400).json({
-        success: false,
-        error: "Donor registration is not available yet.",
       });
     }
 
@@ -97,7 +89,7 @@ export const register = async (req: Request, res: Response) => {
         name,
         email: normalizedEmail,
         passwordHash,
-        role: role ?? "Volunteer",
+        role: role ?? "User",
         // TODO: restore email verification before production signups.
         isEmailVerified: true,
       })
@@ -113,17 +105,6 @@ export const register = async (req: Request, res: Response) => {
       return res
         .status(500)
         .json({ success: false, error: "Failed to create user." });
-    }
-
-    if (created.role === "Volunteer") {
-      await db.insert(volunteerProfiles).values({
-        userId: created.id,
-        roleTitle: "Volunteer",
-        skill: "General",
-        available: true,
-        initials: getInitials(created.name),
-        color: getColorFromName(created.name),
-      });
     }
 
     return res.status(201).json({
@@ -145,7 +126,7 @@ export const login = async (req: Request, res: Response) => {
     const { email, password, role } = req.body as {
       email?: string;
       password?: string;
-      role?: "Admin" | "Volunteer" | "Donor";
+      role?: "Admin" | "User";
     };
 
     if (!email || !password) {
@@ -319,7 +300,7 @@ export const googleLogin = async (req: Request, res: Response) => {
           name: displayName,
           email: normalizedEmail,
           passwordHash: null,
-          role: "Volunteer",
+          role: "User",
           isEmailVerified: true,
           oauthProvider: provider,
           oauthId: googleUserId,
@@ -338,15 +319,6 @@ export const googleLogin = async (req: Request, res: Response) => {
           .status(500)
           .json({ success: false, error: "Failed to create user." });
       }
-
-      await db.insert(volunteerProfiles).values({
-        userId: created.id,
-        roleTitle: "Volunteer",
-        skill: "General",
-        available: true,
-        initials: getInitials(created.name),
-        color: getColorFromName(created.name),
-      });
 
       sessionUser = created;
     }

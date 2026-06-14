@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 export type AuthTokenPayload = {
   sub: string;
   email: string;
-  role: "Admin" | "Volunteer" | "Donor";
+  role: "Admin" | "User";
 };
 
 const accessSecret = process.env.JWT_SECRET ?? "dev_access_secret";
