@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import {AnimatedMeshGradient} from "@/shared/components/mesh-gradient";
+import { AnimatedMeshGradient } from "@/shared/components/mesh-gradient";
 import type { IMeshGradientColor } from "@/shared/components/mesh-gradient/types";
 
 const meshColors: IMeshGradientColor[] = [
@@ -15,7 +15,9 @@ interface MeshGradientBackgroundProps {
   children?: React.ReactNode;
 }
 
-export default function MeshGradientBackground({ children }: MeshGradientBackgroundProps) {
+export default function MeshGradientBackground({
+  children,
+}: MeshGradientBackgroundProps) {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />

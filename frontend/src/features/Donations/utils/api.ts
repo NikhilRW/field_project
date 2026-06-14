@@ -1,4 +1,5 @@
 import http from "@/shared/utils/http";
+import { isWeb } from "@/shared/utils/platform";
 import type { Donation } from "@/shared/types/mock";
 
 export type MonthlyDonation = {
@@ -16,6 +17,7 @@ export type DonationPaymentStatus =
   | "failed";
 
 export type MyDonation = Donation & {
+  donorId: string;
   category: DonationCategory;
   verificationStatus: DonationVerificationStatus;
   paymentStatus: DonationPaymentStatus;
@@ -137,14 +139,24 @@ export const createItemDonation = async (
 ) => {
   const formData = new FormData();
   const fallbackFileName = payload.imageUri.split("/").pop() || "donation.jpg";
+  const fileName = payload.fileName || fallbackFileName;
+  const fileType = payload.fileType || "image/jpeg";
+
+  if (isWeb()) {
+    const res = await fetch(payload.imageUri);
+    const blob = await res.blob();
+    const file = new File([blob], fileName, { type: fileType });
+    formData.append("itemImage", file);
+  } else {
+    formData.append("itemImage", {
+      uri: payload.imageUri,
+      name: fileName,
+      type: fileType,
+    } as any);
+  }
 
   formData.append("category", payload.category);
   formData.append("purpose", payload.purpose);
-  formData.append("itemImage", {
-    uri: payload.imageUri,
-    name: payload.fileName || fallbackFileName,
-    type: payload.fileType || "image/jpeg",
-  } as any);
 
   const response = await http.post<{ success: boolean; data: MyDonation }>(
     "/api/donations/item",

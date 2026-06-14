@@ -481,6 +481,40 @@ export const getMe = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, error: "Unauthorized." });
+    }
+
+    const { name } = req.body as { name?: string };
+
+    if (!name || !name.trim()) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Name is required." });
+    }
+
+    const trimmed = name.trim();
+
+    const [updated] = await db
+      .update(users)
+      .set({ name: trimmed })
+      .where(eq(users.id, req.user.id))
+      .returning();
+
+    return res.status(200).json({
+      success: true,
+      data: buildAuthResponse(updated),
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Unable to update profile." });
+  }
+};
+
 export const sendVerificationEmail = async (req: Request, res: Response) => {
   try {
     const { email } = req.body as { email?: string };

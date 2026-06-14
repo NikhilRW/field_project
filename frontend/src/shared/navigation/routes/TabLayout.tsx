@@ -1,6 +1,5 @@
 import { Tabs } from "expo-router";
-import React from "react";
-import { StyleSheet, View, Platform } from "react-native";
+import { View } from "react-native";
 import {
   LayoutDashboard,
   Users,
@@ -10,15 +9,12 @@ import {
 } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
+import { hideTabIfUser } from "@/shared/utils/tabNavigation";
+import { tabLayoutStyles as styles } from "@/shared/styles/tabLayoutStyles";
 
 export default function TabLayout() {
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const isUser = !isAdmin;
-  // TODO: make all react files follow react best practices.
-  const hiddenTabOptions = {
-    tabBarButton: () => null,
-    tabBarItemStyle: { display: "none" as const },
-  };
 
   return (
     <Tabs
@@ -33,7 +29,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="dashboard"
-        options={{
+        options={hideTabIfUser(isUser, {
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
@@ -44,28 +40,22 @@ export default function TabLayout() {
               />
             </View>
           ),
-        }}
+        })}
       />
       <Tabs.Screen
         name="beneficiaries"
-        options={
-          isUser
-            ? hiddenTabOptions
-            : {
-                title: "People",
-                tabBarIcon: ({ color, focused }) => (
-                  <View
-                    style={[styles.iconWrap, focused && styles.iconWrapActive]}
-                  >
-                    <Users
-                      size={20}
-                      color={color}
-                      strokeWidth={focused ? 2.2 : 1.6}
-                    />
-                  </View>
-                ),
-              }
-        }
+        options={hideTabIfUser(isUser, {
+          title: "People",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <Users
+                size={20}
+                color={color}
+                strokeWidth={focused ? 2.2 : 1.6}
+              />
+            </View>
+          ),
+        })}
       />
       <Tabs.Screen
         name="activities"
@@ -85,7 +75,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="donations"
         options={{
-          title: isAdmin ? "Funds" : "Donate",
+          title: isAdmin ? "Funds" : "Donations",
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
               <HandCoins
@@ -115,35 +105,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    position: "absolute",
-    // backgroundColor: "rgba(255, 255, 255, 0.6)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.8)",
-    elevation: 0,
-    shadowOpacity: 0,
-    paddingTop: 0,
-    ...(Platform.OS === "web" ? { height: 68 } : {}),
-  },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: "600" as const,
-    letterSpacing: 0.2,
-    marginTop: 2,
-  },
-  tabItem: {
-    paddingTop: 2,
-  },
-  iconWrap: {
-    width: 40,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-  },
-  iconWrapActive: {
-    backgroundColor: Colors.primaryLight,
-  },
-});

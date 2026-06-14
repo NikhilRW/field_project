@@ -13,7 +13,10 @@ import dashboardRoutes from "./routes/dashboardRoutes";
 import donationRoutes from "./routes/donationRoutes";
 import surveyRoutes from "./routes/surveyRoutes";
 import volunteerRoutes from "./routes/volunteerRoutes";
-import { sendBulkTestNotification, sendTestNotification } from "@controllers/notificationController";
+import {
+  sendBulkTestNotification,
+  sendTestNotification,
+} from "@controllers/notificationController";
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,7 +24,6 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"],
   },
 });
 
@@ -41,8 +43,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/donations", donationRoutes);
 app.use("/api/surveys", surveyRoutes);
 app.use("/api/volunteers", volunteerRoutes);
-app.post("/test/send",sendTestNotification);
-app.post("/test/send-bulk",sendBulkTestNotification);
+app.post("/test/send", sendTestNotification);
+app.post("/test/send-bulk", sendBulkTestNotification);
 app.get("/", (_, res) => {
   res.status(200).json({ status: "healthy", message: "backend is running" });
 });

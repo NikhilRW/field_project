@@ -45,6 +45,7 @@ const fetchDonorName = async (userId: string) => {
 const mapDonationRow = (row: typeof donations.$inferSelect) => ({
   id: row.id,
   donor: row.donorName,
+  donorId: row.donorId,
   purpose: row.purpose,
   amount: Number(row.amount),
   type: row.type,

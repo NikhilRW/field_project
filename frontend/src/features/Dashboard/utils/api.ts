@@ -25,5 +25,6 @@ export const fetchDashboard = async () => {
   const response = await http.get<{ success: boolean; data: DashboardData }>(
     "/api/dashboard",
   );
+  console.log(response.data);
   return response.data.data;
 };

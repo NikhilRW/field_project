@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import {
   AuthorizationStatus,
-  getMessaging,
   getToken,
   onTokenRefresh,
   requestPermission,
@@ -11,8 +10,8 @@ import http from "@/shared/utils/http";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { getAccessToken } from "@/shared/utils/secureStore";
 import { setNotificationChannelAsync } from "expo-notifications";
-
-const firebaseMessaging = getMessaging();
+import { firebaseMessaging } from "../constants/firebase";
+import { showMessage } from "react-native-flash-message";
 
 const ensureNotificationChannel = async () => {
   if (Platform.OS !== "android") {
@@ -37,6 +36,10 @@ export const usePushRegistration = () => {
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !userId) {
       lastRegisteredUserId.current = null;
+      return;
+    }
+
+    if (!firebaseMessaging) {
       return;
     }
 
@@ -69,6 +72,10 @@ export const usePushRegistration = () => {
 
     const register = async () => {
       try {
+        if (!firebaseMessaging) {
+          console.log("usePushRegistration :: firebase messaging not available.");
+          return;
+        }
         await ensureNotificationChannel();
 
         const permission = await requestPermission(firebaseMessaging);

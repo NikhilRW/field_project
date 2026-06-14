@@ -50,6 +50,9 @@ http.interceptors.request.use(
     if (token) {
       const headers = AxiosHeaders.from(config.headers);
       headers.set("Authorization", `Bearer ${token}`);
+      if (__DEV__ && config.baseURL?.includes("ngrok-free.app")) {
+        headers.set("ngrok-skip-browser-warning", `true`);
+      }
       config.headers = headers;
     }
 

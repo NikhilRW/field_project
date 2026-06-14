@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -6,10 +6,11 @@ import { ChevronRight, Phone, Mail, MapPin, Shield } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import BrandLogo from "@/shared/components/BrandLogo";
 import { useAuthStore } from "@/shared/stores/authStore";
-import MeshGradientBackground  from "@/shared/components/MeshGradientBackground";
+import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { useLogoutMutation } from "@/features/Auth/hooks/useAuthMutations";
 import { buildProfileSettingsItems } from "../constants/settingsItems";
 import { profileStyles as styles } from "../styles/profileStyles";
+import EditNameModal from "../components/EditNameModal";
 
 const getInitials = (name?: string | null) =>
   name
@@ -24,20 +25,31 @@ export default function ProfileScreen() {
   const logoutMutation = useLogoutMutation();
   const user = useAuthStore((state) => state.user);
   const isAdmin = useAuthStore((state) => state.isAdmin);
+  const [editNameVisible, setEditNameVisible] = useState(false);
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();
-    router.replace("/(auth)/login" as any);
+    router.replace("/(auth)/login");
   };
 
-  const settingsItems = buildProfileSettingsItems(handleLogout, isAdmin);
+  const handleEditName = () => setEditNameVisible(true);
+
+  const settingsItems = buildProfileSettingsItems(
+    handleLogout,
+    isAdmin,
+    handleEditName,
+  );
 
   return (
     <MeshGradientBackground>
       <View
         style={[
           styles.container,
-          { paddingTop: insets.top,paddingBottom: insets.bottom + 40, backgroundColor: "transparent" },
+          {
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom + 40,
+            backgroundColor: "transparent",
+          },
         ]}
       >
         <ScrollView
@@ -56,9 +68,11 @@ export default function ProfileScreen() {
                 shadowOpacity: 0,
               },
             ]}
-            >
+          >
             <View style={styles.avatarSection}>
-              <View style={[styles.orgAvatar, isAdmin && styles.orgAvatarBrand]}>
+              <View
+                style={[styles.orgAvatar, isAdmin && styles.orgAvatarBrand]}
+              >
                 {isAdmin ? (
                   <BrandLogo size={64} />
                 ) : (
@@ -72,7 +86,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             <Text style={styles.orgName}>
-              {isAdmin ? "Helping Hands" : user?.name ?? "User"}
+              {isAdmin ? "Helping Hands" : (user?.name ?? "User")}
             </Text>
             <Text style={styles.orgFullName}>
               {isAdmin ? "Samajik Seva Sanstha" : "Helping Hands User"}
@@ -111,7 +125,7 @@ export default function ProfileScreen() {
                       strokeWidth={1.6}
                     />
                     <Text style={styles.contactText}>
-                      Opp. Mrunmayi Palace, Chikanghar, Kalyan
+                      Opp. Manali Palace, Chikanghar, Kalyan
                     </Text>
                   </View>
                 </>
@@ -216,6 +230,12 @@ export default function ProfileScreen() {
           <Text style={styles.footer}>SDG-3: Good Health & Well-Being</Text>
           <View style={{ height: 32 }} />
         </ScrollView>
+
+        <EditNameModal
+          visible={editNameVisible}
+          currentName={user?.name ?? ""}
+          onClose={() => setEditNameVisible(false)}
+        />
       </View>
     </MeshGradientBackground>
   );

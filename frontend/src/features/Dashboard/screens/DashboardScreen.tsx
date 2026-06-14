@@ -113,21 +113,24 @@ export default function DashboardScreen() {
           </Animated.View>
 
           <View style={styles.statsGrid}>
-            <Animated.View
-              entering={ZoomIn.delay(200).springify()}
-              style={styles.statCard}
-            >
-              <View
-                style={[
-                  styles.statIconWrap,
-                  { backgroundColor: Colors.primaryLight },
-                ]}
+            {isAdmin && (
+              <Animated.View
+                entering={ZoomIn.delay(200).springify()}
+                style={styles.statCard}
               >
-                <Users size={20} color={Colors.primary} strokeWidth={2} />
-              </View>
-              <Text style={styles.statValue}>{stats.beneficiaries}</Text>
-              <Text style={styles.statLabel}>Beneficiaries</Text>
-            </Animated.View>
+                <View
+                  style={[
+                    styles.statIconWrap,
+                    { backgroundColor: Colors.primaryLight },
+                  ]}
+                >
+                  <Users size={20} color={Colors.primary} strokeWidth={2} />
+                </View>
+                <Text style={styles.statValue}>{stats.beneficiaries}</Text>
+                <Text style={styles.statLabel}>Beneficiaries</Text>
+              </Animated.View>
+            )}
+
             <Animated.View
               entering={ZoomIn.delay(300).springify()}
               style={styles.statCard}
@@ -147,27 +150,30 @@ export default function DashboardScreen() {
               <Text style={styles.statValue}>{stats.activities}</Text>
               <Text style={styles.statLabel}>Programs</Text>
             </Animated.View>
-            <Animated.View
-              entering={ZoomIn.delay(400).springify()}
-              style={styles.statCard}
-            >
-              <View
-                style={[
-                  styles.statIconWrap,
-                  { backgroundColor: Colors.accentLight },
-                ]}
+            {isAdmin && (
+              <Animated.View
+                entering={ZoomIn.delay(400).springify()}
+                style={styles.statCard}
               >
-                <HeartHandshake
-                  size={20}
-                  color={Colors.accent}
-                  strokeWidth={2}
-                />
-              </View>
-              <Text style={styles.statValue}>{stats.volunteers}</Text>
-              <Text style={styles.statLabel}>
-                {isAdmin ? "Volunteers" : "Field Team"}
-              </Text>
-            </Animated.View>
+                <View
+                  style={[
+                    styles.statIconWrap,
+                    { backgroundColor: Colors.accentLight },
+                  ]}
+                >
+                  <HeartHandshake
+                    size={20}
+                    color={Colors.accent}
+                    strokeWidth={2}
+                  />
+                </View>
+                <Text style={styles.statValue}>{stats.volunteers}</Text>
+                <Text style={styles.statLabel}>
+                  {isAdmin ? "Volunteers" : "Field Team"}
+                </Text>
+              </Animated.View>
+            )}
+
             {isAdmin ? (
               <Animated.View
                 entering={ZoomIn.delay(500).springify()}
@@ -218,7 +224,7 @@ export default function DashboardScreen() {
             >
               <TouchableOpacity
                 style={styles.quickAction}
-                onPress={() => router.push("/(main)/volunteers" as any)}
+                onPress={() => router.push("/(main)/donatedItems" as any)}
                 activeOpacity={0.7}
               >
                 <View
@@ -227,17 +233,17 @@ export default function DashboardScreen() {
                     { backgroundColor: Colors.accentLight },
                   ]}
                 >
-                  <HeartHandshake
+                  <PackageCheck
                     size={22}
                     color={Colors.accent}
                     strokeWidth={2}
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>Volunteers</Text>
+                <Text style={styles.quickActionLabel}>Donated Items</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickAction}
-                onPress={() => router.push("/(main)/add-beneficiary" as any)}
+                onPress={() => router.push("/(main)/add-beneficiary")}
                 activeOpacity={0.7}
               >
                 <View
@@ -250,21 +256,7 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={styles.quickActionLabel}>Add Person</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.quickAction}
-                onPress={() => router.push("/donations")}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.quickActionIcon,
-                    { backgroundColor: Colors.errorLight },
-                  ]}
-                >
-                  <HandCoins size={22} color={Colors.error} strokeWidth={2} />
-                </View>
-                <Text style={styles.quickActionLabel}>Funds</Text>
-              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.quickAction}
                 onPress={() => router.push("/(main)/verify-items" as any)}

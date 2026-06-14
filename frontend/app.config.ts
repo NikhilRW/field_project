@@ -53,11 +53,14 @@ export default (): ExpoConfig => ({
     ],
   },
   web: {
-    output: "static",
-    favicon: "./assets/images/favicon.png",
+    output: "single",
+    favicon: "./assets/favicon.png",
+    bundler: "metro",
   },
   plugins: [
-    "expo-router",
+    [
+      "expo-router",
+    ],
     "@react-native-firebase/app",
     "@react-native-firebase/messaging",
     "@react-native-google-signin/google-signin",

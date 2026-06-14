@@ -8,7 +8,7 @@ export const activitiesStyles = StyleSheet.create({
   },
   titleSection: {
     paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingTop: 16,
     paddingBottom: 12,
   },
   titleRow: {
@@ -90,6 +90,7 @@ export const activitiesStyles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    marginBottom: 12,
   },
   listContent: {
     paddingHorizontal: 20,

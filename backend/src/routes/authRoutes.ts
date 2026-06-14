@@ -6,6 +6,7 @@ import {
   refreshToken,
   logout,
   getMe,
+  updateProfile,
   sendVerificationEmail,
   verifyEmail,
   forgotPassword,
@@ -26,6 +27,7 @@ router.post("/forgot-password", forgotPassword);
 router.post("/verify-reset-token", verifyResetToken);
 router.post("/reset-password", resetPassword);
 router.get("/me", authenticate, getMe);
+router.patch("/profile", authenticate, updateProfile);
 router.post("/logout", authenticate, logout);
 
 export default router;

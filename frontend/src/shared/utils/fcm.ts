@@ -1,7 +1,6 @@
 import {
   AuthorizationStatus,
   deleteToken,
-  getMessaging,
   getToken,
   requestPermission,
   subscribeToTopic as subscribeToFirebaseTopic,
@@ -10,9 +9,32 @@ import {
 import { Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { getAccessToken } from "@/shared/utils/secureStore";
+import {
+  FirebaseMessagingTypes,
+  getMessaging,
+} from "@react-native-firebase/messaging";
 import { setNotificationChannelAsync } from "expo-notifications";
 
-const firebaseMessaging = getMessaging();
+export const getNativeFirebaseMessaging =
+  (): FirebaseMessagingTypes.Module | null => {
+    if (Platform.OS === "web") {
+      return null;
+    }
+
+    try {
+      return getMessaging();
+    } catch (error: any) {
+      if (__DEV__) {
+        console.warn(
+          "[Firebase Messaging] Messaging is not available",
+          error?.message ?? error,
+        );
+      }
+
+      return null;
+    }
+  };
+const firebaseMessaging = getNativeFirebaseMessaging();
 
 /**
  * Create Android notification channel for FCM
@@ -24,9 +46,10 @@ export const createNotificationChannel = async () => {
   }
 
   try {
-    await setNotificationChannelAsync("activity-updates",{
+    await setNotificationChannelAsync("activity-updates", {
       name: "Activity Updates",
-      description: "Notifications about activity status changes and assignments",
+      description:
+        "Notifications about activity status changes and assignments",
       importance: 4, // AndroidImportance.HIGH
       lightColor: "#1B6CA8",
       vibrationPattern: [0, 250, 250, 250],
@@ -44,6 +67,10 @@ export const createNotificationChannel = async () => {
  * Required for FCM on Android 13+ and iOS
  */
 export const requestNotificationPermission = async (): Promise<boolean> => {
+  if (!firebaseMessaging) {
+    return false;
+  }
+
   try {
     const permission = await requestPermission(firebaseMessaging);
     const isGranted =
@@ -68,6 +95,10 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
  * Get FCM token for this device
  */
 export const getFCMToken = async (): Promise<string | null> => {
+  if (!firebaseMessaging) {
+    return null;
+  }
+
   try {
     const token = await getToken(firebaseMessaging);
 
@@ -122,6 +153,10 @@ export const registerFCMToken = async (): Promise<boolean> => {
  * Example: Subscribe to "activity-updates" to receive all activity notifications
  */
 export const subscribeToTopic = async (topic: string): Promise<boolean> => {
+  if (!firebaseMessaging) {
+    return false;
+  }
+
   try {
     await subscribeToFirebaseTopic(firebaseMessaging, topic);
     console.log(`✅ Subscribed to topic: ${topic}`);
@@ -136,6 +171,9 @@ export const subscribeToTopic = async (topic: string): Promise<boolean> => {
  * Unsubscribe from topic
  */
 export const unsubscribeFromTopic = async (topic: string): Promise<boolean> => {
+  if (!firebaseMessaging) {
+    return false;
+  }
   try {
     await unsubscribeFromFirebaseTopic(firebaseMessaging, topic);
     console.log(`✅ Unsubscribed from topic: ${topic}`);
@@ -151,6 +189,10 @@ export const unsubscribeFromTopic = async (topic: string): Promise<boolean> => {
  * Call this once during app initialization (after login)
  */
 export const setupFCM = async (): Promise<void> => {
+  if (!firebaseMessaging) {
+    return;
+  }
+
   console.log("🔧 Setting up Firebase Cloud Messaging...");
 
   try {
@@ -181,6 +223,10 @@ export const setupFCM = async (): Promise<void> => {
  * Delete FCM token (call on logout)
  */
 export const deleteFCMToken = async (): Promise<void> => {
+  if (!firebaseMessaging) {
+    return;
+  }
+
   try {
     await deleteToken(firebaseMessaging);
     console.log("✅ FCM token deleted");

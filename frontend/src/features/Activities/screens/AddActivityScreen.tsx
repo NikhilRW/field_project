@@ -8,7 +8,7 @@ import {
   Platform,
 } from "react-native";
 import DateTimePicker, {
-  type DateTimePickerEvent,
+  type DateTimePickerEvent as RNDateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -22,6 +22,8 @@ import { useActivityDraftStore } from "../hooks/useActivityDraftStore";
 import { useCreateActivity } from "../hooks/useCreateActivity";
 import { formatActivityDate, formatActivityDateLabel } from "../utils/date";
 import { addActivityStyles as styles } from "../styles/addActivityStyles";
+import CustomDateTimePicker from "../components/CustomDateTimePicker";
+import { isWeb } from "@/shared/utils/platform";
 
 const statusOptions: ActivityStatus[] = ["Upcoming", "Ongoing", "Completed"];
 
@@ -112,9 +114,15 @@ export default function AddActivityScreen() {
   };
 
   const handleDateChange = (
-    event: DateTimePickerEvent,
+    event: RNDateTimePickerEvent,
     selectedDate?: Date,
   ) => {
+    if (isWeb()) {
+      // TODO: fix the any stuff here.
+      setDate(new Date((event as any).target.value))
+      
+    }
+
     if (Platform.OS !== "ios") {
       setShowDatePicker(false);
     }
@@ -161,9 +169,8 @@ export default function AddActivityScreen() {
         </TouchableOpacity>
         {showDatePicker && (
           <View style={{ marginBottom: 14 }}>
-            <DateTimePicker
+            <CustomDateTimePicker
               value={date ?? new Date()}
-              mode="date"
               display="default"
               onChange={handleDateChange}
             />

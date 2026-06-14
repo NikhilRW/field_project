@@ -95,3 +95,11 @@ export const logoutRequest = async () => {
   const response = await http.post<{ success: boolean }>("/api/auth/logout");
   return response.data;
 };
+
+export const updateProfileRequest = async (payload: { name: string }) => {
+  const response = await http.patch<{ success: boolean; data: AuthUser }>(
+    "/api/auth/profile",
+    payload,
+  );
+  return response.data.data;
+};

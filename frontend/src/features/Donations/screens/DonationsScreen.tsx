@@ -10,7 +10,7 @@ import { MAX_CHART_HEIGHT } from "../constants/chart";
 import { useDonations, useMonthlyDonations } from "../hooks/useDonations";
 import { donationsStyles as styles } from "../styles/donationsStyles";
 import { getDonationTotals, getMonthlyMaxValue } from "../utils/aggregates";
-import {UserDonationsScreen} from "./UserDonationsScreen";
+import DonatedItemsScreen from "./DonatedItemsScreen";
 
 function AdminFundsScreen() {
   const insets = useSafeAreaInsets();
@@ -239,5 +239,5 @@ function AdminFundsScreen() {
 export default function DonationsScreen() {
   const isAdmin = useAuthStore((state) => state.isAdmin);
 
-  return isAdmin ? <AdminFundsScreen /> : <UserDonationsScreen />;
+  return isAdmin ? <AdminFundsScreen /> : <DonatedItemsScreen showBackButton={false} />;
 }

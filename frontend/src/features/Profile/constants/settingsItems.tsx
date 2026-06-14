@@ -1,11 +1,18 @@
 import React from "react";
-import { Pencil, Users, Bell, LogOut } from "lucide-react-native";
+import {
+  Pencil,
+  Users,
+  Bell,
+  LogOut,
+  UserPen,
+} from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import type { ProfileSettingsItem } from "../types/settings";
 
 export const buildProfileSettingsItems = (
   onLogout: () => void,
   isAdmin: boolean,
+  onEditName?: () => void,
 ): ProfileSettingsItem[] => [
   ...(isAdmin
     ? [
@@ -21,13 +28,22 @@ export const buildProfileSettingsItems = (
           sub: "Admins, users & donors",
           iconBg: Colors.secondaryLight,
         },
+        {
+          icon: <Bell size={16} color={Colors.accent} strokeWidth={1.8} />,
+          label: "Notifications",
+          sub: "Alerts and reminders",
+          iconBg: Colors.accentLight,
+        },
       ]
     : []),
   {
-    icon: <Bell size={16} color={Colors.accent} strokeWidth={1.8} />,
-    label: "Notifications",
-    sub: isAdmin ? "Alerts and reminders" : "Activity and app alerts",
-    iconBg: Colors.accentLight,
+    icon: (
+      <UserPen size={16} color={Colors.primary} strokeWidth={1.8} />
+    ),
+    label: "Edit Name",
+    sub: "Update your display name",
+    iconBg: Colors.primaryLight,
+    onPress: onEditName,
   },
   {
     icon: <LogOut size={16} color={Colors.error} strokeWidth={1.8} />,

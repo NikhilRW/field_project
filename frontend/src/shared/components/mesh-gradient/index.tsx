@@ -18,7 +18,27 @@ import { DEFAULT_INITIAL_COLORS, DEFAULT_PERFORMANCE } from "./const";
 import type { IAnimatedMeshGradient, IMeshGradientColor } from "./types";
 import { useFrameTime } from "./useFrameTime";
 
-const shader = Skia.RuntimeEffect.Make(MESH_GRADIENT_SHADER);
+type RuntimeEffectFactory = {
+  RuntimeEffect?: {
+    Make?: (source: string) => React.ComponentProps<typeof Shader>["source"];
+  };
+};
+
+const createShader = () => {
+  const runtimeEffect = (Skia as unknown as RuntimeEffectFactory).RuntimeEffect;
+
+  if (!runtimeEffect?.Make) {
+    return null;
+  }
+
+  try {
+    return runtimeEffect.Make(MESH_GRADIENT_SHADER);
+  } catch {
+    return null;
+  }
+};
+
+const shader = createShader();
 
 export const AnimatedMeshGradient: React.FC<IAnimatedMeshGradient> = memo<
   IAnimatedMeshGradient & React.ComponentProps<typeof View>

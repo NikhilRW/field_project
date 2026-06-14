@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/shared/stores/authStore";
 import {
   forgotPasswordRequest,
@@ -8,6 +8,7 @@ import {
   registerRequest,
   resetPasswordRequest,
   sendVerificationEmailRequest,
+  updateProfileRequest,
   verifyEmailRequest,
 } from "../utils/api";
 
@@ -68,14 +69,28 @@ export const useResetPasswordMutation = () =>
 
 export const useLogoutMutation = () => {
   const logout = useAuthStore((state) => state.logout);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: logoutRequest,
     onSuccess: async () => {
       await logout();
+      queryClient.clear();
     },
     onError: async () => {
       await logout();
+    },
+  });
+};
+
+export const useUpdateProfileMutation = () => {
+  const setUser = useAuthStore((state) => state.setUser);
+  const user = useAuthStore((state) => state.user);
+
+  return useMutation({
+    mutationFn: updateProfileRequest,
+    onSuccess: (updatedUser) => {
+      setUser({ ...user!, ...updatedUser });
     },
   });
 };

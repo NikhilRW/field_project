@@ -84,8 +84,9 @@ export const useCreateItemDonation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateItemDonationPayload) =>
-      createItemDonation(payload),
+    mutationFn: (payload: CreateItemDonationPayload) => {
+      return createItemDonation(payload);
+    },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),

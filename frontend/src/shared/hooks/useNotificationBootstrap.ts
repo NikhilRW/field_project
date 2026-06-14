@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import {
   FirebaseMessagingTypes,
   getInitialNotification,
-  getMessaging,
   onMessage,
   onNotificationOpenedApp,
   setBackgroundMessageHandler,
@@ -17,9 +16,9 @@ import {
 } from "expo-notifications";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { createNotificationStore } from "@/shared/stores/notificationStore";
+import { firebaseMessaging } from "../constants/firebase";
 
 const ACTIVITY_NOTIFICATION_CHANNEL_ID = "activity-updates";
-const firebaseMessaging = getMessaging();
 
 const getStringDataValue = (
   data: Record<string, unknown> | undefined,
@@ -55,6 +54,11 @@ export const useNotificationBootstrap = () => {
 
   useEffect(() => {
     if (!isHydrated) return;
+
+
+    if (!firebaseMessaging) {
+      return;
+    }
 
     const cleanupFunctions: Array<() => void> = [];
 
@@ -178,7 +182,7 @@ export const useNotificationBootstrap = () => {
 
               if (activityId) {
                 console.log(
-                  "🚀 App opened from killed state (Firebase notification)"
+                  "🚀 App opened from killed state (Firebase notification)",
                 );
                 navigateToActivity(activityId);
                 return;
@@ -193,13 +197,16 @@ export const useNotificationBootstrap = () => {
 
                   if (expoActivityId) {
                     console.log(
-                      "🚀 App opened from killed state (Expo notification)"
+                      "🚀 App opened from killed state (Expo notification)",
                     );
                     navigateToActivity(expoActivityId);
                   }
                 })
                 .catch((error) => {
-                  console.error("Error getting last notification response:", error);
+                  console.error(
+                    "Error getting last notification response:",
+                    error,
+                  );
                 });
             })
             .catch((error) => {
@@ -228,8 +235,7 @@ export const useNotificationBootstrap = () => {
 const handleNotificationClick = (response: NotificationResponse) => {
   // Check if it's a default action (user tapped notification)
   if (
-    response?.actionIdentifier ===
-    "expo.modules.notifications.actions.DEFAULT"
+    response?.actionIdentifier === "expo.modules.notifications.actions.DEFAULT"
   ) {
     const activityId = getActivityIdFromData(
       response?.notification?.request?.content?.data,
