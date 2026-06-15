@@ -13,6 +13,7 @@ export const buildProfileSettingsItems = (
   onLogout: () => void,
   isAdmin: boolean,
   onEditName?: () => void,
+  onManageUsers?: () => void,
 ): ProfileSettingsItem[] => [
   ...(isAdmin
     ? [
@@ -27,6 +28,7 @@ export const buildProfileSettingsItems = (
           label: "Manage Users",
           sub: "Admins, users & donors",
           iconBg: Colors.secondaryLight,
+          onPress: onManageUsers,
         },
         {
           icon: <Bell size={16} color={Colors.accent} strokeWidth={1.8} />,

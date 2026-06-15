@@ -10,6 +10,7 @@ import {
   setAccessToken,
   setRefreshToken,
 } from "@/shared/utils/secureStore";
+import { showMessage } from "react-native-flash-message";
 
 const http = axios.create({
   baseURL: BASE_URI,
@@ -109,8 +110,31 @@ http.interceptors.response.use(
       router.replace("/(auth)/login");
     }
 
+    const errorMessage =
+      error.response?.data?.error ?? error.message ?? "";
+      // TODO: make it clean code.
+    if (
+      error.response?.status === 403 &&
+      errorMessage.toLowerCase().includes("blocked")
+    ) {
+      showMessage({
+        message: "Account Blocked",
+        description: "Your account has been blocked. Contact support.",
+        type: "danger",
+        duration: 4000,
+      });
+      await clearTokens();
+      await useAuthStore.getState().logout();
+      router.replace("/(auth)/login");
+      return Promise.reject(error);
+    }
+
     if (__DEV__) {
-      console.log(error.response);
+      showMessage({
+        message: "Error occurred",
+        description: error.response?.data?.error || error.message,
+        type: "danger",
+      });
       console.error("[HTTP Error]", error.response?.status, error.config?.url);
     }
 

@@ -159,6 +159,12 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    if (user.isBlocked) {
+      return res
+        .status(403)
+        .json({ success: false, error: "Account is blocked. Contact support." });
+    }
+
     if (!user.passwordHash) {
       return res
         .status(401)
@@ -255,6 +261,13 @@ export const googleLogin = async (req: Request, res: Response) => {
     let sessionUser: AuthResponseUser;
 
     if (user) {
+      if (user.isBlocked) {
+        return res.status(403).json({
+          success: false,
+          error: "Account is blocked. Contact support.",
+        });
+      }
+
       if (
         user.oauthProvider &&
         user.oauthProvider !== provider &&
@@ -374,6 +387,13 @@ export const refreshToken = async (req: Request, res: Response) => {
       return res
         .status(401)
         .json({ success: false, error: "Invalid refresh token." });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        error: "Account is blocked. Contact support.",
+      });
     }
 
     const incomingHash = hashToken(refreshToken);

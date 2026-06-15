@@ -74,6 +74,7 @@ export const users = pgTable(
     email: text("email").notNull(),
     passwordHash: text("password_hash"),
     role: userRoleEnum("role").notNull(),
+    isBlocked: boolean("is_blocked").notNull().default(false),
     isEmailVerified: boolean("is_email_verified").notNull().default(false),
     refreshTokenHash: text("refresh_token_hash"),
     oauthProvider: text("oauth_provider"),

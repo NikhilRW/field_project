@@ -1,8 +1,10 @@
 import type { NextFunction, Response } from "express";
 import type { AuthRequest } from "../types/auth";
 import { verifyAccessToken } from "../utils/jwt";
+import { db, users } from "../config/databaseSetup";
+import { eq } from "drizzle-orm";
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
@@ -16,6 +18,19 @@ export const authenticate = (
 
   try {
     const payload = verifyAccessToken(token);
+
+    const [user] = await db
+      .select({ isBlocked: users.isBlocked })
+      .from(users)
+      .where(eq(users.id, payload.sub));
+
+    if (user?.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        error: "Account is blocked. Contact support.",
+      });
+    }
+
     req.user = {
       id: payload.sub,
       email: payload.email,

@@ -92,19 +92,24 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name="(main)/donation/[id]"
         options={{
           headerShown: false,
         }}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="(main)/donate"
         options={{
           headerShown: false,
         }}
       />
-
+      <Stack.Screen
+        name="(main)/manage-users"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

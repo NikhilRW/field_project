@@ -33,11 +33,13 @@ export default function ProfileScreen() {
   };
 
   const handleEditName = () => setEditNameVisible(true);
+  const handleManageUsers = () => router.push("/(main)/manage-users");
 
   const settingsItems = buildProfileSettingsItems(
     handleLogout,
     isAdmin,
     handleEditName,
+    handleManageUsers,
   );
 
   return (

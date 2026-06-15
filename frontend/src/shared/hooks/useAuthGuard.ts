@@ -26,10 +26,7 @@ export const useAuthGuard = () => {
       .then((data) => {
         setUser(data);
       })
-      .catch(async () => {
-        await logout();
-        router.replace("/(auth)/login");
-      })
+      .catch(() => {})
       .finally(() => {
         isFetchingProfile.current = false;
       });

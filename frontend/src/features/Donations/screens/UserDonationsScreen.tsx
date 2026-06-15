@@ -38,8 +38,8 @@ import type {
   DonationVerificationStatus,
   MyDonation,
 } from "../utils/api";
-import type { UserListItem } from "../utils/usersApi";
 import { userDonationsStyles as styles } from "../styles/userDonationsStyles";
+import { UserListItem } from "../types/common";
 
 type UserDonationType = DonationCategory;
 
@@ -50,11 +50,11 @@ type CapturedPhoto = {
   fileType?: string | null;
 };
 
-const donationTypes: Array<{
+const donationTypes: {
   value: UserDonationType;
   label: string;
   icon: React.ReactNode;
-}> = [
+}[] = [
   {
     value: "money",
     label: "Money",
