@@ -4,7 +4,6 @@ import { getAccessToken } from "@/shared/utils/secureStore";
 import { webFirebaseApp } from "@/shared/config/firebase";
 import { isWeb } from "../constants/platform";
 import { getMessaging } from "@react-native-firebase/messaging";
-import { FirebaseApp } from "@firebase/app";
 import { Messaging } from "@firebase/messaging";
 
 let webMessaging: any = null;
