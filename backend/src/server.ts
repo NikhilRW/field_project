@@ -12,6 +12,7 @@ import beneficiaryRoutes from "./routes/beneficiaryRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
 import donationRoutes from "./routes/donationRoutes";
 import surveyRoutes from "./routes/surveyRoutes";
+import userRoutes from "./routes/userRoutes";
 import {
   sendBulkTestNotification,
   sendTestNotification,
@@ -41,6 +42,7 @@ app.use("/api/beneficiaries", beneficiaryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/donations", donationRoutes);
 app.use("/api/surveys", surveyRoutes);
+app.use("/api/users", userRoutes);
 app.post("/test/send", sendTestNotification);
 app.post("/test/send-bulk", sendBulkTestNotification);
 app.get("/", (_, res) => {

@@ -2,14 +2,16 @@ import { Tabs } from "expo-router";
 import { View } from "react-native";
 import {
   LayoutDashboard,
-  Users,
   CalendarDays,
   HandCoins,
   CircleUser,
 } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
-import { hideTabIfUser } from "@/shared/utils/tabNavigation";
+import {
+  hiddenTabOptions,
+  hideTabIfUser,
+} from "@/shared/utils/tabNavigation";
 import { tabLayoutStyles as styles } from "@/shared/styles/tabLayoutStyles";
 
 export default function TabLayout() {
@@ -44,18 +46,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="beneficiaries"
-        options={hideTabIfUser(isUser, {
-          title: "People",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-              <Users
-                size={20}
-                color={color}
-                strokeWidth={focused ? 2.2 : 1.6}
-              />
-            </View>
-          ),
-        })}
+        options={hiddenTabOptions}
       />
       <Tabs.Screen
         name="activities"

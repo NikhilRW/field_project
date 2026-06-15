@@ -1,5 +1,3 @@
-import axios from "axios";
-import crypto from "crypto";
 import type { Response } from "express";
 import { and, desc, eq, ne, or, sql } from "drizzle-orm";
 import {
@@ -10,26 +8,6 @@ import {
 } from "../config/databaseSetup";
 import type { AuthRequest } from "../types/auth";
 import { formatDate } from "../utils/date";
-
-const razorpayApiBaseUrl = "https://api.razorpay.com/v1";
-const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-
-const ensureRazorpayConfig = () => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error("Razorpay API keys are not configured.");
-  }
-};
-
-const buildRazorpayHeaders = () => {
-  ensureRazorpayConfig();
-
-  return {
-    Authorization: `Basic ${Buffer.from(
-      `${razorpayKeyId}:${razorpayKeySecret}`,
-    ).toString("base64")}`,
-  };
-};
 
 const fetchDonorName = async (userId: string) => {
   const [user] = await db
@@ -92,87 +70,6 @@ const buildMonthlyDonationRows = (rows: Array<typeof donations.$inferSelect>) =>
   return Array.from(monthMap.values());
 };
 
-const verifyRazorpaySignature = (orderId: string, paymentId: string, signature: string) => {
-  ensureRazorpayConfig();
-
-  const generatedSignature = crypto
-    .createHmac("sha256", razorpayKeySecret)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-
-  return generatedSignature === signature;
-};
-
-const createRazorpayOrder = async (amount: number, receipt: string, notes: Record<string, string>) => {
-  const response = await axios.post(
-    `${razorpayApiBaseUrl}/orders`,
-    {
-      amount,
-      currency: "INR",
-      receipt,
-      notes,
-    },
-    {
-      headers: {
-        "content-type": "application/json",
-        ...buildRazorpayHeaders(),
-      },
-    },
-  );
-
-  return response.data as {
-    id: string;
-    amount: number;
-    currency: string;
-    receipt: string;
-    status: string;
-  };
-};
-
-const fetchRazorpayPayment = async (paymentId: string) => {
-  const response = await axios.get(`${razorpayApiBaseUrl}/payments/${paymentId}`, {
-    headers: buildRazorpayHeaders(),
-  });
-
-  return response.data as {
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    order_id: string;
-    captured: boolean;
-  };
-};
-
-const captureRazorpayPayment = async (
-  paymentId: string,
-  amount: number,
-  currency: string,
-) => {
-  const response = await axios.post(
-    `${razorpayApiBaseUrl}/payments/${paymentId}/capture`,
-    {
-      amount,
-      currency,
-    },
-    {
-      headers: {
-        "content-type": "application/json",
-        ...buildRazorpayHeaders(),
-      },
-    },
-  );
-
-  return response.data as {
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    order_id: string;
-    captured: boolean;
-  };
-};
-
 export const getDonations = async (_req: AuthRequest, res: Response) => {
   try {
     const rows = await db
@@ -207,6 +104,40 @@ export const getDonations = async (_req: AuthRequest, res: Response) => {
   }
 };
 
+export const getAllDonations = async (_req: AuthRequest, res: Response) => {
+  try {
+    const rows = await db
+      .select()
+      .from(donations)
+      .where(
+        or(
+          and(
+            eq(donations.category, "money"),
+            or(
+              eq(donations.type, "outgoing"),
+              eq(donations.verificationStatus, "verified"),
+            ),
+          ),
+          and(
+            ne(donations.category, "money"),
+            eq(donations.verificationStatus, "verified"),
+          ),
+        ),
+      )
+      .orderBy(desc(donations.date));
+
+    return res.status(200).json({
+      success: true,
+      data: rows.map(mapDonationRow),
+    });
+  } catch (error) {
+    console.error("Failed to fetch all donations", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch donations" });
+  }
+};
+
 export const getMonthlyDonations = async (_req: AuthRequest, res: Response) => {
   try {
     const rows = await db
@@ -222,18 +153,22 @@ export const getMonthlyDonations = async (_req: AuthRequest, res: Response) => {
         ),
       )
       .orderBy(desc(donations.date));
+
     const data = buildMonthlyDonationRows(rows);
+
     return res.status(200).json({ success: true, data });
   } catch (error) {
     console.error("Failed to fetch monthly donations", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to fetch monthly donations",
-    });
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch monthly donations" });
   }
 };
 
-export const getPendingItemDonations = async (_req: AuthRequest, res: Response) => {
+export const getPendingItemDonations = async (
+  _req: AuthRequest,
+  res: Response,
+) => {
   try {
     const rows = await db
       .select()
@@ -254,7 +189,7 @@ export const getPendingItemDonations = async (_req: AuthRequest, res: Response) 
     console.error("Failed to fetch pending item donations", error);
     return res.status(500).json({
       success: false,
-      error: "Failed to fetch pending item donations.",
+      error: "Failed to fetch pending donations.",
     });
   }
 };
@@ -437,15 +372,19 @@ export const getMyDonations = async (req: AuthRequest, res: Response) => {
 export const createItemDonation = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { category, purpose } = req.body as {
+    const { category, purpose, donorId: adminDonorId } = req.body as {
       category?: string;
       purpose?: string;
+      donorId?: string;
     };
     const imageUrl = req.cloudinaryUrl;
 
     if (!userId) {
       return res.status(401).json({ success: false, error: "Unauthorized." });
     }
+
+    const effectiveDonorId =
+      req.user?.role === "Admin" && adminDonorId ? adminDonorId : userId;
 
     if (!category || !purpose || !imageUrl) {
       return res.status(400).json({
@@ -464,21 +403,23 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const donorName = await fetchDonorName(userId);
+    const donorName = await fetchDonorName(effectiveDonorId);
+    const isAdminDirect =
+      req.user?.role === "Admin" && adminDonorId;
 
     const [createdDonation] = await db
       .insert(donations)
       .values({
-        donorId: userId,
+        donorId: effectiveDonorId,
         donorName,
         purpose: purpose.trim(),
         amount: "0",
         type: "incoming",
         category: category as any,
-        verificationStatus: "unverified",
+        verificationStatus: isAdminDirect ? "verified" : "unverified",
         paymentStatus: "not_applicable",
         imageUrl,
-        date: new Date(),
+        date: isAdminDirect ? new Date() : undefined,
       })
       .returning();
 
@@ -494,20 +435,24 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const createMoneyDonationOrder = async (
+export const createMoneyDonation = async (
   req: AuthRequest,
   res: Response,
 ) => {
   try {
     const userId = req.user?.id;
-    const { amount, purpose } = req.body as {
+    const { amount, purpose, donorId: adminDonorId } = req.body as {
       amount?: number;
       purpose?: string;
+      donorId?: string;
     };
 
     if (!userId) {
       return res.status(401).json({ success: false, error: "Unauthorized." });
     }
+
+    const effectiveDonorId =
+      req.user?.role === "Admin" && adminDonorId ? adminDonorId : userId;
 
     const normalizedAmount = Number(amount);
     if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
@@ -517,217 +462,33 @@ export const createMoneyDonationOrder = async (
       });
     }
 
-    const amountInPaise = Math.round(normalizedAmount * 100);
-    const donorName = await fetchDonorName(userId);
-    const receipt = `don_${Date.now()}_${userId.slice(0, 8)}`;
-
-    const razorpayOrder = await createRazorpayOrder(amountInPaise, receipt, {
-      donorId: userId,
-      donorName,
-      purpose: purpose?.trim() || "Helping Hands Donation",
-    });
+    const donorName = await fetchDonorName(effectiveDonorId);
 
     const [createdDonation] = await db
       .insert(donations)
       .values({
-        donorId: userId,
+        donorId: effectiveDonorId,
         donorName,
         purpose: purpose?.trim() || "Helping Hands Donation",
         amount: normalizedAmount.toFixed(2),
         type: "incoming",
         category: "money",
-        verificationStatus: "unverified",
-        paymentStatus: "pending",
-        razorpayOrderId: razorpayOrder.id,
+        verificationStatus: "verified",
+        paymentStatus: "paid",
+        paymentVerifiedAt: new Date(),
         date: new Date(),
       })
       .returning();
 
     return res.status(201).json({
       success: true,
-      data: {
-        donationId: createdDonation.id,
-        keyId: razorpayKeyId,
-        orderId: razorpayOrder.id,
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        purpose: createdDonation.purpose,
-        donorName,
-        donation: mapDonationRow(createdDonation),
-      },
+      data: mapDonationRow(createdDonation),
     });
-  } catch (error: any) {
-    console.error("Failed to create Razorpay order", error?.response?.data ?? error);
-    return res.status(500).json({
-      success: false,
-      error: error?.response?.data?.error?.description ?? "Failed to start donation payment.",
-    });
-  }
-};
-
-export const verifyMoneyDonation = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } =
-      req.body as {
-        razorpayOrderId?: string;
-        razorpayPaymentId?: string;
-        razorpaySignature?: string;
-      };
-
-    if (!userId) {
-      return res.status(401).json({ success: false, error: "Unauthorized." });
-    }
-
-    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing Razorpay payment details.",
-      });
-    }
-
-    const [donation] = await db
-      .select()
-      .from(donations)
-      .where(
-        and(
-          eq(donations.donorId, userId),
-          eq(donations.razorpayOrderId, razorpayOrderId),
-        ),
-      );
-
-    if (!donation) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Donation order not found." });
-    }
-
-    if (!verifyRazorpaySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)) {
-      await db
-        .update(donations)
-        .set({
-          paymentStatus: "failed",
-          razorpayPaymentId,
-          razorpaySignature,
-        })
-        .where(eq(donations.id, donation.id));
-
-      return res.status(400).json({
-        success: false,
-        error: "Payment signature verification failed.",
-      });
-    }
-
-    const fetchedPayment = await fetchRazorpayPayment(razorpayPaymentId);
-
-    if (fetchedPayment.order_id !== razorpayOrderId) {
-      return res.status(400).json({
-        success: false,
-        error: "Payment does not belong to this order.",
-      });
-    }
-
-    let finalPayment = fetchedPayment;
-    if (fetchedPayment.status === "authorized" && !fetchedPayment.captured) {
-      try {
-        finalPayment = await captureRazorpayPayment(
-          razorpayPaymentId,
-          Math.round(Number(donation.amount) * 100),
-          fetchedPayment.currency,
-        );
-      } catch (captureError: any) {
-        console.error(
-          "Failed to capture Razorpay payment, rechecking status",
-          captureError?.response?.data ?? captureError,
-        );
-        finalPayment = await fetchRazorpayPayment(razorpayPaymentId);
-      }
-    }
-
-    if (finalPayment.status !== "captured" && !finalPayment.captured) {
-      await db
-        .update(donations)
-        .set({
-          paymentStatus: "failed",
-          razorpayPaymentId,
-          razorpaySignature,
-        })
-        .where(eq(donations.id, donation.id));
-
-      return res.status(400).json({
-        success: false,
-        error: "Payment was not captured successfully.",
-      });
-    }
-
-    const [updatedDonation] = await db
-      .update(donations)
-      .set({
-        paymentStatus: "paid",
-        verificationStatus: "verified",
-        razorpayPaymentId,
-        razorpaySignature,
-        paymentVerifiedAt: new Date(),
-        date: new Date(),
-      })
-      .where(eq(donations.id, donation.id))
-      .returning();
-
-    return res.status(200).json({
-      success: true,
-      data: mapDonationRow(updatedDonation),
-    });
-  } catch (error: any) {
-    console.error(
-      "Failed to verify money donation",
-      error?.response?.data ?? error,
-    );
-    return res.status(500).json({
-      success: false,
-      error:
-        error?.response?.data?.error?.description ??
-        "Failed to verify donation payment.",
-    });
-  }
-};
-
-export const markMoneyDonationFailed = async (
-  req: AuthRequest,
-  res: Response,
-) => {
-  try {
-    const userId = req.user?.id;
-    const { razorpayOrderId } = req.body as { razorpayOrderId?: string };
-
-    if (!userId) {
-      return res.status(401).json({ success: false, error: "Unauthorized." });
-    }
-
-    if (!razorpayOrderId) {
-      return res.status(400).json({
-        success: false,
-        error: "Order ID is required.",
-      });
-    }
-
-    await db
-      .update(donations)
-      .set({
-        paymentStatus: "failed",
-      })
-      .where(
-        and(
-          eq(donations.donorId, userId),
-          eq(donations.razorpayOrderId, razorpayOrderId),
-        ),
-      );
-
-    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Failed to mark donation payment as failed", error);
+    console.error("Failed to create money donation", error);
     return res.status(500).json({
       success: false,
-      error: "Failed to update donation payment status.",
+      error: "Failed to create donation.",
     });
   }
 };

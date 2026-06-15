@@ -6,22 +6,23 @@ import {
 } from "@tanstack/react-query";
 import {
   createItemDonation,
-  createMoneyDonationOrder,
+  createMoneyDonation,
+  fetchAllDonations,
   fetchDonatedItemDonations,
   fetchDonations,
   fetchItemDonationById,
   fetchMonthlyDonations,
   fetchMyDonations,
   fetchPendingItemDonations,
-  markMoneyDonationFailed,
   rejectItemDonation,
   verifyItemDonation,
-  verifyMoneyDonation,
   type CreateItemDonationPayload,
-  type CreateMoneyDonationOrderPayload,
-  type VerifyMoneyDonationPayload,
+  type CreateMoneyDonationPayload,
 } from "../utils/api";
+import { fetchAllUsers } from "../utils/usersApi";
 
+export const allDonationsQueryKey = ["donations", "all"];
+export const allUsersQueryKey = ["users", "all"];
 export const donationsQueryKey = ["donations"];
 export const monthlyDonationsQueryKey = ["donations", "monthly"];
 export const myDonationsQueryKey = ["donations", "mine", "paginated"];
@@ -29,6 +30,18 @@ export const pendingItemDonationsQueryKey = ["donations", "items", "pending"];
 export const donatedItemDonationsQueryKey = ["donations", "items", "donated"];
 export const itemDonationQueryKey = (id: string) => ["donations", "items", id];
 export const myDonationsPageSize = 7;
+
+export const useAllDonations = () =>
+  useQuery({
+    queryKey: allDonationsQueryKey,
+    queryFn: fetchAllDonations,
+  });
+
+export const useAllUsers = () =>
+  useQuery({
+    queryKey: allUsersQueryKey,
+    queryFn: fetchAllUsers,
+  });
 
 export const useDonations = () =>
   useQuery({
@@ -93,41 +106,25 @@ export const useCreateItemDonation = () => {
         queryClient.invalidateQueries({
           queryKey: pendingItemDonationsQueryKey,
         }),
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
       ]);
     },
   });
 };
 
-export const useCreateMoneyDonationOrder = () =>
-  useMutation({
-    mutationFn: (payload: CreateMoneyDonationOrderPayload) =>
-      createMoneyDonationOrder(payload),
-  });
-
-export const useVerifyMoneyDonation = () => {
+export const useCreateMoneyDonation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: VerifyMoneyDonationPayload) =>
-      verifyMoneyDonation(payload),
+    mutationFn: (payload: CreateMoneyDonationPayload) =>
+      createMoneyDonation(payload),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: monthlyDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
       ]);
-    },
-  });
-};
-
-export const useMarkMoneyDonationFailed = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (razorpayOrderId: string) =>
-      markMoneyDonationFailed(razorpayOrderId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: myDonationsQueryKey });
     },
   });
 };

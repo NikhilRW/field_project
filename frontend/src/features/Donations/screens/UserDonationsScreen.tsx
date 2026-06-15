@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import {
   Alert,
+  FlatList,
   Image,
-  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -28,9 +28,9 @@ import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
 import {
   useCreateItemDonation,
-  useCreateMoneyDonationOrder,
+  useCreateMoneyDonation,
+  useAllUsers,
   useMyDonations,
-  useVerifyMoneyDonation,
 } from "../hooks/useDonations";
 import type {
   DonationCategory,
@@ -38,6 +38,7 @@ import type {
   DonationVerificationStatus,
   MyDonation,
 } from "../utils/api";
+import type { UserListItem } from "../utils/usersApi";
 import { userDonationsStyles as styles } from "../styles/userDonationsStyles";
 
 type UserDonationType = DonationCategory;
@@ -47,12 +48,6 @@ type CapturedPhoto = {
   imageUri: string;
   fileName?: string | null;
   fileType?: string | null;
-};
-
-type RazorpayPaymentSuccess = {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
 };
 
 const donationTypes: Array<{
@@ -168,7 +163,7 @@ function DonationHistoryRow({ donation }: { donation: MyDonation }) {
 
 export const UserDonationsScreen = () => {
   const insets = useSafeAreaInsets();
-  const user = useAuthStore((state) => state.user);
+  const isAdmin = useAuthStore((state) => state.isAdmin);
   const {
     data: myDonationPages,
     fetchNextPage,
@@ -178,14 +173,26 @@ export const UserDonationsScreen = () => {
     refetch: refetchMyDonations,
   } = useMyDonations();
   const createItemDonationMutation = useCreateItemDonation();
-  const createMoneyOrderMutation = useCreateMoneyDonationOrder();
-  const verifyMoneyDonationMutation = useVerifyMoneyDonation();
+  const createMoneyDonationMutation = useCreateMoneyDonation();
+  const { data: allUsers = [] } = useAllUsers();
 
   const [selectedType, setSelectedType] = useState<UserDonationType>("money");
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
-  
+  const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
+  const [userSearch, setUserSearch] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const filteredUsers = useMemo(() => {
+    if (!userSearch.trim()) return allUsers;
+    const q = userSearch.toLowerCase();
+    return allUsers.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+    );
+  }, [allUsers, userSearch]);
+
   const isMoney = selectedType === "money";
   const myDonations = useMemo(
     () => myDonationPages?.pages.flatMap((page) => page.items) ?? [],
@@ -196,17 +203,18 @@ export const UserDonationsScreen = () => {
   const numericAmount = useMemo(() => normalizeAmount(amount), [amount]);
   const isSubmitting =
     createItemDonationMutation.isPending ||
-    createMoneyOrderMutation.isPending ||
-    verifyMoneyDonationMutation.isPending;
+    createMoneyDonationMutation.isPending;
 
   const canSubmit = isMoney
-    ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting
-    : Boolean(purpose.trim() && photo?.imageUri && !isSubmitting);
+    ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting && (!isAdmin || selectedUser)
+    : Boolean(purpose.trim() && photo?.imageUri && !isSubmitting && (!isAdmin || selectedUser));
 
   const resetForm = () => {
     setAmount("");
     setPurpose("");
     setPhoto(null);
+    setSelectedUser(null);
+    setUserSearch("");
   };
   
 
@@ -259,6 +267,7 @@ export const UserDonationsScreen = () => {
         imageUri: photo.imageUri,
         fileName: photo.fileName,
         fileType: photo.fileType,
+        donorId: selectedUser?.id,
       });
 
       showMessage({
@@ -286,56 +295,23 @@ export const UserDonationsScreen = () => {
       return;
     }
 
-    if (Platform.OS === "web") {
-      showMessage({
-        message: "Payment unavailable",
-        description: "Razorpay checkout is available in the mobile app.",
-        type: "warning",
-      });
-      return;
-    }
-
     try {
-      const order = await createMoneyOrderMutation.mutateAsync({
+      await createMoneyDonationMutation.mutateAsync({
         amount: numericAmount,
         purpose: purpose.trim() || "Helping Hands Donation",
-      });
-
-      const RazorpayCheckout = (
-        await import("react-native-razorpay")
-      ).default;
-      const payment = (await RazorpayCheckout.open({
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Helping Hands",
-        description: order.purpose,
-        order_id: order.orderId,
-        prefill: {
-          name: order.donorName,
-          email: user?.email,
-        },
-        theme: {
-          color: Colors.primary,
-        },
-      })) as RazorpayPaymentSuccess;
-
-      await verifyMoneyDonationMutation.mutateAsync({
-        razorpayOrderId: payment.razorpay_order_id,
-        razorpayPaymentId: payment.razorpay_payment_id,
-        razorpaySignature: payment.razorpay_signature,
+        donorId: selectedUser?.id,
       });
 
       showMessage({
-        message: "Donation completed",
-        description: "Your payment was verified successfully.",
+        message: "Donation created",
+        description: "The donation has been recorded successfully.",
         type: "success",
       });
       resetForm();
     } catch (error: any) {
       showMessage({
-        message: "Payment not completed",
-        description: error?.description ?? error?.message ?? "Please try again.",
+        message: "Unable to create donation",
+        description: error?.message ?? "Please try again.",
         type: "danger",
       });
     }
@@ -383,6 +359,114 @@ export const UserDonationsScreen = () => {
               Support the NGO with money or verified item donations
             </Text>
           </View>
+
+          {isAdmin && (
+            <View style={styles.panel}>
+              <Text style={styles.sectionTitle}>Donating on behalf of</Text>
+              <TouchableOpacity
+                style={styles.inputWrap}
+                onPress={() => setShowUserDropdown(!showUserDropdown)}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.input,
+                    { paddingVertical: 14 },
+                    !selectedUser && { color: Colors.textTertiary },
+                  ]}
+                >
+                  {selectedUser
+                    ? `${selectedUser.name} (${selectedUser.email})`
+                    : "Select a user (optional)"}
+                </Text>
+              </TouchableOpacity>
+              {showUserDropdown && (
+                <View
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.92)",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.82)",
+                    maxHeight: 220,
+                    overflow: "hidden",
+                  }}
+                >
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                        borderBottomWidth: 1,
+                        borderBottomColor: "rgba(255,255,255,0.6)",
+                      },
+                    ]}
+                    placeholder="Search by name or email..."
+                    placeholderTextColor={Colors.textTertiary}
+                    value={userSearch}
+                    onChangeText={setUserSearch}
+                  />
+                  <FlatList
+                    data={filteredUsers}
+                    keyExtractor={(item) => item.id}
+                    keyboardShouldPersistTaps="handled"
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={{
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                          borderBottomWidth: 1,
+                          borderBottomColor: "rgba(255,255,255,0.4)",
+                          backgroundColor:
+                            selectedUser?.id === item.id
+                              ? Colors.primaryLight
+                              : "transparent",
+                        }}
+                        onPress={() => {
+                          setSelectedUser(
+                            selectedUser?.id === item.id ? null : item,
+                          );
+                          setShowUserDropdown(false);
+                          setUserSearch("");
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: "600",
+                            color: Colors.textPrimary,
+                          }}
+                        >
+                          {item.name}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: Colors.textTertiary,
+                            marginTop: 1,
+                          }}
+                        >
+                          {item.email}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          color: Colors.textTertiary,
+                          textAlign: "center",
+                          paddingVertical: 14,
+                        }}
+                      >
+                        No users found
+                      </Text>
+                    }
+                  />
+                </View>
+              )}
+            </View>
+          )}
 
           <View style={styles.panel}>
             <Text style={styles.sectionTitle}>Donation type</Text>
@@ -504,8 +588,8 @@ export const UserDonationsScreen = () => {
                 {isSubmitting
                   ? "Processing..."
                   : isMoney
-                    ? "Pay with Razorpay"
-                    : "Submit for verification"}
+                    ? "Create donation"
+                    : "Create donation"}
               </Text>
             </TouchableOpacity>
 
@@ -518,7 +602,7 @@ export const UserDonationsScreen = () => {
               <Text style={styles.helperText}>
                 {isMoney
                   ? "Successful payments are marked paid and verified automatically."
-                  : "Item donations stay unverified until the NGO team checks them at handover."}
+                  : "Item donations are marked verified upon creation."}
               </Text>
             </View>
           </View>

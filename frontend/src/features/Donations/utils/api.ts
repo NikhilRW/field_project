@@ -44,28 +44,34 @@ export type CreateItemDonationPayload = {
   imageUri: string;
   fileName?: string | null;
   fileType?: string | null;
+  donorId?: string;
 };
 
-export type CreateMoneyDonationOrderPayload = {
+export type CreateMoneyDonationPayload = {
   amount: number;
   purpose?: string;
+  donorId?: string;
 };
 
-export type MoneyDonationOrder = {
-  donationId: string;
-  keyId: string;
-  orderId: string;
-  amount: number;
-  currency: string;
+export type AllDonation = {
+  id: string;
+  donor: string;
+  donorId?: string;
   purpose: string;
-  donorName: string;
-  donation: MyDonation;
+  amount: number;
+  type: "incoming" | "outgoing";
+  date: string;
+  category: DonationCategory;
+  verificationStatus: DonationVerificationStatus;
+  paymentStatus: DonationPaymentStatus;
+  imageUrl?: string | null;
 };
 
-export type VerifyMoneyDonationPayload = {
-  razorpayOrderId: string;
-  razorpayPaymentId: string;
-  razorpaySignature: string;
+export const fetchAllDonations = async () => {
+  const response = await http.get<{ success: boolean; data: AllDonation[] }>(
+    "/api/donations/all",
+  );
+  return response.data.data;
 };
 
 export const fetchDonations = async () => {
@@ -157,6 +163,9 @@ export const createItemDonation = async (
 
   formData.append("category", payload.category);
   formData.append("purpose", payload.purpose);
+  if (payload.donorId) {
+    formData.append("donorId", payload.donorId);
+  }
 
   const response = await http.post<{ success: boolean; data: MyDonation }>(
     "/api/donations/item",
@@ -170,30 +179,12 @@ export const createItemDonation = async (
   return response.data.data;
 };
 
-export const createMoneyDonationOrder = async (
-  payload: CreateMoneyDonationOrderPayload,
-) => {
-  const response = await http.post<{
-    success: boolean;
-    data: MoneyDonationOrder;
-  }>("/api/donations/money/order", payload);
-  return response.data.data;
-};
-
-export const verifyMoneyDonation = async (
-  payload: VerifyMoneyDonationPayload,
+export const createMoneyDonation = async (
+  payload: CreateMoneyDonationPayload,
 ) => {
   const response = await http.post<{ success: boolean; data: MyDonation }>(
-    "/api/donations/money/verify",
+    "/api/donations/money",
     payload,
   );
   return response.data.data;
-};
-
-export const markMoneyDonationFailed = async (razorpayOrderId: string) => {
-  const response = await http.post<{ success: boolean }>(
-    "/api/donations/money/failure",
-    { razorpayOrderId },
-  );
-  return response.data.success;
 };

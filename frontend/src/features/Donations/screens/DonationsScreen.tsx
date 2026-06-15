@@ -1,236 +1,273 @@
-import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import React, { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { router } from "expo-router";
+import { CirclePlus, ChevronRight, PackageCheck, IndianRupee } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import AppHeader from "@/shared/components/AppHeader";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
-import { MAX_CHART_HEIGHT } from "../constants/chart";
-import { useDonations, useMonthlyDonations } from "../hooks/useDonations";
-import { donationsStyles as styles } from "../styles/donationsStyles";
-import { getDonationTotals, getMonthlyMaxValue } from "../utils/aggregates";
+import { useAllDonations } from "../hooks/useDonations";
+import type { AllDonation, DonationCategory } from "../utils/api";
 import DonatedItemsScreen from "./DonatedItemsScreen";
 
-function AdminFundsScreen() {
-  const insets = useSafeAreaInsets();
-  const { data: donationItems = [] } = useDonations();
-  const { data: monthlyItems = [] } = useMonthlyDonations();
+const filters: { label: string; value: DonationCategory | "all" }[] = [
+  { label: "All", value: "all" },
+  { label: "Money", value: "money" },
+  { label: "Clothes", value: "clothes" },
+  { label: "Books", value: "books" },
+  { label: "Others", value: "other_items" },
+];
 
-  const { received: totalReceived, spent: totalSpent } =
-    getDonationTotals(donationItems);
-  const maxVal = monthlyItems.length > 0 ? getMonthlyMaxValue(monthlyItems) : 1;
+function AdminDonationsScreen() {
+  const insets = useSafeAreaInsets();
+  const { data: allDonations = [], isLoading } = useAllDonations();
+
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState<DonationCategory | "all">("all");
+
+  const filtered = useMemo(() => {
+    let list = allDonations;
+    if (activeFilter !== "all") {
+      list = list.filter((d) => d.category === activeFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (d) =>
+          d.purpose.toLowerCase().includes(q) ||
+          d.donor.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [allDonations, activeFilter, search]);
+
+  const handleCardPress = (item: AllDonation) => {
+    if (item.category === "money") {
+      router.push(
+        `/(main)/donation/${item.id}?amount=${item.amount}&donor=${encodeURIComponent(item.donor)}&category=${item.category}&date=${item.date}&status=${item.verificationStatus}`,
+      );
+    } else {
+      router.push(`/(main)/donatedItem/${item.id}`);
+    }
+  };
 
   return (
     <MeshGradientBackground>
       <View
-        style={[
-          styles.container,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom + 20,
-            backgroundColor: "transparent",
-          },
-        ]}
+        style={{
+          flex: 1,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom + 20,
+        }}
       >
         <AppHeader />
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>Funds</Text>
-            <Text style={styles.titleSub}>Track donations and expenses</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <View
-              style={[
-                styles.summaryCard,
-                {
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.5)",
-                  elevation: 0,
-                  shadowOpacity: 0,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.summaryIcon,
-                  { backgroundColor: Colors.secondaryLight },
-                ]}
-              >
-                <ArrowDownLeft
-                  size={15}
-                  color={Colors.secondary}
-                  strokeWidth={2}
-                />
-              </View>
-              <Text style={styles.summaryLabel}>Received</Text>
-              <Text style={[styles.summaryValue, { color: Colors.secondary }]}>
-                ₹{totalReceived.toLocaleString("en-IN")}
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.summaryCard,
-                {
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.5)",
-                  elevation: 0,
-                  shadowOpacity: 0,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.summaryIcon,
-                  { backgroundColor: Colors.accentLight },
-                ]}
-              >
-                <ArrowUpRight size={15} color={Colors.accent} strokeWidth={2} />
-              </View>
-              <Text style={styles.summaryLabel}>Spent</Text>
-              <Text style={[styles.summaryValue, { color: Colors.accent }]}>
-                ₹{totalSpent.toLocaleString("en-IN")}
-              </Text>
-            </View>
-          </View>
-
+        <View style={{ paddingHorizontal: 20 }}>
           <View
-            style={[
-              styles.chartCard,
-              {
-                backgroundColor: "rgba(255, 255, 255, 0.35)",
-                borderWidth: 1,
-                borderColor: "rgba(255, 255, 255, 0.8)",
-                elevation: 0,
-                shadowOpacity: 0,
-              },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 12,
+            }}
           >
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Monthly Overview</Text>
-              <View style={styles.legendRow}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      { backgroundColor: Colors.secondary },
-                    ]}
-                  />
-                  <Text style={styles.legendText}>In</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      { backgroundColor: Colors.accent },
-                    ]}
-                  />
-                  <Text style={styles.legendText}>Out</Text>
-                </View>
-              </View>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "rgba(255,255,255,0.35)",
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.8)",
+                paddingHorizontal: 14,
+                height: 44,
+              }}
+            >
+              <TextInput
+                placeholder="Search Donations By Item Name Or Person"
+                placeholderTextColor={Colors.textTertiary}
+                value={search}
+                onChangeText={setSearch}
+                style={{
+                  flex: 1,
+                  fontSize: 13,
+                  color: Colors.textPrimary,
+                }}
+              />
             </View>
-            <View style={styles.chart}>
-              {monthlyItems.map((m, i) => {
-                const receivedH = (m.received / maxVal) * MAX_CHART_HEIGHT;
-                const spentH = (m.spent / maxVal) * MAX_CHART_HEIGHT;
-
-                return (
-                  <View key={i} style={styles.barGroup}>
-                    <View style={styles.bars}>
-                      <View
-                        style={[
-                          styles.bar,
-                          styles.barReceived,
-                          { height: receivedH },
-                        ]}
-                      />
-                      <View
-                        style={[
-                          styles.bar,
-                          styles.barSpent,
-                          { height: spentH },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.barLabel}>{m.month}</Text>
-                  </View>
-                );
-              })}
-            </View>
+            <TouchableOpacity
+              onPress={() => router.push("/(main)/donate")}
+              activeOpacity={0.75}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: Colors.primary,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CirclePlus size={20} color="#fff" strokeWidth={2.2} />
+            </TouchableOpacity>
           </View>
 
-          <Text style={styles.transactionsTitle}>Recent Transactions</Text>
-
-          {donationItems.map((d) => {
-            const isIncoming = d.type === "incoming";
-
-            return (
-              <View
-                key={d.id}
-                style={[
-                  styles.transRow,
-                  {
-                    backgroundColor: "rgba(255, 255, 255, 0.35)",
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8 }}
+            style={{ marginBottom: 8 }}
+          >
+            {filters.map((f) => {
+              const isActive = activeFilter === f.value;
+              return (
+                <TouchableOpacity
+                  key={f.value}
+                  onPress={() => setActiveFilter(f.value)}
+                  activeOpacity={0.75}
+                  style={{
+                    flexShrink: 0,
+                    height: 36,
+                    borderRadius: 999,
+                    paddingHorizontal: 16,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: isActive
+                      ? Colors.primary
+                      : "rgba(255,255,255,0.34)",
                     borderWidth: 1,
-                    borderColor: "rgba(255, 255, 255, 0.8)",
-                    elevation: 0,
-                    shadowOpacity: 0,
-                  },
-                ]}
-                testID={`donation-${d.id}`}
-              >
-                <View
-                  style={[
-                    styles.transIcon,
-                    {
-                      backgroundColor: isIncoming
-                        ? Colors.secondaryLight
-                        : Colors.errorLight,
-                    },
-                  ]}
+                    borderColor: isActive
+                      ? Colors.primary
+                      : "rgba(255,255,255,0.72)",
+                  }}
                 >
-                  {isIncoming ? (
-                    <ArrowDownLeft
-                      size={14}
-                      color={Colors.secondary}
-                      strokeWidth={2}
-                    />
-                  ) : (
-                    <ArrowUpRight
-                      size={14}
-                      color={Colors.error}
-                      strokeWidth={2}
-                    />
-                  )}
-                </View>
-                <View style={styles.transInfo}>
-                  <Text style={styles.transDonor}>{d.donor}</Text>
-                  <Text style={styles.transMeta}>
-                    {d.purpose} · {d.date}
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "700",
+                      color: isActive ? "#fff" : Colors.textSecondary,
+                    }}
+                  >
+                    {f.label}
                   </Text>
-                </View>
-                <Text
-                  style={[
-                    styles.transAmount,
-                    { color: isIncoming ? Colors.secondary : Colors.error },
-                  ]}
-                >
-                  {isIncoming ? "+" : "-"}₹{d.amount.toLocaleString("en-IN")}
-                </Text>
-              </View>
-            );
-          })}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
 
-          <View style={{ height: 32 }} />
-        </ScrollView>
+          {isLoading ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+              <ActivityIndicator size="large" color={Colors.primary} />
+            </View>
+          ) : filtered.length === 0 ? (
+            <View
+              style={{
+                backgroundColor: "rgba(255,255,255,0.38)",
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.82)",
+                padding: 28,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontSize: 13, color: Colors.textSecondary }}>
+                No donations found
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 32 }}
+            >
+              {/* Implement Flatlist */}
+              {filtered.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => handleCardPress(item)}
+                  activeOpacity={0.75}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    backgroundColor: "rgba(255,255,255,0.38)",
+                    borderRadius: 14,
+                    padding: 12,
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.82)",
+                    marginBottom: 10,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 62,
+                      height: 62,
+                      borderRadius: 12,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor:
+                        item.category === "money"
+                          ? Colors.secondaryLight
+                          : Colors.inputBg,
+                      borderWidth: 1,
+                      borderColor: "rgba(255,255,255,0.78)",
+                    }}
+                  >
+                    {item.category === "money" ? (
+                      <IndianRupee size={22} color={Colors.secondary} strokeWidth={2.2} />
+                    ) : item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={{
+                          width: 62,
+                          height: 62,
+                          borderRadius: 12,
+                        }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <PackageCheck size={22} color={Colors.primary} strokeWidth={2.2} />
+                    )}
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "700",
+                        color: Colors.textPrimary,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {item.category === "money"
+                        ? `₹${item.amount.toLocaleString("en-IN")}`
+                        : item.purpose}
+                    </Text>
+                    <Text
+                      style={{
+                        marginTop: 3,
+                        fontSize: 12,
+                        color: Colors.textTertiary,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {item.category === "money" ? item.donor : `${item.donor} · ${item.date}`}
+                    </Text>
+                  </View>
+
+                  <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={2} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </View>
     </MeshGradientBackground>
   );
@@ -238,6 +275,5 @@ function AdminFundsScreen() {
 
 export default function DonationsScreen() {
   const isAdmin = useAuthStore((state) => state.isAdmin);
-
-  return isAdmin ? <AdminFundsScreen /> : <DonatedItemsScreen showBackButton={false} />;
+  return isAdmin ? <AdminDonationsScreen /> : <DonatedItemsScreen showBackButton={false} />;
 }

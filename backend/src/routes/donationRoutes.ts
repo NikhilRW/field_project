@@ -1,17 +1,16 @@
 import { Router } from "express";
 import {
   createItemDonation,
-  createMoneyDonationOrder,
+  createMoneyDonation,
+  getAllDonations,
   getDonations,
   getDonatedItemDonations,
   getItemDonation,
   getMonthlyDonations,
   getMyDonations,
   getPendingItemDonations,
-  markMoneyDonationFailed,
   rejectItemDonation,
   verifyItemDonation,
-  verifyMoneyDonation,
 } from "../controllers/donationController";
 import { authenticate, authorizeRoles } from "../middleware/auth";
 import { upload, uploadDonationImage } from "../middleware/upload";
@@ -19,6 +18,12 @@ import { upload, uploadDonationImage } from "../middleware/upload";
 const router = Router();
 
 router.get("/", authenticate, authorizeRoles("Admin"), getDonations);
+router.get(
+  "/all",
+  authenticate,
+  authorizeRoles("Admin"),
+  getAllDonations,
+);
 router.get(
   "/monthly",
   authenticate,
@@ -58,34 +63,22 @@ router.patch(
 router.get(
   "/mine",
   authenticate,
-  authorizeRoles("User"),
+  authorizeRoles("Admin", "User"),
   getMyDonations,
 );
 router.post(
   "/item",
   authenticate,
-  authorizeRoles("User"),
+  authorizeRoles("Admin", "User"),
   upload.single("itemImage"),
   uploadDonationImage,
   createItemDonation,
 );
 router.post(
-  "/money/order",
+  "/money",
   authenticate,
-  authorizeRoles("User"),
-  createMoneyDonationOrder,
-);
-router.post(
-  "/money/verify",
-  authenticate,
-  authorizeRoles("User"),
-  verifyMoneyDonation,
-);
-router.post(
-  "/money/failure",
-  authenticate,
-  authorizeRoles("User"),
-  markMoneyDonationFailed,
+  authorizeRoles("Admin"),
+  createMoneyDonation,
 );
 
 export default router;
