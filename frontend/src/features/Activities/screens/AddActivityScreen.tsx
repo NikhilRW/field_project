@@ -22,7 +22,7 @@ import { useCreateActivity } from "../hooks/useCreateActivity";
 import { formatActivityDate, formatActivityDateLabel } from "../utils/date";
 import { addActivityStyles as styles } from "../styles/addActivityStyles";
 import CustomDateTimePicker from "../components/CustomDateTimePicker";
-import { isWeb } from "@/shared/utils/platform";
+import { isWeb } from "@/shared/constants/platform";
 
 const statusOptions: ActivityStatus[] = ["Upcoming", "Ongoing", "Completed"];
 
@@ -110,7 +110,7 @@ export default function AddActivityScreen() {
     event: RNDateTimePickerEvent,
     selectedDate?: Date,
   ) => {
-    if (isWeb()) {
+    if (isWeb) {
       // TODO: fix the any stuff here.
       setDate(new Date((event as any).target.value))
     }

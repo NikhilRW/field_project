@@ -1,5 +1,5 @@
 import http from "@/shared/utils/http";
-import { isWeb } from "@/shared/utils/platform";
+import { isWeb } from "@/shared/constants/platform";
 import type { Donation } from "@/shared/types/mock";
 
 export type MonthlyDonation = {
@@ -142,7 +142,7 @@ export const createItemDonation = async (
   const fileName = payload.fileName || fallbackFileName;
   const fileType = payload.fileType || "image/jpeg";
 
-  if (isWeb()) {
+  if (isWeb) {
     const res = await fetch(payload.imageUri);
     const blob = await res.blob();
     const file = new File([blob], fileName, { type: fileType });

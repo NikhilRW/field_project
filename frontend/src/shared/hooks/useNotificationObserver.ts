@@ -1,22 +1,8 @@
 import { useEffect, useRef } from "react";
-import {
-  FirebaseMessagingTypes,
-  getInitialNotification,
-  onMessage,
-  onNotificationOpenedApp,
-} from "@react-native-firebase/messaging";
 import { router } from "expo-router";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { firebaseMessaging } from "../constants/firebase";
-
-const getActivityIdFromMessage = (
-  message: FirebaseMessagingTypes.RemoteMessage,
-) => {
-  const activityId = message.data?.activityId;
-  return typeof activityId === "string" && activityId.length > 0
-    ? activityId
-    : null;
-};
+import { isWeb } from "../constants/platform";
 
 export const useNotificationObserver = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -24,72 +10,93 @@ export const useNotificationObserver = () => {
   const pendingActivityIdRef = useRef<string | null>(null);
   const handledMessageIdsRef = useRef(new Set<string>());
 
-  // Set message handler for when app is in foreground
   useEffect(() => {
-    if (!firebaseMessaging) {
-      return;
-    }
-
-    const unsubscribeForeground = onMessage(
-      firebaseMessaging,
-      async (message) => {
-        console.log("Foreground message received:", message);
-
-        const activityId = getActivityIdFromMessage(message);
+    if (isWeb) {
+      const handleWebNotificationClick = (event: Event) => {
+        // TODO: fix the any type here.
+        const notificationEvent = event as any;
+        const activityId = notificationEvent.notification?.data?.activityId;
         if (activityId) {
           pendingActivityIdRef.current = activityId;
         }
-      },
-    );
+      };
 
-    return unsubscribeForeground;
-  }, []);
+      navigator.serviceWorker?.addEventListener(
+        "notificationclick",
+        handleWebNotificationClick as any,
+      );
 
-  // Handle notification taps and app launch from notification
-  useEffect(() => {
+      return () => {
+        navigator.serviceWorker?.removeEventListener(
+          "notificationclick",
+          handleWebNotificationClick as any,
+        );
+      };
+    }
+
     if (!firebaseMessaging) {
       return;
     }
 
     let isMounted = true;
 
-    const handleNotificationOpen = async (
-      message: FirebaseMessagingTypes.RemoteMessage | null,
-    ) => {
-      if (!isMounted || !message) {
-        return;
-      }
+    const initNative = async () => {
+      const {
+        getInitialNotification,
+        onMessage: onNativeMessage,
+        onNotificationOpenedApp,
+      } = await import("@react-native-firebase/messaging");
 
-      const messageId = message.messageId;
-      if (!messageId || handledMessageIdsRef.current.has(messageId)) {
-        return;
-      }
+      const unsubscribeForeground = onNativeMessage(
+        firebaseMessaging!,
+        async (message: any) => {
+          console.log("Foreground message received:", message);
+          const activityId = message.data?.activityId;
+          if (typeof activityId === "string" && activityId.length > 0) {
+            pendingActivityIdRef.current = activityId;
+          }
+        },
+      );
 
-      handledMessageIdsRef.current.add(messageId);
-      const activityId = getActivityIdFromMessage(message);
+      cleanupFunctions.push(unsubscribeForeground);
 
-      if (activityId) {
-        pendingActivityIdRef.current = activityId;
-      }
+      const handleNotificationOpen = async (message: any) => {
+        if (!isMounted || !message) return;
+
+        const messageId = message.messageId;
+        if (!messageId || handledMessageIdsRef.current.has(messageId)) return;
+
+        handledMessageIdsRef.current.add(messageId);
+        const activityId = message.data?.activityId;
+        if (typeof activityId === "string" && activityId.length > 0) {
+          pendingActivityIdRef.current = activityId;
+        }
+      };
+
+      getInitialNotification(firebaseMessaging!).then((message: any) => {
+        handleNotificationOpen(message);
+      });
+
+      const unsubscribeNotificationOpened = onNotificationOpenedApp(
+        firebaseMessaging!,
+        (message: any) => {
+          handleNotificationOpen(message);
+        },
+      );
+
+      cleanupFunctions.push(unsubscribeNotificationOpened);
     };
 
-    // Get initial notification that opened the app
-    getInitialNotification(firebaseMessaging).then((message) => {
-      handleNotificationOpen(message);
-    });
+    const cleanupFunctions: Array<() => void> = [];
 
-    // Handle notification when app is in background and user taps it
-    const unsubscribeNotificationOpened = onNotificationOpenedApp(
-      firebaseMessaging,
-      (message) => {
-        handleNotificationOpen(message);
-      },
-    );
+    initNative();
 
-    return unsubscribeNotificationOpened;
+    return () => {
+      isMounted = false;
+      cleanupFunctions.forEach((fn) => fn());
+    };
   }, []);
 
-  // Navigate to activity when authenticated and have pending activity ID
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !pendingActivityIdRef.current) {
       return;

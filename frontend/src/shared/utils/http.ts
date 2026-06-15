@@ -50,9 +50,7 @@ http.interceptors.request.use(
     if (token) {
       const headers = AxiosHeaders.from(config.headers);
       headers.set("Authorization", `Bearer ${token}`);
-      if (__DEV__ && config.baseURL?.includes("ngrok-free.app")) {
-        headers.set("ngrok-skip-browser-warning", `true`);
-      }
+      headers.set("ngrok-skip-browser-warning", `true`);
       config.headers = headers;
     }
 
@@ -112,6 +110,7 @@ http.interceptors.response.use(
     }
 
     if (__DEV__) {
+      console.log(error.response);
       console.error("[HTTP Error]", error.response?.status, error.config?.url);
     }
 

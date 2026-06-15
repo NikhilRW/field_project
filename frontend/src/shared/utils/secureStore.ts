@@ -1,28 +1,26 @@
 import * as SecureStore from "expo-secure-store";
-import { isWeb } from "./platform";
 import { mmkvWrapper } from "./mmkvStorage";
-
-const isWebPlatform = isWeb();
+import { isWeb } from "../constants/platform";
 
 const ACCESS_TOKEN_KEY = "auth_access_token";
 const REFRESH_TOKEN_KEY = "auth_refresh_token";
 
 export const webSafeSecureStore = {
   setItemAsync: async (key: string, value: string) => {
-    if (isWebPlatform) {
+    if (isWeb) {
       mmkvWrapper.setItem(key, value);
     } else {
       await SecureStore.setItemAsync(key, value);
     }
   },
   getItemAsync: async (key: string) => {
-    if (isWebPlatform) {
+    if (isWeb) {
       return mmkvWrapper.getItem(key);
     }
     return await SecureStore.getItemAsync(key);
   },
   deleteItemAsync: async (key: string) => {
-    if (isWebPlatform) {
+    if (isWeb) {
       mmkvWrapper.removeItem(key);
     } else {
       await SecureStore.deleteItemAsync(key);

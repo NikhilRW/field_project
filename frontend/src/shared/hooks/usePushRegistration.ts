@@ -1,27 +1,25 @@
 import { useEffect, useRef } from "react";
-import {
-  AuthorizationStatus,
-  getToken,
-  onTokenRefresh,
-  requestPermission,
-} from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { getAccessToken } from "@/shared/utils/secureStore";
 import { setNotificationChannelAsync } from "expo-notifications";
 import { firebaseMessaging } from "../constants/firebase";
-import { showMessage } from "react-native-flash-message";
+import {
+  requestNotificationPermission,
+  getFCMToken,
+  registerWebServiceWorker,
+} from "../utils/fcm";
+import { isWeb } from "../constants/platform";
 
 const ensureNotificationChannel = async () => {
   if (Platform.OS !== "android") {
     return;
   }
 
-  // Create Android notification channel for FCM
   await setNotificationChannelAsync("activity-updates", {
     name: "Activity Updates",
-    importance: 5, // Max importance for heads-up notifications
+    importance: 5,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#FF231F7C",
   });
@@ -36,10 +34,6 @@ export const usePushRegistration = () => {
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !userId) {
       lastRegisteredUserId.current = null;
-      return;
-    }
-
-    if (!firebaseMessaging) {
       return;
     }
 
@@ -72,10 +66,29 @@ export const usePushRegistration = () => {
 
     const register = async () => {
       try {
+        if (isWeb) {
+          await registerWebServiceWorker();
+          const granted = await requestNotificationPermission();
+          if (!granted) return;
+          const token = await getFCMToken();
+          if (token) {
+            await registerToken(token);
+          }
+          return;
+        }
+
         if (!firebaseMessaging) {
           console.log("usePushRegistration :: firebase messaging not available.");
           return;
         }
+
+        const {
+          AuthorizationStatus,
+          getToken,
+          onTokenRefresh,
+          requestPermission,
+        } = await import("@react-native-firebase/messaging");
+
         await ensureNotificationChannel();
 
         const permission = await requestPermission(firebaseMessaging);
@@ -94,6 +107,12 @@ export const usePushRegistration = () => {
         }
 
         await registerToken(token);
+
+        const tokenSubscription = onTokenRefresh(firebaseMessaging, (token: string) => {
+          registerToken(token).catch(handleRegistrationError);
+        });
+
+        cleanupFunctions.push(tokenSubscription);
       } catch (error: any) {
         if (__DEV__) {
           console.warn(
@@ -113,20 +132,17 @@ export const usePushRegistration = () => {
       }
     };
 
-    // Listen for FCM token refreshes
-    const tokenSubscription = onTokenRefresh(firebaseMessaging, (token) => {
-      void registerToken(token).catch(handleRegistrationError);
-    });
+    const cleanupFunctions: Array<() => void> = [];
 
     if (lastRegisteredUserId.current !== userId) {
       void register().catch(handleRegistrationError);
-    } else {
-      void ensureNotificationChannel().catch(() => {});
+    } else if (!isWeb) {
+      ensureNotificationChannel().catch(() => {});
     }
 
     return () => {
       isActive = false;
-      tokenSubscription();
+      cleanupFunctions.forEach((fn) => fn());
     };
   }, [isHydrated, isAuthenticated, userId]);
 };

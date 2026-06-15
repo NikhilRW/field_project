@@ -27,6 +27,7 @@ import {
 } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import AppHeader from "@/shared/components/AppHeader";
+import NotificationPermissionPrompt from "@/shared/components/NotificationPermissionPrompt";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { useDashboard } from "../hooks/useDashboard";
@@ -109,6 +110,8 @@ export default function DashboardScreen() {
             <Text style={styles.greetingSub}>Welcome back</Text>
             <Text style={styles.greeting}>Good Morning, {greetingName}</Text>
           </Animated.View>
+
+          <NotificationPermissionPrompt />
 
           <View style={styles.statsGrid}>
             {isAdmin && (

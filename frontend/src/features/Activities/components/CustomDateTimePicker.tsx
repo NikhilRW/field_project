@@ -1,6 +1,6 @@
 import React, { createElement } from "react";
 import { DatePickerOptions } from "@react-native-community/datetimepicker";
-import { isWeb } from "@/shared/utils/platform";
+import { isWeb } from "@/shared/constants/platform";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const CustomDateTimePicker = ({
@@ -10,7 +10,7 @@ const CustomDateTimePicker = ({
   minimumDate,
   onChange,
 }: DatePickerOptions) => {
-  if (isWeb()) {
+  if (isWeb) {
     return createElement("input", {
       type: "date",
       value: value,

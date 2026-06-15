@@ -1,56 +1,56 @@
-import {
-  AuthorizationStatus,
-  deleteToken,
-  getToken,
-  requestPermission,
-  subscribeToTopic as subscribeToFirebaseTopic,
-  unsubscribeFromTopic as unsubscribeFromFirebaseTopic,
-} from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { getAccessToken } from "@/shared/utils/secureStore";
-import {
-  FirebaseMessagingTypes,
-  getMessaging,
-} from "@react-native-firebase/messaging";
-import { setNotificationChannelAsync } from "expo-notifications";
+import { webFirebaseApp } from "@/shared/config/firebase";
+import { isWeb } from "../constants/platform";
+import { getMessaging } from "@react-native-firebase/messaging";
+import { FirebaseApp } from "@firebase/app";
+import { Messaging } from "@firebase/messaging";
 
-export const getNativeFirebaseMessaging =
-  (): FirebaseMessagingTypes.Module | null => {
-    if (Platform.OS === "web") {
-      return null;
-    }
+let webMessaging: any = null;
+let webSwRegistration: ServiceWorkerRegistration | null = null;
 
-    try {
-      return getMessaging();
-    } catch (error: any) {
-      if (__DEV__) {
-        console.warn(
-          "[Firebase Messaging] Messaging is not available",
-          error?.message ?? error,
-        );
-      }
+const waitForWebApp = async () => {
+  while (!webFirebaseApp) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return webFirebaseApp;
+};
 
-      return null;
-    }
-  };
-const firebaseMessaging = getNativeFirebaseMessaging();
+const getWebMessaging = async (): Promise<Messaging> => {
+  if (webMessaging) return webMessaging;
+  const app = await waitForWebApp();
+  const { getMessaging } = await import("@firebase/messaging");
+  webMessaging = getMessaging(app);
+  return webMessaging;
+};
 
-/**
- * Create Android notification channel for FCM
- * Required for Android 8.0+
- */
+const getNativeMessagingModule = async () => {
+  const native = await import("@react-native-firebase/messaging");
+  return native;
+};
+
+export const getNativeFirebaseMessaging = () => {
+  if (isWeb) {
+    return null;
+  }
+  return getMessaging();
+};
+
+export const getMessagingInstance = () => (isWeb ? webMessaging : null);
+
 export const createNotificationChannel = async () => {
   if (Platform.OS !== "android") {
     return;
   }
 
   try {
+    const { setNotificationChannelAsync } = await import("expo-notifications");
     await setNotificationChannelAsync("activity-updates", {
       name: "Activity Updates",
       description:
         "Notifications about activity status changes and assignments",
-      importance: 4, // AndroidImportance.HIGH
+      importance: 4,
       lightColor: "#1B6CA8",
       vibrationPattern: [0, 250, 250, 250],
       sound: "default",
@@ -62,21 +62,29 @@ export const createNotificationChannel = async () => {
   }
 };
 
-/**
- * Request notification permissions
- * Required for FCM on Android 13+ and iOS
- */
 export const requestNotificationPermission = async (): Promise<boolean> => {
-  if (!firebaseMessaging) {
-    return false;
+  if (isWeb) {
+    try {
+      if (Notification.permission === "granted") return true;
+      if (Notification.permission === "denied") return false;
+
+      const permission = await Notification.requestPermission();
+      return permission === "granted";
+    } catch {
+      return false;
+    }
   }
 
   try {
-    const permission = await requestPermission(firebaseMessaging);
+    const native = await getNativeMessagingModule();
+    const firebaseMessaging = native.getMessaging();
+    if (!firebaseMessaging) return false;
+
+    const permission = await native.requestPermission(firebaseMessaging);
     const isGranted =
-      permission === AuthorizationStatus.AUTHORIZED ||
-      permission === AuthorizationStatus.PROVISIONAL ||
-      permission === AuthorizationStatus.EPHEMERAL;
+      permission === native.AuthorizationStatus.AUTHORIZED ||
+      permission === native.AuthorizationStatus.PROVISIONAL ||
+      permission === native.AuthorizationStatus.EPHEMERAL;
 
     if (isGranted) {
       console.log("✅ Notification permission granted");
@@ -91,16 +99,34 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Get FCM token for this device
- */
 export const getFCMToken = async (): Promise<string | null> => {
-  if (!firebaseMessaging) {
-    return null;
+  if (isWeb) {
+    try {
+      const messaging = await getWebMessaging();
+      const { getToken } = await import("@firebase/messaging");
+      const vapidKey = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
+
+      const options: any = { vapidKey };
+      if (webSwRegistration) {
+        options.serviceWorkerRegistration = webSwRegistration;
+      }
+
+      const token = await getToken(messaging, options);
+      return token ?? null;
+    } catch (error: any) {
+      if (__DEV__) {
+        console.warn("[FCM Web] Error getting token:", error?.message ?? error);
+      }
+      return null;
+    }
   }
 
   try {
-    const token = await getToken(firebaseMessaging);
+    const native = await getNativeMessagingModule();
+    const firebaseMessaging = native.getMessaging();
+    if (!firebaseMessaging) return null;
+
+    const token = await native.getToken(firebaseMessaging);
 
     if (token) {
       console.log("✅ FCM token obtained:", token.substring(0, 20) + "...");
@@ -115,10 +141,6 @@ export const getFCMToken = async (): Promise<string | null> => {
   }
 };
 
-/**
- * Register FCM token with backend
- * Called after login and when token refreshes
- */
 export const registerFCMToken = async (): Promise<boolean> => {
   try {
     const token = await getFCMToken();
@@ -148,17 +170,48 @@ export const registerFCMToken = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Subscribe to topic for broadcast notifications
- * Example: Subscribe to "activity-updates" to receive all activity notifications
- */
-export const subscribeToTopic = async (topic: string): Promise<boolean> => {
-  if (!firebaseMessaging) {
-    return false;
-  }
+export const registerWebServiceWorker = async () => {
+  if (!isWeb || !("serviceWorker" in navigator)) return;
 
   try {
-    await subscribeToFirebaseTopic(firebaseMessaging, topic);
+    const registration = await navigator.serviceWorker.register(
+      "/firebase-messaging-sw.js",
+      {
+        scope: "/",
+      },
+    );
+    console.log("✅ Web service worker registered");
+
+    webSwRegistration = registration;
+
+    if (registration.active) {
+      registration.active.postMessage({
+        type: "FIREBASE_CONFIG",
+        config: {
+          apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+          projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+          messagingSenderId:
+            process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+          appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+        },
+      });
+    }
+
+    return registration;
+  } catch (error) {
+    console.error("Error registering web service worker:", error);
+  }
+};
+
+export const subscribeToTopic = async (topic: string): Promise<boolean> => {
+  if (isWeb) return false;
+
+  try {
+    const native = await getNativeMessagingModule();
+    const firebaseMessaging = native.getMessaging();
+    if (!firebaseMessaging) return false;
+
+    await native.subscribeToTopic(firebaseMessaging, topic);
     console.log(`✅ Subscribed to topic: ${topic}`);
     return true;
   } catch (error) {
@@ -167,15 +220,15 @@ export const subscribeToTopic = async (topic: string): Promise<boolean> => {
   }
 };
 
-/**
- * Unsubscribe from topic
- */
 export const unsubscribeFromTopic = async (topic: string): Promise<boolean> => {
-  if (!firebaseMessaging) {
-    return false;
-  }
+  if (isWeb) return false;
+
   try {
-    await unsubscribeFromFirebaseTopic(firebaseMessaging, topic);
+    const native = await getNativeMessagingModule();
+    const firebaseMessaging = native.getMessaging();
+    if (!firebaseMessaging) return false;
+
+    await native.unsubscribeFromTopic(firebaseMessaging, topic);
     console.log(`✅ Unsubscribed from topic: ${topic}`);
     return true;
   } catch (error) {
@@ -184,51 +237,63 @@ export const unsubscribeFromTopic = async (topic: string): Promise<boolean> => {
   }
 };
 
-/**
- * Complete FCM setup
- * Call this once during app initialization (after login)
- */
 export const setupFCM = async (): Promise<void> => {
-  if (!firebaseMessaging) {
-    return;
-  }
-
   console.log("🔧 Setting up Firebase Cloud Messaging...");
 
   try {
-    // Step 1: Create Android notification channel
-    await createNotificationChannel();
+    if (isWeb) {
+      await registerWebServiceWorker();
+      await requestNotificationPermission();
+      await registerFCMToken();
+      console.log("✅ Firebase Cloud Messaging setup complete (web)");
+      return;
+    }
 
-    // Step 2: Request permissions
+    await createNotificationChannel();
     const permissionGranted = await requestNotificationPermission();
     if (!permissionGranted) {
       console.warn("Notifications disabled - permission not granted");
       return;
     }
 
-    // Step 3: Register token with backend
     await registerFCMToken();
-
-    // Step 4: Subscribe to default topics (optional)
-    // You can add topics here if using topic-based messaging
-    // await subscribeToTopic("activity-updates");
-
     console.log("✅ Firebase Cloud Messaging setup complete");
   } catch (error) {
     console.error("Error setting up FCM:", error);
   }
 };
 
-/**
- * Delete FCM token (call on logout)
- */
 export const deleteFCMToken = async (): Promise<void> => {
-  if (!firebaseMessaging) {
+  try {
+    const accessToken = await getAccessToken();
+    if (accessToken) {
+      await http.post("/api/notifications/unregister-token");
+    }
+  } catch (error: any) {
+    if (error?.response?.status !== 401 && error?.response?.status !== 403) {
+      console.error("Error unregistering FCM token:", error);
+    }
+  }
+
+  if (isWeb) {
+    if (webMessaging) {
+      try {
+        const { deleteToken } = await import("@firebase/messaging");
+        await deleteToken(webMessaging);
+        console.log("✅ FCM token deleted (web)");
+      } catch (error) {
+        console.error("Error deleting FCM token (web):", error);
+      }
+    }
     return;
   }
 
   try {
-    await deleteToken(firebaseMessaging);
+    const native = await getNativeMessagingModule();
+    const firebaseMessaging = native.getMessaging();
+    if (!firebaseMessaging) return;
+
+    await native.deleteToken(firebaseMessaging);
     console.log("✅ FCM token deleted");
   } catch (error) {
     console.error("Error deleting FCM token:", error);

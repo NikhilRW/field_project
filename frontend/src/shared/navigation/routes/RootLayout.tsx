@@ -10,24 +10,21 @@ import { useNotificationObserver } from "@/shared/hooks/useNotificationObserver"
 import { usePushRegistration } from "@/shared/hooks/usePushRegistration";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { setupFCM } from "@/shared/utils/fcm";
-import { isWeb } from "@/shared/utils/platform";
-import firebase from "@react-native-firebase/app";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useState } from "react";
-import { Text } from "react-native";
 import FlashMessage from "react-native-flash-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import "@/shared/config/firebase";
 
 SplashScreen.preventAutoHideAsync();
 
 // TODO: modularize the styles here also
 function RootLayoutNav() {
- 
   return (
-    <Stack screenOptions={{ headerBackTitle: "Back" }} >
+    <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(main)/onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />

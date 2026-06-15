@@ -1,11 +1,4 @@
 import { useEffect, useRef } from "react";
-import {
-  FirebaseMessagingTypes,
-  getInitialNotification,
-  onMessage,
-  onNotificationOpenedApp,
-  setBackgroundMessageHandler,
-} from "@react-native-firebase/messaging";
 import { router } from "expo-router";
 import {
   setNotificationHandler,
@@ -17,8 +10,25 @@ import {
 import { useAuthStore } from "@/shared/stores/authStore";
 import { createNotificationStore } from "@/shared/stores/notificationStore";
 import { firebaseMessaging } from "../constants/firebase";
+import { webFirebaseApp } from "../config/firebase";
+import { isWeb } from "../constants/platform";
 
-const ACTIVITY_NOTIFICATION_CHANNEL_ID = "activity-updates";
+const isDesktopBrowser = isWeb && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+let webMessaging: any = null;
+
+const getWebMessaging = async () => {
+  if (webMessaging) return webMessaging;
+
+  // Wait for webFirebaseApp to be initialized
+  while (!webFirebaseApp) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  const { getMessaging } = await import("@firebase/messaging");
+  webMessaging = getMessaging(webFirebaseApp);
+  return webMessaging;
+};
 
 const getStringDataValue = (
   data: Record<string, unknown> | undefined,
@@ -31,17 +41,6 @@ const getStringDataValue = (
 const getActivityIdFromData = (data: Record<string, unknown> | undefined) =>
   getStringDataValue(data, "activityId");
 
-/**
- * Complete notification bootstrap hook
- * Handles all app states: foreground, background, and killed
- *
- * Flow:
- * 1. Configure notification handler for foreground behavior
- * 2. Set up background message handler
- * 3. Listen for foreground messages
- * 4. Handle notification taps (app backgrounded)
- * 5. Check for initial notification (app killed)
- */
 export const useNotificationBootstrap = () => {
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const {
@@ -49,172 +48,189 @@ export const useNotificationBootstrap = () => {
     setHasHandledKilledStateNotification,
   } = createNotificationStore();
 
-  // Prevent duplicate handling of killed-state notifications
   const killedStateHandledRef = useRef(false);
 
   useEffect(() => {
     if (!isHydrated) return;
 
-
-    if (!firebaseMessaging) {
-      return;
-    }
-
     const cleanupFunctions: Array<() => void> = [];
 
-    // Defer initialization to avoid blocking app startup
     const timeoutId = setTimeout(() => {
       initializeNotifications();
     }, 500);
 
     const initializeNotifications = () => {
       try {
-        // 1️⃣ CONFIGURE FOREGROUND NOTIFICATION HANDLER
-        // Controls how notifications appear when app is open
-        setNotificationHandler({
-          handleNotification: async () => ({
-            shouldShowAlert: true,
-            shouldPlaySound: true,
-            shouldSetBadge: true,
-            shouldShowBanner: true,
-            shouldShowList: true,
-          }),
-        });
-
-        // 2️⃣ SET UP BACKGROUND MESSAGE HANDLER
-        // Called when app is backgrounded and message arrives
-        setBackgroundMessageHandler(
-          firebaseMessaging,
-          async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-            console.log("📱 Background message received:", {
-              title: remoteMessage.notification?.title,
-              body: remoteMessage.notification?.body,
-              activityId: getActivityIdFromData(remoteMessage.data),
-            });
-
-            // Don't show notifications for "ended" events
-            if (getStringDataValue(remoteMessage.data, "ended") === "true") {
-              return;
-            }
-
-            // Schedule local notification to show in notification center
-            await scheduleNotificationAsync({
-              content: {
-                title: remoteMessage.notification?.title ?? "Helping Hands",
-                body: remoteMessage.notification?.body ?? "",
-                sound: "default",
-                badge: 1,
-                data: remoteMessage.data ?? {},
-              },
-              trigger: null, // Show immediately
-            });
-          },
-        );
-
-        // 3️⃣ HANDLE FOREGROUND MESSAGES
-        // Called when app is open and message arrives
-        const unsubscribeForeground = onMessage(
-          firebaseMessaging,
-          async (remoteMessage) => {
-            console.log("🔴 Foreground message received:", {
-              title: remoteMessage.notification?.title,
-              body: remoteMessage.notification?.body,
-              activityId: getActivityIdFromData(remoteMessage.data),
-            });
-
-            if (getStringDataValue(remoteMessage.data, "ended") === "true") {
-              return;
-            }
-
-            // Show notification banner even if app is open
-            await scheduleNotificationAsync({
-              content: {
-                title: remoteMessage.notification?.title ?? "Helping Hands",
-                body: remoteMessage.notification?.body ?? "",
-                sound: "default",
-                badge: 1,
-                data: remoteMessage.data ?? {},
-              },
-              trigger: null, // Show immediately
-            });
-          },
-        );
-
-        cleanupFunctions.push(unsubscribeForeground);
-
-        // 4️⃣ HANDLE NOTIFICATION TAP (APP BACKGROUNDED)
-        // Called when user taps notification and app is backgrounded
-        const notificationClickSubscription =
-          addNotificationResponseReceivedListener((response) => {
-            console.log("👆 Notification clicked (backgrounded app)");
-            handleNotificationClick(response);
-          });
-
-        cleanupFunctions.push(() => {
-          notificationClickSubscription.remove();
-        });
-
-        // 5️⃣ HANDLE APP OPENED FROM BACKGROUND NOTIFICATION
-        // Called when user taps notification and app transitions from background
-        const unsubscribeNotificationOpened = onNotificationOpenedApp(
-          firebaseMessaging,
-          (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-            console.log("🔔 App opened from background notification");
-            navigateToActivity(getActivityIdFromData(remoteMessage.data));
-          },
-        );
-
-        cleanupFunctions.push(unsubscribeNotificationOpened);
-
-        // 6️⃣ HANDLE APP OPENED FROM KILLED STATE
-        // Called once when app is completely closed and user taps notification
-        if (
-          !killedStateHandledRef.current &&
-          !hasHandledKilledStateNotification
-        ) {
-          killedStateHandledRef.current = true;
-          setHasHandledKilledStateNotification(true);
-
-          // Get Firebase initial notification (has priority)
-          getInitialNotification(firebaseMessaging)
-            .then((remoteMessage) => {
-              const activityId = getActivityIdFromData(remoteMessage?.data);
-
-              if (activityId) {
-                console.log(
-                  "🚀 App opened from killed state (Firebase notification)",
-                );
-                navigateToActivity(activityId);
-                return;
-              }
-
-              // Fallback: Check Expo scheduled notifications
-              getLastNotificationResponseAsync()
-                .then((response) => {
-                  const expoActivityId = getActivityIdFromData(
-                    response?.notification?.request?.content?.data,
-                  );
-
-                  if (expoActivityId) {
-                    console.log(
-                      "🚀 App opened from killed state (Expo notification)",
-                    );
-                    navigateToActivity(expoActivityId);
-                  }
-                })
-                .catch((error) => {
-                  console.error(
-                    "Error getting last notification response:",
-                    error,
-                  );
-                });
-            })
-            .catch((error) => {
-              console.error("Error getting initial notification:", error);
-            });
+        if (isWeb) {
+          initializeWebNotifications();
+          return;
         }
+
+        initializeNativeNotifications();
       } catch (error) {
         console.error("Error initializing notifications:", error);
+      }
+    };
+
+    const initializeWebNotifications = async () => {
+      const messaging = await getWebMessaging();
+      const { onMessage } = await import("@firebase/messaging");
+
+      setHasHandledKilledStateNotification(true);
+      killedStateHandledRef.current = true;
+
+      onMessage(messaging, async (payload: any) => {
+        console.log("🔴 Web foreground message received:", payload);
+
+        if (!isDesktopBrowser) return;
+
+        const title = payload.notification?.title ?? "Helping Hands";
+        const body = payload.notification?.body ?? "";
+
+        if (getStringDataValue(payload.data, "ended") === "true") return;
+
+        new Notification(title, { body, icon: "/favicon.png" });
+      });
+    };
+
+    const initializeNativeNotifications = async () => {
+      if (!firebaseMessaging) {
+        return;
+      }
+
+      const {
+        getInitialNotification,
+        onMessage: onNativeMessage,
+        onNotificationOpenedApp,
+        setBackgroundMessageHandler,
+      } = await import("@react-native-firebase/messaging");
+
+      setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+
+      setBackgroundMessageHandler(
+        firebaseMessaging,
+        async (remoteMessage: any) => {
+          console.log("📱 Background message received:", {
+            title: remoteMessage.notification?.title,
+            body: remoteMessage.notification?.body,
+            activityId: getActivityIdFromData(remoteMessage.data),
+          });
+
+          if (getStringDataValue(remoteMessage.data, "ended") === "true") {
+            return;
+          }
+
+          await scheduleNotificationAsync({
+            content: {
+              title: remoteMessage.notification?.title ?? "Helping Hands",
+              body: remoteMessage.notification?.body ?? "",
+              sound: "default",
+              badge: 1,
+              data: remoteMessage.data ?? {},
+            },
+            trigger: null,
+          });
+        },
+      );
+
+      const unsubscribeForeground = onNativeMessage(
+        firebaseMessaging,
+        async (remoteMessage: any) => {
+          console.log("🔴 Foreground message received:", {
+            title: remoteMessage.notification?.title,
+            body: remoteMessage.notification?.body,
+            activityId: getActivityIdFromData(remoteMessage.data),
+          });
+
+          if (getStringDataValue(remoteMessage.data, "ended") === "true") {
+            return;
+          }
+
+          await scheduleNotificationAsync({
+            content: {
+              title: remoteMessage.notification?.title ?? "Helping Hands",
+              body: remoteMessage.notification?.body ?? "",
+              sound: "default",
+              badge: 1,
+              data: remoteMessage.data ?? {},
+            },
+            trigger: null,
+          });
+        },
+      );
+
+      cleanupFunctions.push(unsubscribeForeground);
+
+      const notificationClickSubscription =
+        addNotificationResponseReceivedListener((response) => {
+          console.log("👆 Notification clicked (backgrounded app)");
+          handleNotificationClick(response);
+        });
+
+      cleanupFunctions.push(() => {
+        notificationClickSubscription.remove();
+      });
+
+      const unsubscribeNotificationOpened = onNotificationOpenedApp(
+        firebaseMessaging,
+        (remoteMessage: any) => {
+          console.log("🔔 App opened from background notification");
+          navigateToActivity(getActivityIdFromData(remoteMessage.data));
+        },
+      );
+
+      cleanupFunctions.push(unsubscribeNotificationOpened);
+
+      if (
+        !killedStateHandledRef.current &&
+        !hasHandledKilledStateNotification
+      ) {
+        killedStateHandledRef.current = true;
+        setHasHandledKilledStateNotification(true);
+
+        getInitialNotification(firebaseMessaging)
+          .then((remoteMessage: any) => {
+            const activityId = getActivityIdFromData(remoteMessage?.data);
+
+            if (activityId) {
+              console.log(
+                "🚀 App opened from killed state (Firebase notification)",
+              );
+              navigateToActivity(activityId);
+              return;
+            }
+
+            getLastNotificationResponseAsync()
+              .then((response) => {
+                const expoActivityId = getActivityIdFromData(
+                  response?.notification?.request?.content?.data,
+                );
+
+                if (expoActivityId) {
+                  console.log(
+                    "🚀 App opened from killed state (Expo notification)",
+                  );
+                  navigateToActivity(expoActivityId);
+                }
+              })
+              .catch((error) => {
+                console.error(
+                  "Error getting last notification response:",
+                  error,
+                );
+              });
+          })
+          .catch((error) => {
+            console.error("Error getting initial notification:", error);
+          });
       }
     };
 
@@ -229,11 +245,7 @@ export const useNotificationBootstrap = () => {
   ]);
 };
 
-/**
- * Handle notification click - navigate to activity
- */
 const handleNotificationClick = (response: NotificationResponse) => {
-  // Check if it's a default action (user tapped notification)
   if (
     response?.actionIdentifier === "expo.modules.notifications.actions.DEFAULT"
   ) {
@@ -246,13 +258,9 @@ const handleNotificationClick = (response: NotificationResponse) => {
   }
 };
 
-/**
- * Navigate to activity detail screen
- */
 const navigateToActivity = (activityId: string | undefined) => {
   if (!activityId) return;
 
   console.log(`🎯 Navigating to activity: ${activityId}`);
-  // Use replace instead of push to avoid history stack issues
   router.replace(`/(main)/activity/${activityId}` as any);
 };

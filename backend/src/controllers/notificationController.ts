@@ -38,10 +38,34 @@ export const registerPushToken = async (req: AuthRequest, res: Response) => {
     console.log(`✅ FCM token registered for user ${req.user.id}`);
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Register push token error:", error);
+    console.error("Failed to register push token:", error);
     return res
       .status(500)
       .json({ success: false, error: "Failed to register push token." });
+  }
+};
+
+/**
+ * Unregister/clear FCM device token on logout
+ */
+export const unregisterPushToken = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, error: "Unauthorized." });
+    }
+
+    await db
+      .update(users)
+      .set({ expoPushToken: null })
+      .where(eq(users.id, req.user.id));
+
+    console.log(`✅ FCM token cleared for user ${req.user.id}`);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Failed to unregister push token:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to unregister push token." });
   }
 };
 

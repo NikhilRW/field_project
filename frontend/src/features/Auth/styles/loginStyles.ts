@@ -138,17 +138,16 @@ export const loginStyles = StyleSheet.create({
     fontWeight: "500" as const,
   },
   googleBtn: {
-    height: 50,
     borderRadius: 12,
     overflow: "hidden",
   },
-  googleGradient: {
+  googleBtnContentContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 15,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingVertical: 12,
   },
   googleMark: {
     width: 30,

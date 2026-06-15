@@ -6,7 +6,7 @@ import {
 } from "react-native-reanimated";
 import { onboardingSlides } from "../constants/slides";
 import type { OnboardingSlide } from "../types/slide";
-import { scheduleOnRN } from "react-native-worklets";
+import { runOnJS } from "react-native-worklets";
 
 export const useOnboardingCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,7 +26,7 @@ export const useOnboardingCarousel = () => {
   const animateToSlide = (nextIndex: number) => {
     fadeAnim.value = withTiming(0, { duration: 180 }, (finished) => {
       if (finished) {
-        scheduleOnRN(() => setCurrentIndex(nextIndex));
+        runOnJS(setCurrentIndex)(nextIndex);
         slideAnim.value = 20;
         fadeAnim.value = withTiming(1, { duration: 220 });
         slideAnim.value = withTiming(0, { duration: 220 });

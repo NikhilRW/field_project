@@ -9,6 +9,7 @@ import {
   setRefreshToken,
 } from "@/shared/utils/secureStore";
 import { signOutFromGoogle } from "../utils/google";
+import { deleteFCMToken } from "../utils/fcm";
 
 export type AuthRole = "Admin" | "User";
 
@@ -78,6 +79,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
+        await deleteFCMToken();
         await clearTokens();
         await signOutFromGoogle();
         set({
