@@ -34,9 +34,11 @@ import { UserListItem } from "@/features/Donations/types/common";
 export default function ManageUsersScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { data: allUsers = [], isLoading } = useQuery({
+  const { data: allUsers = [], isLoading, isError } = useQuery({
     queryKey: ["users", "manage"],
     queryFn: fetchAllUsers,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const [search, setSearch] = useState("");
@@ -206,6 +208,10 @@ export default function ManageUsersScreen() {
               }}
             >
               <ActivityIndicator size="large" color={Colors.primary} />
+            </View>
+          ) : isError ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 28 }}>
+              <Text style={{ fontSize: 13, color: Colors.textSecondary }}>Failed to load users</Text>
             </View>
           ) : (
             <FlatList

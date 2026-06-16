@@ -1,7 +1,6 @@
 import React, { createElement } from "react";
-import { DatePickerOptions } from "@react-native-community/datetimepicker";
+import DateTimePicker,{ DatePickerOptions } from "@react-native-community/datetimepicker";
 import { isWeb } from "@/shared/constants/platform";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 const CustomDateTimePicker = ({
   value,

@@ -109,10 +109,18 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
     })} - ${p.value}`;
   }, []);
 
-  if (data.length === 0) {
+  const hasSingleDate = useMemo(() => {
+    if (points.length < 2) return true;
+    const firstDate = points[0].date.getTime();
+    return points.every((p) => p.date.getTime() === firstDate);
+  }, [points]);
+
+  if (data.length === 0 || points.length < 2 || hasSingleDate) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No data to display</Text>
+        <Text style={styles.emptyText}>
+          {data.length === 0 ? "No data to display" : "Insufficient data for chart"}
+        </Text>
       </View>
     );
   }

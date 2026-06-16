@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -25,7 +25,6 @@ import {
   ArrowUpRight,
   PackageCheck,
 } from "lucide-react-native";
-import { useMutation } from "@tanstack/react-query";
 import AppHeader from "@/shared/components/AppHeader";
 import NotificationPermissionPrompt from "@/shared/components/NotificationPermissionPrompt";
 import { Colors } from "@/shared/constants/color";
@@ -45,15 +44,6 @@ export default function DashboardScreen() {
   const { data } = useDashboard();
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const user = useAuthStore((state) => state.user);
-
-  const { mutate } = useMutation({
-    mutationKey: ["hello"],
-    networkMode: "online",
-  });
-
-  useEffect(() => {
-    mutate();
-  }, []);
 
   const stats = data?.stats ?? {
     beneficiaries: 0,

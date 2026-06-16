@@ -24,12 +24,13 @@ export const useAnalytics = (): UseAnalyticsReturn => {
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
   const [graphMetric, setGraphMetric] = useState<GraphMetric>("total");
   const [graphType, setGraphType] = useState<DonationType>("all");
-
+    
   const { data: allData = [], isLoading, error: queryError } = useQuery({
     queryKey: ANALYTICS_QUERY_KEY,
-    queryFn: __DEV__ && USE_MOCK_DATA ? generateMockData : fetchAnalyticsData,
+    queryFn: fetchAnalyticsData,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
-
   const error = queryError ? "Failed to load analytics data" : null;
 
   const filtered = useMemo(
@@ -112,7 +113,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
         const date = new Date(createdAt).toISOString().split("T")[0];
         dateMap.set(date, (dateMap.get(date) || 0) + 1);
       });
-
+     
       return Array.from(dateMap.entries())
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => a.date.localeCompare(b.date));

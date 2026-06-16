@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   ScrollView,
@@ -33,7 +34,7 @@ export default function BeneficiariesScreen() {
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<BeneficiaryFilterTab>("All");
-  const { data: beneficiaryList = [] } = useBeneficiaries();
+  const { data: beneficiaryList = [], isLoading, isError } = useBeneficiaries();
 
   const filtered = beneficiaryList.filter((b) => {
     const matchSearch = b.name.toLowerCase().includes(search.toLowerCase());
@@ -134,6 +135,15 @@ export default function BeneficiariesScreen() {
           ))}
         </ScrollView>
 
+        {isLoading ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : isError ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 28 }}>
+            <Text style={{ fontSize: 13, color: Colors.textSecondary }}>Failed to load beneficiaries</Text>
+          </View>
+        ) : (
         <ScrollView
           style={styles.list}
           contentContainerStyle={styles.listContent}
@@ -207,6 +217,7 @@ export default function BeneficiariesScreen() {
           ))}
           <View style={{ height: 100 }} />
         </ScrollView>
+        )}
 
         <TouchableOpacity
           style={styles.fab}

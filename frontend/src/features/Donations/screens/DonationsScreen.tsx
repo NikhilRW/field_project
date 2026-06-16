@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   ScrollView,
   Text,
@@ -9,7 +10,12 @@ import {
   View,
 } from "react-native";
 import { router } from "expo-router";
-import { CirclePlus, ChevronRight, PackageCheck, IndianRupee } from "lucide-react-native";
+import {
+  CirclePlus,
+  ChevronRight,
+  PackageCheck,
+  IndianRupee,
+} from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppHeader from "@/shared/components/AppHeader";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
@@ -32,7 +38,9 @@ function AdminDonationsScreen() {
   const { data: allDonations = [], isLoading } = useAllDonations();
 
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<DonationCategory | "all">("all");
+  const [activeFilter, setActiveFilter] = useState<DonationCategory | "all">(
+    "all",
+  );
 
   const filtered = useMemo(() => {
     let list = allDonations;
@@ -70,7 +78,7 @@ function AdminDonationsScreen() {
         }}
       >
         <AppHeader />
-        <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ flex: 1, paddingHorizontal: 20 }}>
           <View
             style={{
               flexDirection: "row",
@@ -120,77 +128,84 @@ function AdminDonationsScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-            style={{ marginBottom: 8 }}
-          >
-            {filters.map((f) => {
-              const isActive = activeFilter === f.value;
-              return (
-                <TouchableOpacity
-                  key={f.value}
-                  onPress={() => setActiveFilter(f.value)}
-                  activeOpacity={0.75}
-                  style={{
-                    flexShrink: 0,
-                    height: 36,
-                    borderRadius: 999,
-                    paddingHorizontal: 16,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: isActive
-                      ? Colors.primary
-                      : "rgba(255,255,255,0.34)",
-                    borderWidth: 1,
-                    borderColor: isActive
-                      ? Colors.primary
-                      : "rgba(255,255,255,0.72)",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: "700",
-                      color: isActive ? "#fff" : Colors.textSecondary,
-                    }}
-                  >
-                    {f.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
           {isLoading ? (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <ActivityIndicator size="large" color={Colors.primary} />
-            </View>
-          ) : filtered.length === 0 ? (
             <View
               style={{
-                backgroundColor: "rgba(255,255,255,0.38)",
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.82)",
-                padding: 28,
+                flex: 1,
                 alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <Text style={{ fontSize: 13, color: Colors.textSecondary }}>
-                No donations found
-              </Text>
+              <ActivityIndicator size="large" color={Colors.primary} />
             </View>
           ) : (
-            <ScrollView
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 32 }}
-            >
-              {/* Implement Flatlist */}
-              {filtered.map((item) => (
+              ListEmptyComponent={
+                <View
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.38)",
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.82)",
+                    padding: 28,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 13, color: Colors.textSecondary }}>
+                    No donations found
+                  </Text>
+                </View>
+              }
+              ListHeaderComponent={
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                  style={{ marginBottom: 8 }}
+                >
+                  {filters.map((f) => {
+                    const isActive = activeFilter === f.value;
+                    return (
+                      <TouchableOpacity
+                        key={f.value}
+                        onPress={() => setActiveFilter(f.value)}
+                        activeOpacity={0.75}
+                        style={{
+                          flexShrink: 0,
+                          height: 36,
+                          borderRadius: 999,
+                          paddingHorizontal: 16,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: isActive
+                            ? Colors.primary
+                            : "rgba(255,255,255,0.34)",
+                          borderWidth: 1,
+                          borderColor: isActive
+                            ? Colors.primary
+                            : "rgba(255,255,255,0.72)",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: "700",
+                            color: isActive ? "#fff" : Colors.textSecondary,
+                          }}
+                        >
+                          {f.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              }
+              renderItem={({ item }) => (
                 <TouchableOpacity
-                  key={item.id}
                   onPress={() => handleCardPress(item)}
                   activeOpacity={0.75}
                   style={{
@@ -221,7 +236,11 @@ function AdminDonationsScreen() {
                     }}
                   >
                     {item.category === "money" ? (
-                      <IndianRupee size={22} color={Colors.secondary} strokeWidth={2.2} />
+                      <IndianRupee
+                        size={22}
+                        color={Colors.secondary}
+                        strokeWidth={2.2}
+                      />
                     ) : item.imageUrl ? (
                       <Image
                         source={{ uri: item.imageUrl }}
@@ -233,7 +252,11 @@ function AdminDonationsScreen() {
                         resizeMode="cover"
                       />
                     ) : (
-                      <PackageCheck size={22} color={Colors.primary} strokeWidth={2.2} />
+                      <PackageCheck
+                        size={22}
+                        color={Colors.primary}
+                        strokeWidth={2.2}
+                      />
                     )}
                   </View>
 
@@ -258,14 +281,20 @@ function AdminDonationsScreen() {
                       }}
                       numberOfLines={1}
                     >
-                      {item.category === "money" ? item.donor : `${item.donor} · ${item.date}`}
+                      {item.category === "money"
+                        ? item.donor
+                        : `${item.donor} · ${item.date}`}
                     </Text>
                   </View>
 
-                  <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={2} />
+                  <ChevronRight
+                    size={18}
+                    color={Colors.textTertiary}
+                    strokeWidth={2}
+                  />
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              )}
+            />
           )}
         </View>
       </View>
@@ -275,5 +304,9 @@ function AdminDonationsScreen() {
 
 export default function DonationsScreen() {
   const isAdmin = useAuthStore((state) => state.isAdmin);
-  return isAdmin ? <AdminDonationsScreen /> : <DonatedItemsScreen showBackButton={false} />;
+  return isAdmin ? (
+    <AdminDonationsScreen />
+  ) : (
+    <DonatedItemsScreen showBackButton={false} />
+  );
 }

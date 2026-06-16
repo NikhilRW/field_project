@@ -29,24 +29,31 @@ export const myDonationsQueryKey = ["donations", "mine", "paginated"];
 export const pendingItemDonationsQueryKey = ["donations", "items", "pending"];
 export const donatedItemDonationsQueryKey = ["donations", "items", "donated"];
 export const itemDonationQueryKey = (id: string) => ["donations", "items", id];
+export const analyticsQueryKey = ["analytics"];
 export const myDonationsPageSize = 7;
 
 export const useAllDonations = () =>
   useQuery({
     queryKey: allDonationsQueryKey,
     queryFn: fetchAllDonations,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
 export const useAllUsers = () =>
   useQuery({
     queryKey: allUsersQueryKey,
     queryFn: fetchAllUsers,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
 export const useDonations = () =>
   useQuery({
     queryKey: donationsQueryKey,
     queryFn: fetchDonations,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
 export const useMonthlyDonations = () =>
@@ -107,6 +114,7 @@ export const useCreateItemDonation = () => {
           queryKey: pendingItemDonationsQueryKey,
         }),
         queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
       ]);
     },
   });
@@ -124,6 +132,7 @@ export const useCreateMoneyDonation = () => {
         queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: monthlyDonationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
       ]);
     },
   });

@@ -7,4 +7,6 @@ export const useBeneficiaries = () =>
   useQuery({
     queryKey: beneficiariesQueryKey,
     queryFn: fetchBeneficiaries,
+    staleTime: 0,
+    refetchOnMount: "always",
   });

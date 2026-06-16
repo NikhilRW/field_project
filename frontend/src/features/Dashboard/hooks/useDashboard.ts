@@ -7,4 +7,6 @@ export const useDashboard = () =>
   useQuery({
     queryKey: dashboardQueryKey,
     queryFn: fetchDashboard,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
