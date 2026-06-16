@@ -13,7 +13,7 @@ const CustomDateTimePicker = ({
   if (isWeb) {
     return createElement("input", {
       type: "date",
-      value: value,
+      value: value instanceof Date ? value.toISOString().split("T")[0] : String(value),
       onInput: onChange,
     });
   }

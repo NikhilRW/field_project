@@ -46,3 +46,4 @@ app-example
 /.cache
 
 eas.json
+public/canvaskit.wasm

@@ -20,10 +20,11 @@ let webMessaging: any = null;
 const getWebMessaging = async () => {
   if (webMessaging) return webMessaging;
 
-  // Wait for webFirebaseApp to be initialized
-  while (!webFirebaseApp) {
+  for (let i = 0; i < 50; i++) {
+    if (webFirebaseApp) break;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
+  if (!webFirebaseApp) throw new Error("Firebase web app not initialized");
 
   const { getMessaging } = await import("@firebase/messaging");
   webMessaging = getMessaging(webFirebaseApp);
@@ -73,24 +74,28 @@ export const useNotificationBootstrap = () => {
     };
 
     const initializeWebNotifications = async () => {
-      const messaging = await getWebMessaging();
-      const { onMessage } = await import("@firebase/messaging");
+      try {
+        const messaging = await getWebMessaging();
+        const { onMessage } = await import("@firebase/messaging");
 
-      setHasHandledKilledStateNotification(true);
-      killedStateHandledRef.current = true;
+        setHasHandledKilledStateNotification(true);
+        killedStateHandledRef.current = true;
 
-      onMessage(messaging, async (payload: any) => {
-        console.log("🔴 Web foreground message received:", payload);
+        onMessage(messaging, async (payload: any) => {
+          console.log("🔴 Web foreground message received:", payload);
 
-        if (!isDesktopBrowser) return;
+          if (!isDesktopBrowser) return;
 
-        const title = payload.notification?.title ?? "Helping Hands";
-        const body = payload.notification?.body ?? "";
+          const title = payload.notification?.title ?? "Helping Hands";
+          const body = payload.notification?.body ?? "";
 
-        if (getStringDataValue(payload.data, "ended") === "true") return;
+          if (getStringDataValue(payload.data, "ended") === "true") return;
 
-        new Notification(title, { body, icon: "/favicon.png" });
-      });
+          new Notification(title, { body, icon: "/favicon.png" });
+        });
+      } catch (error) {
+        console.warn("Web notifications unavailable:", error);
+      }
     };
 
     const initializeNativeNotifications = async () => {

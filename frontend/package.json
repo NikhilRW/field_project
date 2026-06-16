@@ -8,7 +8,8 @@
     "fix:android-autolinking": "node scripts/patch-settings-gradle.cjs",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "postinstall": "node ./scripts/skia-post-install-script.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.11",
@@ -54,6 +55,7 @@
     "react-native": "0.83.6",
     "react-native-flash-message": "^0.4.2",
     "react-native-gesture-handler": "~2.30.0",
+    "react-native-graph": "^1.2.0",
     "react-native-maps": "^1.27.2",
     "react-native-mmkv": "^4.3.0",
     "react-native-nitro-modules": "^0.35.2",
@@ -61,9 +63,11 @@
     "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
+    "react-native-svg": "^15.15.5",
     "react-native-unistyles": "^3.1.1",
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.7.4",
+    "victory-native": "^41.26.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },

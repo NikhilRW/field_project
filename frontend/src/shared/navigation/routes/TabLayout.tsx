@@ -5,6 +5,7 @@ import {
   CalendarDays,
   HandCoins,
   CircleUser,
+  BarChart3,
 } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
@@ -77,6 +78,21 @@ export default function TabLayout() {
             </View>
           ),
         }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={hideTabIfUser(isUser, {
+          title: "Analytics",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+              <BarChart3
+                size={20}
+                color={color}
+                strokeWidth={focused ? 2.2 : 1.6}
+              />
+            </View>
+          ),
+        })}
       />
       <Tabs.Screen
         name="profile"

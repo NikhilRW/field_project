@@ -18,11 +18,18 @@ import FlashMessage from "react-native-flash-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import "@/shared/config/firebase";
+import { useLoadSkia } from "@/shared/hooks/useLoadSkia";
 
 SplashScreen.preventAutoHideAsync();
 
 // TODO: modularize the styles here also
 function RootLayoutNav() {
+  const { isSkiaLoded } = useLoadSkia();
+
+  if (!isSkiaLoded) {
+    return null; // or a loading indicator
+  }
+
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
