@@ -29,11 +29,11 @@ export const styles = StyleSheet.create({
   },
   header: {
     gap: 4,
-    paddingTop: 8,
+    paddingTop: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "800",
+    fontSize: 20,
+    fontWeight: "700" as const,
     color: Colors.textPrimary,
   },
   subtitle: {

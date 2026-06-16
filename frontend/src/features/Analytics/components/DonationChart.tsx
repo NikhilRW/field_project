@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { View, Text } from "react-native";
 import {
   Circle,
@@ -19,37 +19,30 @@ import {
   type SelectionDotProps,
 } from "react-native-graph";
 import { Colors } from "@/shared/constants/color";
-import type { DonationChartProps } from "../types/props";
 import {
   CIRCLE_RADIUS,
-  CIRCLE_RADIUS_MULTIPLIER,
   HORIZONTAL_PADDING,
 } from "../constants/common";
-import { aggregateByWeek } from "../utils/common";
+import type { DonationChartProps } from "../types/props";
 import { styles } from "../styles/donationChartStyles";
 
 // TODO: what is this actually can not use ref directly.
 const tooltipTextRef: { current: string } = { current: "" };
 
-function StaticSelectionDot({ color, circleX, circleY }: SelectionDotProps) {
+function StaticSelectionDot({ color, circleX, circleY, isActive }: SelectionDotProps) {
   const font = useFont(require("../../../../assets/ttfs/Inter.ttf"), 13);
   const circleRadius = useSharedValue(CIRCLE_RADIUS);
-  const circleStrokeRadius = useDerivedValue(
-    () => circleRadius.value * CIRCLE_RADIUS_MULTIPLIER,
-  );
-  const [text, setText] = useState(tooltipTextRef.current);
+  const glowOuterR = useDerivedValue(() => circleRadius.value * 4, [circleRadius]);
+  const dotOpacity = useDerivedValue(() => (isActive.value ? 1 : 0), [isActive]);
+  const [text, setText] = useState("");
   const textX = useDerivedValue(
-    () => Math.max(5, circleX.value - 70),
+    () => Math.max(5, circleX.value - 50),
     [circleX],
   );
   const textY = useDerivedValue(
     () => Math.max(14, circleY.value - 20),
     [circleY],
   );
-
-  useEffect(() => {
-    setText(tooltipTextRef.current);
-  }, []);
 
   useAnimatedReaction(
     () => circleX.value,
@@ -60,16 +53,10 @@ function StaticSelectionDot({ color, circleX, circleY }: SelectionDotProps) {
   );
 
   return (
-    <Group>
-      <Circle
-        opacity={0.05}
-        cx={circleX}
-        cy={circleY}
-        r={circleStrokeRadius}
-        color="#333333"
-      />
+    <Group opacity={dotOpacity}>
+      <Circle cx={circleX} cy={circleY} r={glowOuterR} color={"#00ddff"} opacity={0.06} />
       <Circle cx={circleX} cy={circleY} r={circleRadius} color={color}>
-        <Shadow dx={0} dy={0} color="rgba(0,0,0,0.5)" blur={4} />
+        <Shadow dx={0} dy={0} color={color} blur={6} />
       </Circle>
       {font && (
         <SkiaText
@@ -85,19 +72,13 @@ function StaticSelectionDot({ color, circleX, circleY }: SelectionDotProps) {
 }
 
 export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
-  const points = useMemo(() => aggregateByWeek(data), [data]);
-  const firstPoint = points[0] ?? null;
-
-  useEffect(() => {
-    if (firstPoint) {
-      const d = new Date(firstPoint.date);
-      tooltipTextRef.current = `${d.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })}  ${firstPoint.value}`;
-    }
-  }, [firstPoint]);
+  const points = useMemo(
+    () =>
+      data
+        .map((d) => ({ value: d.count, date: new Date(d.date) }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime()),
+    [data],
+  );
 
   const { yLabels, xLabels } = useMemo(() => {
     const vals = points.map((p) => p.value);
@@ -106,8 +87,10 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
     const yLabels = Array.from({ length: ticks + 1 }, (_, i) =>
       Math.round((maxVal / ticks) * i),
     );
+    const labelCount = points.length <= 10 ? points.length : 5;
+    const step = Math.max(1, Math.floor(points.length / labelCount));
     const xLabels = points
-      .filter((_, i) => i % Math.max(1, Math.floor(points.length / 5)) === 0)
+      .filter((_, i) => i % step === 0)
       .map((p) => ({
         date: p.date,
         label: p.date.toLocaleDateString("en-US", {
@@ -158,7 +141,7 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
             style={styles.graph}
             lineThickness={2}
             horizontalPadding={HORIZONTAL_PADDING}
-            verticalPadding={30}
+            verticalPadding={15}
             SelectionDot={StaticSelectionDot}
           />
           <View style={styles.xAxis}>

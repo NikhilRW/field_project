@@ -37,6 +37,7 @@ export const styles = StyleSheet.create({
   },
   graphWrapper: {
     flex: 1,
+    paddingTop: 10,
   },
   graph: {
     height: 180,

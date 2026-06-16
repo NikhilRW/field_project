@@ -12,7 +12,7 @@ export default function IndexScreen() {
 
   return (
     <Redirect
-      href={isAuthenticated ? "/(tabs)/dashboard" : "/(main)/onboarding"}
+      href={isAuthenticated ? "/(tabs)/activities" : "/(main)/onboarding"}
     />
   );
 }

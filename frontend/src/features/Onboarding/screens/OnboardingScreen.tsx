@@ -20,7 +20,7 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/(tabs)/dashboard" as any);
+      router.replace("/(tabs)/activities" as any);
     }
   }, [isAuthenticated]);
 

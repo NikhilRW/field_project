@@ -29,5 +29,4 @@ export const DONATION_TYPES: { value: DonationType; label: string }[] = [
 ];
 
 export const CIRCLE_RADIUS = 5;
-export const CIRCLE_RADIUS_MULTIPLIER = 6;
-export const HORIZONTAL_PADDING = 10;
+export const HORIZONTAL_PADDING = 7;

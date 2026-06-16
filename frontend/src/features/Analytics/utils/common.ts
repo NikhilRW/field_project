@@ -130,4 +130,15 @@ const aggregateByWeek = (
     .map(([date, count]) => ({ value: count, date: new Date(date) }));
 };
 
-export { filterDonations, generateMockData, getDateRange, groupByDate, aggregateByWeek };
+const aggregateChartData = (
+  data: { date: string; count: number }[],
+): { value: number; date: Date }[] => {
+  if (data.length <= 14) {
+    return data
+      .map((d) => ({ value: d.count, date: new Date(d.date) }))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+  return aggregateByWeek(data);
+};
+
+export { filterDonations, generateMockData, getDateRange, groupByDate, aggregateByWeek, aggregateChartData };

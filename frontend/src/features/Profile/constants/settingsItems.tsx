@@ -1,8 +1,6 @@
 import React from "react";
 import {
-  Pencil,
   Users,
-  Bell,
   LogOut,
   UserPen,
 } from "lucide-react-native";
@@ -18,23 +16,11 @@ export const buildProfileSettingsItems = (
   ...(isAdmin
     ? [
         {
-          icon: <Pencil size={16} color={Colors.primary} strokeWidth={1.8} />,
-          label: "Edit Profile",
-          sub: "Update NGO information",
-          iconBg: Colors.primaryLight,
-        },
-        {
           icon: <Users size={16} color={Colors.secondary} strokeWidth={1.8} />,
           label: "Manage Users",
           sub: "Admins, users & donors",
           iconBg: Colors.secondaryLight,
           onPress: onManageUsers,
-        },
-        {
-          icon: <Bell size={16} color={Colors.accent} strokeWidth={1.8} />,
-          label: "Notifications",
-          sub: "Alerts and reminders",
-          iconBg: Colors.accentLight,
         },
       ]
     : []),

@@ -84,7 +84,7 @@ export default function RegisterScreen() {
       }
 
       await googleLoginMutation.mutateAsync({ idToken });
-      router.replace("/(tabs)/dashboard" as any);
+      router.replace("/(tabs)/activities" as any);
     } catch (error: any) {
       Alert.alert("Google sign-in failed", getGoogleSignInErrorMessage(error));
     }

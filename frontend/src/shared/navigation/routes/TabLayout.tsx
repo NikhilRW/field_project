@@ -1,7 +1,6 @@
 import { Tabs } from "expo-router";
 import { View } from "react-native";
 import {
-  LayoutDashboard,
   CalendarDays,
   HandCoins,
   CircleUser,
@@ -32,18 +31,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="dashboard"
-        options={hideTabIfUser(isUser, {
-          title: "Home",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-              <LayoutDashboard
-                size={20}
-                color={color}
-                strokeWidth={focused ? 2.2 : 1.6}
-              />
-            </View>
-          ),
-        })}
+        options={hiddenTabOptions}
       />
       <Tabs.Screen
         name="beneficiaries"
@@ -67,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="donations"
         options={{
-          title: isAdmin ? "Funds" : "Donations",
+          title:"Donations",
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
               <HandCoins

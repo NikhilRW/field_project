@@ -41,9 +41,9 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const data = await loginMutation.mutateAsync({ email, password });
+      await loginMutation.mutateAsync({ email, password });
 
-      const destination = "/(tabs)/dashboard";
+      const destination = "/(tabs)/activities";
 
       router.replace(destination as any);
     } catch (error: any) {
@@ -62,7 +62,7 @@ export default function LoginScreen() {
       }
 
       await googleLoginMutation.mutateAsync({ idToken });
-      router.replace("/(tabs)/dashboard" as any);
+      router.replace("/(tabs)/activities" as any);
     } catch (error: any) {
       Alert.alert("Google sign-in failed", getGoogleSignInErrorMessage(error));
     }

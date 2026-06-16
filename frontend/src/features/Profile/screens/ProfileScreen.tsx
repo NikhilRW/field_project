@@ -145,32 +145,6 @@ export default function ProfileScreen() {
               )}
             </View>
           </View>
-
-          {isAdmin ? (
-            <View
-              style={[
-                styles.impactRow,
-                {
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.5)",
-                  elevation: 0,
-                  shadowOpacity: 0,
-                },
-              ]}
-            >
-              <View style={styles.impactItem}>
-                <Text style={styles.impactValue}>248</Text>
-                <Text style={styles.impactLabel}>People</Text>
-              </View>
-              <View style={styles.impactDivider} />
-              <View style={styles.impactItem}>
-                <Text style={styles.impactValue}>18</Text>
-                <Text style={styles.impactLabel}>Programs</Text>
-              </View>
-            </View>
-          ) : null}
-
           <Text style={styles.sectionLabel}>Settings</Text>
 
           <View
@@ -224,7 +198,6 @@ export default function ProfileScreen() {
             ))}
           </View>
 
-          <Text style={styles.footer}>SDG-3: Good Health & Well-Being</Text>
           <View style={{ height: 32 }} />
         </ScrollView>
 
