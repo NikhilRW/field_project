@@ -78,7 +78,9 @@ export const usePushRegistration = () => {
         }
 
         if (!firebaseMessaging) {
-          console.log("usePushRegistration :: firebase messaging not available.");
+          console.log(
+            "usePushRegistration :: firebase messaging not available.",
+          );
           return;
         }
 
@@ -108,9 +110,12 @@ export const usePushRegistration = () => {
 
         await registerToken(token);
 
-        const tokenSubscription = onTokenRefresh(firebaseMessaging, (token: string) => {
-          registerToken(token).catch(handleRegistrationError);
-        });
+        const tokenSubscription = onTokenRefresh(
+          firebaseMessaging,
+          (token: string) => {
+            registerToken(token).catch(handleRegistrationError);
+          },
+        );
 
         cleanupFunctions.push(tokenSubscription);
       } catch (error: any) {
@@ -132,7 +137,7 @@ export const usePushRegistration = () => {
       }
     };
 
-    const cleanupFunctions: Array<() => void> = [];
+    const cleanupFunctions: (() => void)[] = [];
 
     if (lastRegisteredUserId.current !== userId) {
       void register().catch(handleRegistrationError);

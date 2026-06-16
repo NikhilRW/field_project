@@ -4,23 +4,15 @@ import { getAccessToken } from "@/shared/utils/secureStore";
 import { webFirebaseApp } from "@/shared/config/firebase";
 import { isWeb } from "../constants/platform";
 import { getMessaging } from "@react-native-firebase/messaging";
-import { Messaging } from "@firebase/messaging";
+import { getMessaging as getFirebaseWebMessaging } from "@firebase/messaging";
+import type { Messaging } from "@firebase/messaging";
 
 let webMessaging: any = null;
 let webSwRegistration: ServiceWorkerRegistration | null = null;
 
-const waitForWebApp = async () => {
-  while (!webFirebaseApp) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  return webFirebaseApp;
-};
-
 const getWebMessaging = async (): Promise<Messaging> => {
   if (webMessaging) return webMessaging;
-  const app = await waitForWebApp();
-  const { getMessaging } = await import("@firebase/messaging");
-  webMessaging = getMessaging(app);
+  webMessaging = getFirebaseWebMessaging(webFirebaseApp);
   return webMessaging;
 };
 
@@ -76,7 +68,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 
   try {
     const native = await getNativeMessagingModule();
-    const firebaseMessaging = native.getMessaging();
+    const firebaseMessaging = getMessaging();
     if (!firebaseMessaging) return false;
 
     const permission = await native.requestPermission(firebaseMessaging);
@@ -104,7 +96,6 @@ export const getFCMToken = async (): Promise<string | null> => {
       const messaging = await getWebMessaging();
       const { getToken } = await import("@firebase/messaging");
       const vapidKey = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
-
       const options: any = { vapidKey };
       if (webSwRegistration) {
         options.serviceWorkerRegistration = webSwRegistration;

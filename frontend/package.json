@@ -8,13 +8,12 @@
     "fix:android-autolinking": "node scripts/patch-settings-gradle.cjs",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint",
-    "postinstall": "node ./scripts/skia-post-install-script.js"
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.11",
-    "@firebase/app": "^0.14.13",
-    "@firebase/messaging": "^0.13.0",
+    "@firebase/app": "0.13.0",
+    "@firebase/messaging": "^0.12.0",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-community/datetimepicker": "8.6.0",
     "@react-native-community/netinfo": "11.5.2",

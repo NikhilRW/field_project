@@ -27,7 +27,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
 
   const { data: allData = [], isLoading, error: queryError } = useQuery({
     queryKey: ANALYTICS_QUERY_KEY,
-    queryFn: USE_MOCK_DATA ? generateMockData : fetchAnalyticsData,
+    queryFn: __DEV__ && USE_MOCK_DATA ? generateMockData : fetchAnalyticsData,
   });
 
   const error = queryError ? "Failed to load analytics data" : null;

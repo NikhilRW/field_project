@@ -13,21 +13,21 @@ import { firebaseMessaging } from "../constants/firebase";
 import { webFirebaseApp } from "../config/firebase";
 import { isWeb } from "../constants/platform";
 
-const isDesktopBrowser = isWeb && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isDesktopBrowser =
+  isWeb && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 let webMessaging: any = null;
 
 const getWebMessaging = async () => {
   if (webMessaging) return webMessaging;
 
-  for (let i = 0; i < 50; i++) {
+  while (!webFirebaseApp === null) {
     if (webFirebaseApp) break;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  if (!webFirebaseApp) throw new Error("Firebase web app not initialized");
-
   const { getMessaging } = await import("@firebase/messaging");
-  webMessaging = getMessaging(webFirebaseApp);
+  const { getApp } = await import("@firebase/app");
+  webMessaging = getMessaging(getApp());
   return webMessaging;
 };
 
@@ -54,7 +54,7 @@ export const useNotificationBootstrap = () => {
   useEffect(() => {
     if (!isHydrated) return;
 
-    const cleanupFunctions: Array<() => void> = [];
+    const cleanupFunctions: (() => void)[] = [];
 
     const timeoutId = setTimeout(() => {
       initializeNotifications();

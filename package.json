@@ -8,8 +8,5 @@
   "scripts": {
     "dev:android": "bun run --cwd frontend android",
     "dev:backend": "bun run --cwd backend dev"
-  },
-  "dependencies": {
-    "expo-image-picker": "~55.0.19"
   }
 }
