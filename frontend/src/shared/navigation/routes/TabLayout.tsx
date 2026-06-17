@@ -8,10 +8,7 @@ import {
 } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
-import {
-  hiddenTabOptions,
-  hideTabIfUser,
-} from "@/shared/utils/tabNavigation";
+import { hiddenTabOptions, hideTabIfUser } from "@/shared/utils/tabNavigation";
 import { tabLayoutStyles as styles } from "@/shared/styles/tabLayoutStyles";
 
 export default function TabLayout() {
@@ -27,16 +24,11 @@ export default function TabLayout() {
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
+        animation: "shift",
       }}
+      backBehavior="initialRoute"
+      initialRouteName="activities"
     >
-      <Tabs.Screen
-        name="dashboard"
-        options={hiddenTabOptions}
-      />
-      <Tabs.Screen
-        name="beneficiaries"
-        options={hiddenTabOptions}
-      />
       <Tabs.Screen
         name="activities"
         options={{
@@ -55,7 +47,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="donations"
         options={{
-          title:"Donations",
+          title: "Donations",
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
               <HandCoins
@@ -97,6 +89,8 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="beneficiaries" options={hiddenTabOptions} />
+      <Tabs.Screen name="dashboard" options={hiddenTabOptions} />
     </Tabs>
   );
 }

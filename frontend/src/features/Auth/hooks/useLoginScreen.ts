@@ -10,7 +10,7 @@ import {
 } from "../utils/googleAuth";
 import { isWeb } from "@/shared/constants/platform";
 import { router } from "expo-router";
-import { useWebGoogleLogin } from "../hooks/useWebGoogleLogin";
+import { useWebGoogleLogin } from "./useGoogleLogin";
 import { showAppMessage } from "@/shared/utils/flashMessage";
 
 export const useLoginScreen = () => {

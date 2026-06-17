@@ -28,8 +28,7 @@ export default function ProfileScreen() {
   const [editNameVisible, setEditNameVisible] = useState(false);
 
   const handleLogout = async () => {
-    await logoutMutation.mutateAsync();
-    router.replace("/(auth)/login");
+    logoutMutation.mutate();
   };
 
   const handleEditName = () => setEditNameVisible(true);
@@ -169,6 +168,7 @@ export default function ProfileScreen() {
                 onPress={item.onPress}
                 activeOpacity={0.6}
                 testID={`settings-${i}`}
+                disabled={logoutMutation.isPending}
               >
                 <View
                   style={[

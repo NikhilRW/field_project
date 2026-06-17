@@ -11,6 +11,7 @@ import {
   updateProfileRequest,
   verifyEmailRequest,
 } from "../utils/api";
+import { useRouter } from "expo-router";
 
 export const useLoginMutation = () => {
   const login = useAuthStore((state) => state.login);
@@ -70,15 +71,18 @@ export const useResetPasswordMutation = () =>
 export const useLogoutMutation = () => {
   const logout = useAuthStore((state) => state.logout);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: logoutRequest,
     onSuccess: async () => {
       await logout();
       queryClient.clear();
+      router.replace("/(auth)/login");
     },
-    onError: async () => {
-      await logout();
+    onError: async (error) => {
+      // TODO: handle that apiClient null error.
+      console.log(error);
     },
   });
 };

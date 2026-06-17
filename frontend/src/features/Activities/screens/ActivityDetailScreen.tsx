@@ -63,7 +63,7 @@ export default function ActivityDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.navigate("/activities")}
           style={styles.backButton}
           activeOpacity={0.7}
         >

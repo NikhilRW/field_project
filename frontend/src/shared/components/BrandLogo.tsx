@@ -14,7 +14,7 @@ export default function BrandLogo({
   return (
     <UniImage
       source={require("../../../assets/splash-icon.png")}
-      style={[{ width: size, height: size }, style]}
+      style={{ width: size, height: size }}
       contentFit="contain"
     />
   );

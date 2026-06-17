@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import { View, Text } from "react-native";
 import {
   Circle,
@@ -10,8 +10,8 @@ import {
 import {
   useSharedValue,
   useDerivedValue,
-  useAnimatedReaction,
-  runOnJS,
+  SharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import {
   LineGraph,
@@ -19,22 +19,29 @@ import {
   type SelectionDotProps,
 } from "react-native-graph";
 import { Colors } from "@/shared/constants/color";
-import {
-  CIRCLE_RADIUS,
-  HORIZONTAL_PADDING,
-} from "../constants/common";
+import { CIRCLE_RADIUS, HORIZONTAL_PADDING } from "../constants/common";
 import type { DonationChartProps } from "../types/props";
 import { styles } from "../styles/donationChartStyles";
 
 // TODO: what is this actually can not use ref directly.
-const tooltipTextRef: { current: string } = { current: "" };
 
-function StaticSelectionDot({ color, circleX, circleY, isActive }: SelectionDotProps) {
+function StaticSelectionDot({
+  color,
+  circleX,
+  circleY,
+  isActive,
+  toolTipText,
+}: SelectionDotProps & { toolTipText: SharedValue<string> }) {
   const font = useFont(require("../../../../assets/ttfs/Inter.ttf"), 13);
   const circleRadius = useSharedValue(CIRCLE_RADIUS);
-  const glowOuterR = useDerivedValue(() => circleRadius.value * 4, [circleRadius]);
-  const dotOpacity = useDerivedValue(() => (isActive.value ? 1 : 0), [isActive]);
-  const [text, setText] = useState("");
+  const glowOuterR = useDerivedValue(
+    () => circleRadius.value * 4,
+    [circleRadius],
+  );
+  const dotOpacity = useDerivedValue(
+    () => withTiming(isActive.value ? 1 : 0, { duration: 200 }),
+    [isActive],
+  );
   const textX = useDerivedValue(
     () => Math.max(5, circleX.value - 50),
     [circleX],
@@ -44,17 +51,15 @@ function StaticSelectionDot({ color, circleX, circleY, isActive }: SelectionDotP
     [circleY],
   );
 
-  useAnimatedReaction(
-    () => circleX.value,
-    () => {
-      runOnJS(setText)(tooltipTextRef.current);
-    },
-    [circleX, circleY],
-  );
-
   return (
     <Group opacity={dotOpacity}>
-      <Circle cx={circleX} cy={circleY} r={glowOuterR} color={"#00ddff"} opacity={0.06} />
+      <Circle
+        cx={circleX}
+        cy={circleY}
+        r={glowOuterR}
+        color={"#00ddff"}
+        opacity={0.06}
+      />
       <Circle cx={circleX} cy={circleY} r={circleRadius} color={color}>
         <Shadow dx={0} dy={0} color={color} blur={6} />
       </Circle>
@@ -62,7 +67,7 @@ function StaticSelectionDot({ color, circleX, circleY, isActive }: SelectionDotP
         <SkiaText
           x={textX}
           y={textY}
-          text={text}
+          text={toolTipText}
           font={font}
           color={Colors.textPrimary}
         />
@@ -79,6 +84,7 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
         .sort((a, b) => a.date.getTime() - b.date.getTime()),
     [data],
   );
+  const toolTipText = useSharedValue("");
 
   const { yLabels, xLabels } = useMemo(() => {
     const vals = points.map((p) => p.value);
@@ -101,13 +107,16 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
     return { yLabels, xLabels };
   }, [points]);
 
-  const handlePointSelected = useCallback((p: GraphPoint) => {
-    const d = new Date(p.date);
-    tooltipTextRef.current = `${d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} - ${p.value}`;
-  }, []);
+  const handlePointSelected = useCallback(
+    (p: GraphPoint) => {
+      const d = new Date(p.date);
+      toolTipText.value = `${d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${p.value}`;
+    },
+    [toolTipText],
+  );
 
   const hasSingleDate = useMemo(() => {
     if (points.length < 2) return true;
@@ -119,7 +128,9 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>
-          {data.length === 0 ? "No data to display" : "Insufficient data for chart"}
+          {data.length === 0
+            ? "No data to display"
+            : "Insufficient data for chart"}
         </Text>
       </View>
     );
@@ -150,7 +161,9 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
             lineThickness={2}
             horizontalPadding={HORIZONTAL_PADDING}
             verticalPadding={15}
-            SelectionDot={StaticSelectionDot}
+            SelectionDot={(props) => (
+              <StaticSelectionDot {...props} toolTipText={toolTipText} />
+            )}
           />
           <View style={styles.xAxis}>
             {xLabels.map((label, i) => (

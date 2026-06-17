@@ -79,15 +79,15 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        await deleteFCMToken();
-        await clearTokens();
-        await signOutFromGoogle();
         set({
           user: null,
           role: null,
           isAdmin: false,
           isAuthenticated: false,
         });
+        await deleteFCMToken();
+        await clearTokens();
+        await signOutFromGoogle();
       },
 
       hydrate: async () => {
