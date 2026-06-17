@@ -1,8 +1,8 @@
 import React from "react";
+import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -189,10 +189,10 @@ export default function VerifyItemDetailScreen() {
           </View>
 
           <View style={styles.imageCard}>
-            <Image
+            <UniImage
               source={{ uri: item.imageUrl ?? undefined }}
               style={styles.image}
-              resizeMode="cover"
+              contentFit="cover"
             />
           </View>
 

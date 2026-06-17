@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from "react";
+import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   RefreshControl,
   ScrollView,
   Text,
@@ -37,11 +37,11 @@ const categoryLabels: Record<DonationCategory, string> = {
   other_items: "Other items",
 };
 
-const filterOptions: Array<{
+const filterOptions: {
   value: FilterCategory;
   label: string;
   icon: React.ReactNode;
-}> = [
+}[] = [
   {
     value: "all",
     label: "All",
@@ -84,10 +84,10 @@ function DonatedItemRow({ item }: { item: MyDonation }) {
       testID={`donated-item-${item.id}`}
     >
       {item.imageUrl ? (
-        <Image
+        <UniImage
           source={{ uri: item.imageUrl }}
           style={styles.thumbnail}
-          resizeMode="cover"
+          contentFit="cover"
         />
       ) : (
         <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>

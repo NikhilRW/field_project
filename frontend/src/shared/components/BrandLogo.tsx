@@ -1,5 +1,5 @@
 import React from "react";
-import { Image } from "react-native";
+import { UniImage } from "@/shared/components/UniComponents";
 import type { ImageStyle, StyleProp } from "react-native";
 
 type BrandLogoProps = {
@@ -12,10 +12,10 @@ export default function BrandLogo({
   style,
 }: BrandLogoProps) {
   return (
-    <Image
+    <UniImage
       source={require("../../../assets/splash-icon.png")}
       style={[{ width: size, height: size }, style]}
-      resizeMode="contain"
+      contentFit="contain"
     />
   );
 }

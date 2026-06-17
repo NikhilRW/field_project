@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
+import { UniImage } from "@/shared/components/UniComponents";
 import {
   Alert,
   FlatList,
-  Image,
   RefreshControl,
   ScrollView,
   Text,
@@ -525,10 +525,10 @@ export const UserDonationsScreen = () => {
                   testID="donation-photo-button"
                 >
                   {photo?.previewUri ? (
-                    <Image
+                    <UniImage
                       source={{ uri: photo.previewUri }}
                       style={styles.photoPreview}
-                      resizeMode="cover"
+                      contentFit="cover"
                     />
                   ) : (
                     <>

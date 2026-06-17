@@ -145,7 +145,6 @@ export const donatedItemsStyles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 16,
-    elevation: 0,
   },
   image: {
     width: "100%",

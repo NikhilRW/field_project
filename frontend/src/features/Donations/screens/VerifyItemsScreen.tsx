@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
+import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
-  Image,
   RefreshControl,
   ScrollView,
   Text,
@@ -138,10 +138,10 @@ export default function VerifyItemsScreen() {
                 }
                 testID={`verify-item-${item.id}`}
               >
-                <Image
+                <UniImage
                   source={{ uri: item.imageUrl ?? undefined }}
                   style={styles.thumbnail}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemTitle} numberOfLines={1}>

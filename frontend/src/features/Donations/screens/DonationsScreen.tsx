@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
+import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   ScrollView,
   Text,
   TextInput,
@@ -242,14 +242,14 @@ function AdminDonationsScreen() {
                         strokeWidth={2.2}
                       />
                     ) : item.imageUrl ? (
-                      <Image
+                      <UniImage
                         source={{ uri: item.imageUrl }}
                         style={{
                           width: 62,
                           height: 62,
                           borderRadius: 12,
                         }}
-                        resizeMode="cover"
+                        contentFit="cover"
                       />
                     ) : (
                       <PackageCheck

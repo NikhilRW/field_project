@@ -1,7 +1,7 @@
 import React from "react";
+import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -108,10 +108,10 @@ export default function DonatedItemDetailScreen() {
 
           <View style={styles.imageCard}>
             {item.imageUrl ? (
-              <Image
+              <UniImage
                 source={{ uri: item.imageUrl }}
                 style={styles.image}
-                resizeMode="cover"
+                contentFit="cover"
               />
             ) : (
               <View style={styles.imagePlaceholder}>

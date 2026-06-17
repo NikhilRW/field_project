@@ -1,5 +1,6 @@
 import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import { UniImage } from "@/shared/components/UniComponents";
 import { LinearGradient } from "expo-linear-gradient";
 import { GOOGLE_IMAGE_SOURCE } from "../constants/common";
 import { loginStyles as styles } from "../styles/loginStyles";
@@ -27,11 +28,7 @@ export default function GoogleAuthButton({
       >
         <View style={styles.googleBtnContentContainer}>
           <View style={styles.googleMark}>
-            <Image
-              source={GOOGLE_IMAGE_SOURCE}
-              resizeMethod="resize"
-              style={styles.googleImage}
-            />
+            <UniImage source={GOOGLE_IMAGE_SOURCE} style={styles.googleImage} />
           </View>
           <Text style={styles.googleBtnText}>
             {isLoading ? "Continuing..." : "Continue with Google"}
