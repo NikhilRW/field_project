@@ -19,6 +19,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import "@/shared/config/firebase";
 import { useLoadSkia } from "@/shared/hooks/useLoadSkia";
+import { isWeb } from "@/shared/constants/platform";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -68,11 +70,7 @@ function RootLayoutNav() {
       <Stack.Screen
         name="(main)/activity/[id]"
         options={{
-          headerShown: true,
-          title: "Activity Details",
-          headerStyle: { backgroundColor: "#FFFFFF" },
-          headerTintColor: "#1B6CA8",
-          headerTitleStyle: { fontWeight: "600" as const, color: "#1C1C2E" },
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -183,7 +181,15 @@ export default function RootLayout() {
       }}
     >
       <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
-        <RootLayoutNav />
+        {isWeb ? (
+          <GoogleOAuthProvider
+            clientId={process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID!}
+          >
+            <RootLayoutNav />
+          </GoogleOAuthProvider>
+        ) : (
+          <RootLayoutNav />
+        )}
         <FlashMessage position="bottom" style={{ marginBottom: bottom }} />
       </GestureHandlerRootView>
     </PersistQueryClientProvider>

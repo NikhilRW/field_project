@@ -1,7 +1,13 @@
 import React from "react";
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { Trash2, CalendarDays } from "lucide-react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import { ArrowLeft, Trash2, CalendarDays } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
 import ActivityStatusMenu from "../components/ActivityStatusMenu";
@@ -56,6 +62,19 @@ export default function ActivityDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft
+            size={14}
+            style={styles.backButtonIcon}
+            color={Colors.primary}
+            strokeWidth={2}
+          />
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
         <View style={styles.titleRow}>
           <View style={styles.titleWrap}>
             <Text style={styles.title}>{activity.name}</Text>

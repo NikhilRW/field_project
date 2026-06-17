@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthRequest } from "../types/auth";
 import { and, eq, gt, isNull } from "drizzle-orm";
-import { OAuth2Client } from "google-auth-library";
+import { OAuth2Client, OAuth2ClientOptions } from "google-auth-library";
 import {
   db,
   emailVerificationTokens,
@@ -20,7 +20,6 @@ import {
   sendVerificationEmail as sendVerificationEmailMessage,
 } from "../utils/email";
 
-
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
 type AuthResponseUser = {
@@ -31,14 +30,16 @@ type AuthResponseUser = {
   isEmailVerified: boolean;
 };
 
-const googleClient = new OAuth2Client();
+const clientOptions: OAuth2ClientOptions = {
+  client_id: process.env.GOOGLE_OAUTH_CLIENT_ID,
+  client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+  redirectUri: "postmessage",
+};
+
+const googleClient = new OAuth2Client(clientOptions);
 
 const getGoogleClientIds = () =>
-  [
-    process.env.GOOGLE_OAUTH_CLIENT_ID,
-    process.env.GOOGLE_WEB_CLIENT_ID,
-    process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID,
-  ]
+  [process.env.GOOGLE_OAUTH_CLIENT_ID]
     .flatMap((value) => value?.split(",") ?? [])
     .map((value) => value.trim())
     .filter(Boolean);
@@ -160,9 +161,10 @@ export const login = async (req: Request, res: Response) => {
     }
 
     if (user.isBlocked) {
-      return res
-        .status(403)
-        .json({ success: false, error: "Account is blocked. Contact support." });
+      return res.status(403).json({
+        success: false,
+        error: "Account is blocked. Contact support.",
+      });
     }
 
     if (!user.passwordHash) {
@@ -204,40 +206,53 @@ export const login = async (req: Request, res: Response) => {
 
 export const googleLogin = async (req: Request, res: Response) => {
   try {
-    const { idToken } = req.body as { idToken?: string };
+    const { idToken, authCode } = req.body as {
+      idToken?: string;
+      authCode?: string;
+    };
 
-    if (!idToken) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Google idToken is required." });
-    }
-
-    const audience = getGoogleClientIds();
-
-    if (!audience.length) {
-      return res.status(500).json({
+    if (!idToken && !authCode) {
+      return res.status(400).json({
         success: false,
-        error: "Google OAuth client ID is not configured on the server.",
+        error: "Google idToken or authCode is required.",
       });
     }
+    let payload = null;
+    if (idToken) {
+      const audience = getGoogleClientIds();
 
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience,
-    });
+      if (!audience.length) {
+        return res.status(500).json({
+          success: false,
+          error: "Google OAuth client ID is not configured on the server.",
+        });
+      }
 
-    const payload = ticket.getPayload();
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience,
+      });
 
-    if (!payload?.sub || !payload.email) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Invalid Google token." });
-    }
+      payload = ticket.getPayload();
 
-    if (!payload.email_verified) {
-      return res
-        .status(403)
-        .json({ success: false, error: "Google email is not verified." });
+      if (!payload?.sub || !payload.email) {
+        return res
+          .status(401)
+          .json({ success: false, error: "Invalid Google token." });
+      }
+
+      if (!payload.email_verified) {
+        return res
+          .status(403)
+          .json({ success: false, error: "Google email is not verified." });
+      }
+    } else {
+      const { tokens } = await googleClient.getToken(authCode);
+      const ticket = await googleClient.verifyIdToken({
+        idToken: tokens.id_token,
+        audience: getGoogleClientIds(),
+      });
+      payload = ticket.getPayload();
     }
 
     const normalizedEmail = normalizeEmail(payload.email);

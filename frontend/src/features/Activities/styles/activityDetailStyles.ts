@@ -151,6 +151,20 @@ export const activityDetailStyles = StyleSheet.create({
   statusMenuOptionTextActive: {
     color: Colors.primary,
   },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 12,
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: "600" as const,
+  },
+  backButtonIcon: {
+    marginTop: 2,
+  },
   stateContainer: {
     flex: 1,
     alignItems: "center",

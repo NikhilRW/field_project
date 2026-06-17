@@ -13,7 +13,7 @@ const configureGoogleSignIn = () => {
     return;
   }
 
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_ID;
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
 
   if (!webClientId) {
     throw new Error("Google Sign-In is not configured for this app.");

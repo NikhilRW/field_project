@@ -7,68 +7,30 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import BrandLogo from "@/shared/components/BrandLogo";
 import GoogleAuthButton from "../components/GoogleAuthButton";
-import { useLoginForm } from "../hooks/useLoginForm";
-import {
-  useGoogleLoginMutation,
-  useLoginMutation,
-} from "../hooks/useAuthMutations";
 import { loginStyles as styles } from "../styles/loginStyles";
-import {
-  getGoogleIdToken,
-  getGoogleSignInErrorMessage,
-} from "../utils/googleAuth";
+import { useLoginScreen } from "../hooks/useLoginScreen";
 
 // TODO: glassy vibes same as our app in all auth screens.
 export default function LoginScreen() {
   const {
     email,
-    setEmail,
+    handleGoogleSignIn,
+    handleLogin,
+    isAuthLoading,
     password,
+    setEmail,
     setPassword,
     showPassword,
     toggleShowPassword,
-  } = useLoginForm();
-
-  const loginMutation = useLoginMutation();
-  const googleLoginMutation = useGoogleLoginMutation();
-
-  const handleLogin = async () => {
-    try {
-      await loginMutation.mutateAsync({ email, password });
-
-      const destination = "/(tabs)/activities";
-
-      router.replace(destination as any);
-    } catch (error: any) {
-      const message = error?.message ?? "Unable to sign in. Please try again.";
-      Alert.alert("Login failed", message);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      const idToken = await getGoogleIdToken();
-      console.log("idtoken : "+idToken);
-      
-      if (!idToken) {
-        return;
-      }
-
-      await googleLoginMutation.mutateAsync({ idToken });
-      router.replace("/(tabs)/activities" as any);
-    } catch (error: any) {
-      Alert.alert("Google sign-in failed", getGoogleSignInErrorMessage(error));
-    }
-  };
-
-  const isAuthLoading = loginMutation.isPending || googleLoginMutation.isPending;
+    isGoogleLoginLoading,
+    isEmailLoginLoading,
+  } = useLoginScreen();
 
   return (
     <KeyboardAvoidingView
@@ -148,7 +110,7 @@ export default function LoginScreen() {
             disabled={isAuthLoading}
           >
             <Text style={styles.loginBtnText}>
-              {loginMutation.isPending ? "Signing In..." : "Sign In"}
+              {isEmailLoginLoading ? "Signing In..." : "Sign In"}
             </Text>
           </TouchableOpacity>
 
@@ -162,7 +124,7 @@ export default function LoginScreen() {
             onPress={handleGoogleSignIn}
             testID="google-login-btn"
             disabled={isAuthLoading}
-            isLoading={googleLoginMutation.isPending}
+            isLoading={isGoogleLoginLoading}
           />
 
           <View
@@ -187,7 +149,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );

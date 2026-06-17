@@ -21,7 +21,8 @@ export type RegisterRequest = {
 };
 
 export type GoogleLoginRequest = {
-  idToken: string;
+  idToken?: string;
+  authCode?: string;
 };
 
 export const loginRequest = async (payload: LoginRequest) => {
