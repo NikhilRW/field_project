@@ -12,6 +12,7 @@ import { createNotificationStore } from "@/shared/stores/notificationStore";
 import { firebaseMessaging } from "../constants/firebase";
 import { webFirebaseApp } from "../config/firebase";
 import { isWeb } from "../constants/platform";
+import { requestNotificationPermission } from "../utils/fcm";
 
 const isDesktopBrowser =
   isWeb && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -109,6 +110,8 @@ export const useNotificationBootstrap = () => {
         onNotificationOpenedApp,
         setBackgroundMessageHandler,
       } = await import("@react-native-firebase/messaging");
+
+      await requestNotificationPermission();
 
       setNotificationHandler({
         handleNotification: async () => ({
