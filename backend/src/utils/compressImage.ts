@@ -23,7 +23,6 @@ export const compressImageBuffer = (buffer: Buffer): Promise<Buffer> => {
 
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
-      .outputOption("-vf", "scale=1920:-1")
       .outputOption("-q:v", "15")
       .save(outputPath)
       .on("end", () => {
