@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import { and, desc, eq, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import {
   db,
   donationCategoryEnum,
@@ -38,9 +38,14 @@ const mapDonationRow = (row: typeof donations.$inferSelect) => ({
 const getMonthLabel = (date: Date) =>
   date.toLocaleString("en-US", { month: "short" });
 
-const buildMonthlyDonationRows = (rows: Array<typeof donations.$inferSelect>) => {
+const buildMonthlyDonationRows = (
+  rows: Array<typeof donations.$inferSelect>,
+) => {
   const now = new Date();
-  const monthMap = new Map<string, { month: string; received: number; spent: number }>();
+  const monthMap = new Map<
+    string,
+    { month: string; received: number; spent: number }
+  >();
 
   for (let offset = 5; offset >= 0; offset -= 1) {
     const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
@@ -69,40 +74,6 @@ const buildMonthlyDonationRows = (rows: Array<typeof donations.$inferSelect>) =>
   });
 
   return Array.from(monthMap.values());
-};
-
-export const getDonations = async (_req: AuthRequest, res: Response) => {
-  try {
-    const rows = await db
-      .select()
-      .from(donations)
-      .where(
-        and(
-          eq(donations.category, "money"),
-          or(
-            eq(donations.type, "outgoing"),
-            eq(donations.verificationStatus, "verified"),
-          ),
-        ),
-      )
-      .orderBy(desc(donations.date));
-
-    const data = rows.map((row) => ({
-      id: row.id,
-      donor: row.donorName,
-      purpose: row.purpose,
-      amount: Number(row.amount),
-      type: row.type,
-      date: formatDate(row.date),
-    }));
-
-    return res.status(200).json({ success: true, data });
-  } catch (error) {
-    console.error("Failed to fetch donations", error);
-    return res
-      .status(500)
-      .json({ success: false, error: "Failed to fetch donations" });
-  }
 };
 
 export const getAllDonations = async (_req: AuthRequest, res: Response) => {
@@ -221,6 +192,44 @@ export const getDonatedItemDonations = async (
     return res.status(500).json({
       success: false,
       error: "Failed to fetch donated items.",
+    });
+  }
+};
+
+export const batchMarkItemsDonated = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  try {
+    const { ids }: { ids: string[] } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "ids array is required and must not be empty.",
+      });
+    }
+
+    const result = await db
+      .update(donations)
+      .set({ isDonated: true })
+      .where(
+        and(
+          inArray(donations.id, ids),
+          ne(donations.category, "money"),
+        ),
+      )
+      .returning();
+
+    return res.status(200).json({
+      success: true,
+      data: result.map(mapDonationRow),
+    });
+  } catch (error) {
+    console.error("Failed to batch mark items as donated", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to update donations.",
     });
   }
 };
@@ -411,7 +420,11 @@ export const getMyDonations = async (req: AuthRequest, res: Response) => {
 export const createItemDonation = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { category, purpose, donorId: adminDonorId } = req.body as {
+    const {
+      category,
+      purpose,
+      donorId: adminDonorId,
+    } = req.body as {
       category?: string;
       purpose?: string;
       donorId?: string;
@@ -443,8 +456,7 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
     }
 
     const donorName = await fetchDonorName(effectiveDonorId);
-    const isAdminDirect =
-      req.user?.role === "Admin" && adminDonorId;
+    const isAdminDirect = req.user?.role === "Admin" && adminDonorId;
 
     const [createdDonation] = await db
       .insert(donations)
@@ -474,13 +486,14 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const createMoneyDonation = async (
-  req: AuthRequest,
-  res: Response,
-) => {
+export const createMoneyDonation = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { amount, purpose, donorId: adminDonorId } = req.body as {
+    const {
+      amount,
+      purpose,
+      donorId: adminDonorId,
+    } = req.body as {
       amount?: number;
       purpose?: string;
       donorId?: string;

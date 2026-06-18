@@ -66,6 +66,7 @@ export type AllDonation = {
   verificationStatus: DonationVerificationStatus;
   paymentStatus: DonationPaymentStatus;
   imageUrl?: string | null;
+  isDonated: boolean;
 };
 
 export const fetchAllDonations = async () => {
@@ -145,6 +146,14 @@ export const toggleItemDonatedStatus = async (id: string) => {
   const response = await http.patch<{ success: boolean; data: MyDonation }>(
     `/api/donations/items/${id}/mark-donated`,
   );
+  return response.data.data;
+};
+
+export const batchMarkItemsDonated = async (ids: string[]) => {
+  const response = await http.post<{
+    success: boolean;
+    data: MyDonation[];
+  }>("/api/donations/items/batch-mark-donated", { ids });
   return response.data.data;
 };
 

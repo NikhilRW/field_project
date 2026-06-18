@@ -1,9 +1,9 @@
 import { Router } from "express";
 import {
+  batchMarkItemsDonated,
   createItemDonation,
   createMoneyDonation,
   getAllDonations,
-  getDonations,
   getDonatedItemDonations,
   getItemDonation,
   getMonthlyDonations,
@@ -18,7 +18,6 @@ import { upload, uploadDonationImage } from "../middleware/upload";
 
 const router = Router();
 
-router.get("/", authenticate, authorizeRoles("Admin"), getDonations);
 router.get(
   "/all",
   authenticate,
@@ -60,6 +59,12 @@ router.patch(
   authenticate,
   authorizeRoles("Admin"),
   rejectItemDonation,
+);
+router.post(
+  "/items/batch-mark-donated",
+  authenticate,
+  authorizeRoles("Admin"),
+  batchMarkItemsDonated,
 );
 router.patch(
   "/items/:id/mark-donated",

@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  batchMarkItemsDonated,
   createItemDonation,
   createMoneyDonation,
   fetchAllDonations,
@@ -100,6 +101,22 @@ export const useItemDonation = (id: string) =>
     queryFn: () => fetchItemDonationById(id),
     enabled: Boolean(id),
   });
+
+export const useBatchMarkItemsDonated = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => batchMarkItemsDonated(ids),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({
+          queryKey: donatedItemDonationsQueryKey,
+        }),
+      ]);
+    },
+  });
+};
 
 export const useToggleItemDonatedStatus = () => {
   const queryClient = useQueryClient();
