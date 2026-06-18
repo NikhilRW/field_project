@@ -229,9 +229,6 @@ export const donations = pgTable(
       .notNull()
       .default("not_applicable"),
     imageUrl: text("image_url"),
-    razorpayOrderId: text("razorpay_order_id"),
-    razorpayPaymentId: text("razorpay_payment_id"),
-    razorpaySignature: text("razorpay_signature"),
     paymentVerifiedAt: timestamp("payment_verified_at", {
       withTimezone: true,
       mode: "date",
@@ -250,12 +247,6 @@ export const donations = pgTable(
     ),
     paymentStatusIdx: index("donations_payment_status_idx").on(
       table.paymentStatus,
-    ),
-    razorpayOrderIdx: uniqueIndex("donations_razorpay_order_id_unique").on(
-      table.razorpayOrderId,
-    ),
-    razorpayPaymentIdx: index("donations_razorpay_payment_id_idx").on(
-      table.razorpayPaymentId,
     ),
     dateIdx: index("donations_date_idx").on(table.date),
   }),

@@ -2,6 +2,7 @@ import type { NextFunction, Response } from "express";
 import multer from "multer";
 import type { AuthRequest } from "../types/auth";
 import { uploadToCloudinary } from "../config/cloudinaryConfig";
+import { compressImageBuffer } from "../utils/compressImage";
 
 const storage = multer.memoryStorage();
 
@@ -32,8 +33,10 @@ export const uploadDonationImage = async (
         .json({ success: false, error: "Donation item photo is required." });
     }
 
+    const compressed = await compressImageBuffer(req.file.buffer);
+
     const result = await uploadToCloudinary(
-      req.file.buffer,
+      compressed,
       "helping-hands/donations",
     );
 

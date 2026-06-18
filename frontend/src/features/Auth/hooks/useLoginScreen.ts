@@ -31,10 +31,12 @@ export const useLoginScreen = () => {
       await googleLoginMutation.mutateAsync({ authCode: codeResponse });
     },
     onLoginError: (errorTitle, errorDescription) => {
-      showAppMessage(
-        errorTitle ?? getGoogleSignInErrorMessage(errorTitle),
-        errorDescription ?? getGoogleSignInErrorMessage(errorDescription),
-      );
+      showAppMessage({
+        message: errorTitle ?? getGoogleSignInErrorMessage(errorTitle),
+        description:
+          errorDescription ?? getGoogleSignInErrorMessage(errorDescription),
+        type: "danger",
+      });
     },
   });
 
@@ -66,11 +68,11 @@ export const useLoginScreen = () => {
         router.replace("/(tabs)/activities");
       }
     } catch (error: any) {
-      showAppMessage(
-        "Google sign-in failed",
-        getGoogleSignInErrorMessage(error),
-        "danger",
-      );
+      showAppMessage({
+        type: "danger",
+        message: "Google sign-in failed",
+        description: getGoogleSignInErrorMessage(error),
+      });
     }
   };
 

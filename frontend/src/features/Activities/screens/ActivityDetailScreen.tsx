@@ -18,6 +18,7 @@ import {
   getActivityStatusBg,
   getActivityStatusColor,
 } from "../utils/statusColors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -56,24 +57,18 @@ export default function ActivityDetailScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
-          onPress={() => router.navigate("/activities")}
           style={styles.backButton}
-          activeOpacity={0.7}
+          onPress={() => router.back()}
+          activeOpacity={0.75}
         >
-          <ArrowLeft
-            size={14}
-            style={styles.backButtonIcon}
-            color={Colors.primary}
-            strokeWidth={2}
-          />
-          <Text style={styles.backButtonText}>Back</Text>
+          <ArrowLeft size={20} color={Colors.primary} strokeWidth={2.2} />
         </TouchableOpacity>
         <View style={styles.titleRow}>
           <View style={styles.titleWrap}>
@@ -144,7 +139,7 @@ export default function ActivityDetailScreen() {
         onDelete={handleDelete}
         onClose={closeDeleteModal}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

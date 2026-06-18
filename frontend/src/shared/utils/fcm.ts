@@ -1,11 +1,12 @@
-import { Platform } from "react-native";
+import { PermissionsAndroid, Platform } from "react-native";
 import http from "@/shared/utils/http";
 import { getAccessToken } from "@/shared/utils/secureStore";
 import { webFirebaseApp } from "@/shared/config/firebase";
-import { isWeb } from "../constants/platform";
+import { isAndroid, isWeb } from "../constants/platform";
 import { getMessaging } from "@react-native-firebase/messaging";
 import { getMessaging as getFirebaseWebMessaging } from "@firebase/messaging";
 import type { Messaging } from "@firebase/messaging";
+import { showAppMessage } from "./flashMessage";
 
 let webMessaging: any = null;
 let webSwRegistration: ServiceWorkerRegistration | null = null;
@@ -70,20 +71,37 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     const native = await getNativeMessagingModule();
     const firebaseMessaging = getMessaging();
     if (!firebaseMessaging) return false;
-
-    const permission = await native.requestPermission(firebaseMessaging);
-    const isGranted =
-      permission === native.AuthorizationStatus.AUTHORIZED ||
-      permission === native.AuthorizationStatus.PROVISIONAL ||
-      permission === native.AuthorizationStatus.EPHEMERAL;
-
-    if (isGranted) {
-      console.log("✅ Notification permission granted");
+    if (isAndroid) {
+      const result = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      );
+      if (result === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("✅ Notification permission granted");
+        return true;
+      } else {
+        showAppMessage({
+          type: "warning",
+          message: "Notification permission denied",
+          description:
+            "You won't receive updates about your activities. You can enable notifications in your device settings.",
+        });
+        return false;
+      }
     } else {
-      console.log("⚠️  Notification permission denied");
-    }
+      const permission = await native.requestPermission(firebaseMessaging);
+      const isGranted =
+        permission === native.AuthorizationStatus.AUTHORIZED ||
+        permission === native.AuthorizationStatus.PROVISIONAL ||
+        permission === native.AuthorizationStatus.EPHEMERAL;
 
-    return isGranted;
+      if (isGranted) {
+        console.log("✅ Notification permission granted");
+        return true;
+      } else {
+        console.log("⚠️  Notification permission denied");
+        return false;
+      }
+    }
   } catch (error) {
     console.error("Error requesting notification permission:", error);
     return false;

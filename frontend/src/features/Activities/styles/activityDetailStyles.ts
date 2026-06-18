@@ -152,10 +152,15 @@ export const activityDetailStyles = StyleSheet.create({
     color: Colors.primary,
   },
   backButton: {
-    flexDirection: "row",
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: "center",
-    gap: 4,
-    marginBottom: 12,
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.82)",
+    marginBottom: 16,
   },
   backButtonText: {
     fontSize: 14,
