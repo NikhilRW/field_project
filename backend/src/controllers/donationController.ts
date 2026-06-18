@@ -32,6 +32,7 @@ const mapDonationRow = (row: typeof donations.$inferSelect) => ({
   verificationStatus: row.verificationStatus,
   paymentStatus: row.paymentStatus,
   imageUrl: row.imageUrl,
+  isDonated: row.isDonated,
 });
 
 const getMonthLabel = (date: Date) =>
@@ -206,6 +207,7 @@ export const getDonatedItemDonations = async (
         and(
           ne(donations.category, "money"),
           eq(donations.verificationStatus, "verified"),
+          eq(donations.isDonated, false),
         ),
       )
       .orderBy(desc(donations.date));
@@ -219,6 +221,47 @@ export const getDonatedItemDonations = async (
     return res.status(500).json({
       success: false,
       error: "Failed to fetch donated items.",
+    });
+  }
+};
+
+export const markItemAsDonated = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = String(req.params.id);
+
+    const [donation] = await db
+      .select()
+      .from(donations)
+      .where(and(eq(donations.id, id), ne(donations.category, "money")));
+
+    if (!donation) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Item donation not found." });
+    }
+
+    if (donation.isDonated) {
+      return res.status(400).json({
+        success: false,
+        error: "This item has already been marked as donated.",
+      });
+    }
+
+    const [updatedDonation] = await db
+      .update(donations)
+      .set({ isDonated: true })
+      .where(eq(donations.id, donation.id))
+      .returning();
+
+    return res.status(200).json({
+      success: true,
+      data: mapDonationRow(updatedDonation),
+    });
+  } catch (error) {
+    console.error("Failed to mark item as donated", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to mark item as donated.",
     });
   }
 };

@@ -14,6 +14,7 @@ import {
   fetchMonthlyDonations,
   fetchMyDonations,
   fetchPendingItemDonations,
+  markItemAsDonated,
   rejectItemDonation,
   verifyItemDonation,
   type CreateItemDonationPayload,
@@ -99,6 +100,23 @@ export const useItemDonation = (id: string) =>
     queryFn: () => fetchItemDonationById(id),
     enabled: Boolean(id),
   });
+
+export const useMarkItemAsDonated = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => markItemAsDonated(id),
+    onSuccess: async (donation) => {
+      queryClient.setQueryData(itemDonationQueryKey(donation.id), donation);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: donatedItemDonationsQueryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+      ]);
+    },
+  });
+};
 
 export const useCreateItemDonation = () => {
   const queryClient = useQueryClient();

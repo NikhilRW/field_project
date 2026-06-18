@@ -1,18 +1,20 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, PackageCheck } from "lucide-react-native";
+import { ArrowLeft, Hand, PackageCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
-import { useItemDonation } from "../hooks/useDonations";
+import { useAuthStore } from "@/shared/stores/authStore";
+import { useItemDonation, useMarkItemAsDonated } from "../hooks/useDonations";
 import type { DonationCategory } from "../utils/api";
 import { donatedItemsStyles as styles } from "../styles/donatedItemsStyles";
 
@@ -27,7 +29,27 @@ export default function DonatedItemDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const itemId = id ?? "";
+  const currentUser = useAuthStore((state) => state.user);
+  const isAdmin = currentUser?.role === "Admin";
   const { data: item, isLoading, isError } = useItemDonation(itemId);
+  const { mutate: markDonated, isPending: isMarking } =
+    useMarkItemAsDonated();
+
+  const handleMarkDonated = useCallback(() => {
+    if (!item || item.isDonated) return;
+
+    Alert.alert(
+      "Mark as Donated",
+      `Confirm that "${item.purpose}" has been handed over to the beneficiary?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Confirm",
+          onPress: () => markDonated(item.id),
+        },
+      ],
+    );
+  }, [item, markDonated]);
 
   if (isLoading) {
     return (
@@ -143,6 +165,35 @@ export default function DonatedItemDetailScreen() {
               <Text style={styles.statusText}>{item.verificationStatus}</Text>
             </View>
           </View>
+
+          {isAdmin && !item.isDonated && (
+            <TouchableOpacity
+              style={styles.donateButton}
+              activeOpacity={0.75}
+              onPress={handleMarkDonated}
+              disabled={isMarking}
+            >
+              {isMarking ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Hand size={20} color="#fff" strokeWidth={2.2} />
+                  <Text style={styles.donateButtonText}>
+                    Mark as Donated
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {item.isDonated && (
+            <View style={styles.donatedBadge}>
+              <Hand size={18} color={Colors.secondary} strokeWidth={2.2} />
+              <Text style={styles.donatedBadgeText}>
+                Handed over to beneficiary
+              </Text>
+            </View>
+          )}
 
           <View style={{ height: 32 }} />
         </ScrollView>

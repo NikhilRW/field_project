@@ -229,6 +229,7 @@ export const donations = pgTable(
       .notNull()
       .default("not_applicable"),
     imageUrl: text("image_url"),
+    isDonated: boolean("is_donated").notNull().default(false),
     paymentVerifiedAt: timestamp("payment_verified_at", {
       withTimezone: true,
       mode: "date",

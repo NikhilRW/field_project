@@ -9,6 +9,7 @@ import {
   getMonthlyDonations,
   getMyDonations,
   getPendingItemDonations,
+  markItemAsDonated,
   rejectItemDonation,
   verifyItemDonation,
 } from "../controllers/donationController";
@@ -59,6 +60,12 @@ router.patch(
   authenticate,
   authorizeRoles("Admin"),
   rejectItemDonation,
+);
+router.patch(
+  "/items/:id/mark-donated",
+  authenticate,
+  authorizeRoles("Admin"),
+  markItemAsDonated,
 );
 router.get(
   "/mine",

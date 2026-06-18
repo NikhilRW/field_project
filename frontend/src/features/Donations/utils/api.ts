@@ -22,6 +22,7 @@ export type MyDonation = Donation & {
   verificationStatus: DonationVerificationStatus;
   paymentStatus: DonationPaymentStatus;
   imageUrl?: string | null;
+  isDonated: boolean;
 };
 
 export type MyDonationsPage = {
@@ -136,6 +137,13 @@ export const verifyItemDonation = async (id: string) => {
 export const rejectItemDonation = async (id: string) => {
   const response = await http.patch<{ success: boolean; data: MyDonation }>(
     `/api/donations/items/${id}/reject`,
+  );
+  return response.data.data;
+};
+
+export const markItemAsDonated = async (id: string) => {
+  const response = await http.patch<{ success: boolean; data: MyDonation }>(
+    `/api/donations/items/${id}/mark-donated`,
   );
   return response.data.data;
 };
