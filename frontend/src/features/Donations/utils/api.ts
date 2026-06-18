@@ -141,7 +141,7 @@ export const rejectItemDonation = async (id: string) => {
   return response.data.data;
 };
 
-export const markItemAsDonated = async (id: string) => {
+export const toggleItemDonatedStatus = async (id: string) => {
   const response = await http.patch<{ success: boolean; data: MyDonation }>(
     `/api/donations/items/${id}/mark-donated`,
   );

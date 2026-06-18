@@ -14,8 +14,8 @@ import {
   fetchMonthlyDonations,
   fetchMyDonations,
   fetchPendingItemDonations,
-  markItemAsDonated,
   rejectItemDonation,
+  toggleItemDonatedStatus,
   verifyItemDonation,
   type CreateItemDonationPayload,
   type CreateMoneyDonationPayload,
@@ -101,11 +101,11 @@ export const useItemDonation = (id: string) =>
     enabled: Boolean(id),
   });
 
-export const useMarkItemAsDonated = () => {
+export const useToggleItemDonatedStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => markItemAsDonated(id),
+    mutationFn: (id: string) => toggleItemDonatedStatus(id),
     onSuccess: async (donation) => {
       queryClient.setQueryData(itemDonationQueryKey(donation.id), donation);
       await Promise.all([

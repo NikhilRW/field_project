@@ -225,7 +225,10 @@ export const getDonatedItemDonations = async (
   }
 };
 
-export const markItemAsDonated = async (req: AuthRequest, res: Response) => {
+export const toggleItemDonatedStatus = async (
+  req: AuthRequest,
+  res: Response,
+) => {
   try {
     const id = String(req.params.id);
 
@@ -240,16 +243,9 @@ export const markItemAsDonated = async (req: AuthRequest, res: Response) => {
         .json({ success: false, error: "Item donation not found." });
     }
 
-    if (donation.isDonated) {
-      return res.status(400).json({
-        success: false,
-        error: "This item has already been marked as donated.",
-      });
-    }
-
     const [updatedDonation] = await db
       .update(donations)
-      .set({ isDonated: true })
+      .set({ isDonated: !donation.isDonated })
       .where(eq(donations.id, donation.id))
       .returning();
 
@@ -258,10 +254,10 @@ export const markItemAsDonated = async (req: AuthRequest, res: Response) => {
       data: mapDonationRow(updatedDonation),
     });
   } catch (error) {
-    console.error("Failed to mark item as donated", error);
+    console.error("Failed to toggle item donated status", error);
     return res.status(500).json({
       success: false,
-      error: "Failed to mark item as donated.",
+      error: "Failed to update donation status.",
     });
   }
 };

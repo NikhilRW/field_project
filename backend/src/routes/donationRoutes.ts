@@ -9,8 +9,8 @@ import {
   getMonthlyDonations,
   getMyDonations,
   getPendingItemDonations,
-  markItemAsDonated,
   rejectItemDonation,
+  toggleItemDonatedStatus,
   verifyItemDonation,
 } from "../controllers/donationController";
 import { authenticate, authorizeRoles } from "../middleware/auth";
@@ -65,7 +65,7 @@ router.patch(
   "/items/:id/mark-donated",
   authenticate,
   authorizeRoles("Admin"),
-  markItemAsDonated,
+  toggleItemDonatedStatus,
 );
 router.get(
   "/mine",

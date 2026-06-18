@@ -1,20 +1,23 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
-  Alert,
+  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Hand, PackageCheck } from "lucide-react-native";
+import { ArrowLeft, Hand, PackageCheck, RotateCcw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
-import { useItemDonation, useMarkItemAsDonated } from "../hooks/useDonations";
+import {
+  useItemDonation,
+  useToggleItemDonatedStatus,
+} from "../hooks/useDonations";
 import type { DonationCategory } from "../utils/api";
 import { donatedItemsStyles as styles } from "../styles/donatedItemsStyles";
 
@@ -32,24 +35,15 @@ export default function DonatedItemDetailScreen() {
   const currentUser = useAuthStore((state) => state.user);
   const isAdmin = currentUser?.role === "Admin";
   const { data: item, isLoading, isError } = useItemDonation(itemId);
-  const { mutate: markDonated, isPending: isMarking } =
-    useMarkItemAsDonated();
+  const { mutate: toggleDonated, isPending: isToggling } =
+    useToggleItemDonatedStatus();
+  const [showModal, setShowModal] = useState(false);
 
-  const handleMarkDonated = useCallback(() => {
-    if (!item || item.isDonated) return;
-
-    Alert.alert(
-      "Mark as Donated",
-      `Confirm that "${item.purpose}" has been handed over to the beneficiary?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: () => markDonated(item.id),
-        },
-      ],
-    );
-  }, [item, markDonated]);
+  const handleToggleDonated = useCallback(() => {
+    if (!item) return;
+    toggleDonated(item.id);
+    setShowModal(false);
+  }, [item, toggleDonated]);
 
   if (isLoading) {
     return (
@@ -166,27 +160,50 @@ export default function DonatedItemDetailScreen() {
             </View>
           </View>
 
-          {isAdmin && !item.isDonated && (
-            <TouchableOpacity
-              style={styles.donateButton}
-              activeOpacity={0.75}
-              onPress={handleMarkDonated}
-              disabled={isMarking}
-            >
-              {isMarking ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Hand size={20} color="#fff" strokeWidth={2.2} />
-                  <Text style={styles.donateButtonText}>
-                    Mark as Donated
+          {isAdmin && (
+            <>
+              {item.isDonated ? (
+                <View style={styles.donatedBadge}>
+                  <TouchableOpacity
+                    style={styles.editBadgeButton}
+                    onPress={() => setShowModal(true)}
+                    activeOpacity={0.7}
+                  >
+                    <RotateCcw
+                      size={14}
+                      color={Colors.secondary}
+                      strokeWidth={2.2}
+                    />
+                    <Text style={styles.editBadgeText}>Edit</Text>
+                  </TouchableOpacity>
+                  <Hand size={18} color={Colors.secondary} strokeWidth={2.2} />
+                  <Text style={styles.donatedBadgeText}>
+                    Handed over to beneficiary
                   </Text>
-                </>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.donateButton}
+                  activeOpacity={0.75}
+                  onPress={() => setShowModal(true)}
+                  disabled={isToggling}
+                >
+                  {isToggling ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Hand size={20} color="#fff" strokeWidth={2.2} />
+                      <Text style={styles.donateButtonText}>
+                        Mark as Donated
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+            </>
           )}
 
-          {item.isDonated && (
+          {!isAdmin && item.isDonated && (
             <View style={styles.donatedBadge}>
               <Hand size={18} color={Colors.secondary} strokeWidth={2.2} />
               <Text style={styles.donatedBadgeText}>
@@ -194,6 +211,50 @@ export default function DonatedItemDetailScreen() {
               </Text>
             </View>
           )}
+
+          <Modal
+            visible={showModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Hand size={32} color={Colors.secondary} strokeWidth={2} />
+                <Text style={styles.modalTitle}>
+                  {item.isDonated ? "Revert Donation Status" : "Mark as Donated"}
+                </Text>
+                <Text style={styles.modalBody}>
+                  {item.isDonated
+                    ? `"${item.purpose}" will be marked as not donated and will appear in the available items list again.`
+                    : `Confirm that "${item.purpose}" has been handed over to the beneficiary?`}
+                </Text>
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.modalCancelBtn}
+                    activeOpacity={0.7}
+                    onPress={() => setShowModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalConfirmBtn}
+                    activeOpacity={0.75}
+                    onPress={handleToggleDonated}
+                    disabled={isToggling}
+                  >
+                    {isToggling ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.modalConfirmText}>
+                        {item.isDonated ? "Revert" : "Confirm"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           <View style={{ height: 32 }} />
         </ScrollView>
