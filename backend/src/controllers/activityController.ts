@@ -20,7 +20,8 @@ const notifyUsersAboutActivity = async (
       id: users.id,
       expoPushToken: users.expoPushToken,
     })
-    .from(users);
+    .from(users)
+    .where(eq(users.role, "User"));
 
   if (userRows.length === 0) {
     return;

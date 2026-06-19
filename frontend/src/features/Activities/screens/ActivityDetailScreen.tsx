@@ -65,7 +65,7 @@ export default function ActivityDetailScreen() {
       >
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.navigate("/activities")}
           activeOpacity={0.75}
         >
           <ArrowLeft size={20} color={Colors.primary} strokeWidth={2.2} />
