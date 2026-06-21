@@ -15,6 +15,7 @@ import {
   PackageCheck,
   RotateCcw,
   HelpingHand,
+  Trash2,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
@@ -23,6 +24,7 @@ import { useAuthStore } from "@/shared/stores/authStore";
 import {
   useItemDonation,
   useToggleItemDonatedStatus,
+  useDeleteDonation,
 } from "../hooks/useDonations";
 import type { DonationCategory } from "../utils/api";
 import { donatedItemsStyles as styles } from "../styles/donatedItemsStyles";
@@ -43,13 +45,23 @@ export default function DonatedItemDetailScreen() {
   const { data: item, isLoading, isError } = useItemDonation(itemId);
   const { mutate: toggleDonated, isPending: isToggling } =
     useToggleItemDonatedStatus();
+  const { mutate: deleteDonation, isPending: isDeleting } =
+    useDeleteDonation();
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleToggleDonated = useCallback(() => {
     if (!item) return;
     toggleDonated(item.id);
     setShowModal(false);
   }, [item, toggleDonated]);
+
+  const handleDelete = useCallback(() => {
+    if (!item) return;
+    deleteDonation(item.id);
+    setShowDeleteModal(false);
+    router.back();
+  }, [item, deleteDonation]);
 
   if (isLoading) {
     return (
@@ -113,13 +125,25 @@ export default function DonatedItemDetailScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.75}
-          >
-            <ArrowLeft size={20} color={Colors.primary} strokeWidth={2.2} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              activeOpacity={0.75}
+            >
+              <ArrowLeft size={20} color={Colors.primary} strokeWidth={2.2} />
+            </TouchableOpacity>
+            {isAdmin && (
+              <TouchableOpacity
+                style={[styles.backButton, { borderColor: Colors.errorLight }]}
+                onPress={() => setShowDeleteModal(true)}
+                activeOpacity={0.75}
+                disabled={isDeleting}
+              >
+                <Trash2 size={20} color={Colors.error} strokeWidth={2.2} />
+              </TouchableOpacity>
+            )}
+          </View>
 
           <View style={styles.titleSection}>
             <Text style={styles.title}>{item.purpose}</Text>
@@ -133,7 +157,7 @@ export default function DonatedItemDetailScreen() {
               <UniImage
                 source={{ uri: item.imageUrl }}
                 style={styles.image}
-                contentFit="cover"
+                contentFit="scale-down"
               />
             ) : (
               <View style={styles.imagePlaceholder}>
@@ -253,6 +277,43 @@ export default function DonatedItemDetailScreen() {
                       <Text style={styles.modalConfirmText}>
                         {item.isDonated ? "Revert" : "Confirm"}
                       </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={showDeleteModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowDeleteModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Delete Donation</Text>
+                <Text style={styles.modalBody}>
+                  Permanently delete "{item.purpose}"? This cannot be undone.
+                </Text>
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.modalCancelBtn}
+                    activeOpacity={0.7}
+                    onPress={() => setShowDeleteModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalConfirmBtn}
+                    activeOpacity={0.75}
+                    onPress={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.modalConfirmText}>Delete</Text>
                     )}
                   </TouchableOpacity>
                 </View>

@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native-unistyles";
 import { Colors } from "@/shared/constants/color";
+import { Dimensions } from "react-native";
 
 export const activityDetailStyles = StyleSheet.create({
   container: {
@@ -181,5 +182,18 @@ export const activityDetailStyles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textTertiary,
     textAlign: "center",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width:Dimensions.get("window").width,
+    height:Dimensions.get("window").height,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 999,
   },
 });

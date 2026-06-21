@@ -486,6 +486,28 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const deleteDonation = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = String(req.params.id);
+
+    const [existing] = await db
+      .select({ id: donations.id })
+      .from(donations)
+      .where(eq(donations.id, id));
+
+    if (!existing) {
+      return res.status(404).json({ success: false, error: "Donation not found." });
+    }
+
+    await db.delete(donations).where(eq(donations.id, id));
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete donation", error);
+    return res.status(500).json({ success: false, error: "Failed to delete donation." });
+  }
+};
+
 export const createMoneyDonation = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;

@@ -3,6 +3,7 @@ import {
   batchMarkItemsDonated,
   createItemDonation,
   createMoneyDonation,
+  deleteDonation,
   getAllDonations,
   getDonatedItemDonations,
   getItemDonation,
@@ -91,6 +92,12 @@ router.post(
   authenticate,
   authorizeRoles("Admin"),
   createMoneyDonation,
+);
+router.delete(
+  "/items/:id",
+  authenticate,
+  authorizeRoles("Admin"),
+  deleteDonation,
 );
 
 export default router;

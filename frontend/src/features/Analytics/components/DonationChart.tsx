@@ -124,7 +124,13 @@ export const DonationChart: React.FC<DonationChartProps> = ({ data }) => {
     return points.every((p) => p.date.getTime() === firstDate);
   }, [points]);
 
-  if (data.length === 0 || points.length < 2 || hasSingleDate) {
+  const hasIdenticalValues = useMemo(() => {
+    if (points.length < 2) return true;
+    const firstVal = points[0].value;
+    return points.every((p) => p.value === firstVal);
+  }, [points]);
+
+  if (data.length === 0 || points.length < 2 || hasSingleDate || hasIdenticalValues) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>

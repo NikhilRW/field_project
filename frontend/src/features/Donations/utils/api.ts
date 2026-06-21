@@ -195,6 +195,13 @@ export const createItemDonation = async (
   );
   return response.data.data;
 };
+export const deleteDonation = async (id: string) => {
+  const response = await http.delete<{ success: boolean }>(
+    `/api/donations/items/${id}`,
+  );
+  return response.data;
+};
+
 // TODO: put types in another files.
 export type DraftDonation = {
   id: string;
@@ -280,16 +287,13 @@ export const updateDraft = async (id: string, payload: UpdateDraftPayload) => {
   const formData = new FormData();
 
   if (payload.imageUri) {
-    const fallbackFileName =
-      payload.imageUri.split("/").pop() || "draft.jpg";
-    const fileName = payload.fileName || fallbackFileName;
+    const fileName = payload.fileName || payload.imageUri.split("/").pop() || "draft.jpg";
     const fileType = payload.fileType || "image/jpeg";
 
     if (isWeb) {
       const res = await fetch(payload.imageUri);
       const blob = await res.blob();
-      const file = new File([blob], fileName, { type: fileType });
-      formData.append("itemImage", file);
+      formData.append("itemImage", new File([blob], fileName, { type: fileType }));
     } else {
       formData.append("itemImage", {
         uri: payload.imageUri,

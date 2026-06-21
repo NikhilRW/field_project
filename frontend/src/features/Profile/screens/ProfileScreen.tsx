@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { ChevronRight, Phone, Mail, MapPin, Shield } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import BrandLogo from "@/shared/components/BrandLogo";
 import { useAuthStore } from "@/shared/stores/authStore";
+import { fetchMe } from "@/features/Auth/utils/api";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { useLogoutMutation } from "@/features/Auth/hooks/useAuthMutations";
 import { buildProfileSettingsItems } from "../constants/settingsItems";
@@ -25,7 +26,16 @@ export default function ProfileScreen() {
   const logoutMutation = useLogoutMutation();
   const user = useAuthStore((state) => state.user);
   const isAdmin = useAuthStore((state) => state.isAdmin);
+  const setUser = useAuthStore((state) => state.setUser);
   const [editNameVisible, setEditNameVisible] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMe()
+        .then((freshUser) => setUser(freshUser))
+        .catch(() => {});
+    }, [setUser]),
+  );
 
   const handleLogout = async () => {
     logoutMutation.mutate();

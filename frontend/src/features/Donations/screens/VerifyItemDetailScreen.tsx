@@ -192,7 +192,7 @@ export default function VerifyItemDetailScreen() {
             <UniImage
               source={{ uri: item.imageUrl ?? undefined }}
               style={styles.image}
-              contentFit="cover"
+              contentFit="scale-down"
             />
           </View>
 

@@ -8,7 +8,7 @@ import {
   updateDraft,
 } from "../controllers/draftController";
 import { authenticate, authorizeRoles } from "../middleware/auth";
-import { upload, uploadDonationImage } from "../middleware/upload";
+import { upload, uploadDonationImage, uploadDonationImageOptional } from "../middleware/upload";
 
 const router = Router();
 
@@ -37,7 +37,7 @@ router.put(
   authenticate,
   authorizeRoles("Admin", "User"),
   upload.single("itemImage"),
-  uploadDonationImage,
+  uploadDonationImageOptional,
   updateDraft,
 );
 router.delete(

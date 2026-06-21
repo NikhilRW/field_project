@@ -9,9 +9,14 @@ const getDateRange = (
   let start = new Date();
 
   if (filter === "custom" && customStart && customEnd) {
-    return { start: customStart, end: customEnd };
+    const start = new Date(customStart);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(customEnd);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
   }
 
+  start.setHours(0, 0, 0, 0);
   switch (filter) {
     case "7days":
       start.setDate(end.getDate() - 7);
@@ -24,6 +29,7 @@ const getDateRange = (
       break;
   }
 
+  end.setHours(23, 59, 59, 999);
   return { start, end };
 };
 

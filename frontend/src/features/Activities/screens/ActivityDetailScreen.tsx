@@ -139,6 +139,12 @@ export default function ActivityDetailScreen() {
         onDelete={handleDelete}
         onClose={closeDeleteModal}
       />
+
+      {isUpdatingStatus && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
     </SafeAreaView>
   );
 }

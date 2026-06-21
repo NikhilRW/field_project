@@ -302,6 +302,17 @@ export const donatedItemsStyles = StyleSheet.create({
     fontWeight: "600" as const,
     color: Colors.secondary,
   },
+  deleteButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.82)",
+    marginTop: 16,
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: "center",

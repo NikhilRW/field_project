@@ -42,6 +42,9 @@ export const createDonationScreenStyles = StyleSheet.create({
     fontWeight: "700" as const,
     color: "#ffffff",
   },
+  saveDraftBtnDisabled: {
+    opacity: 0.55,
+  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,

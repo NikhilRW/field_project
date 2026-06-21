@@ -52,3 +52,33 @@ export const uploadDonationImage = async (
     });
   }
 };
+
+export const uploadDonationImageOptional = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.file?.buffer) {
+      return next();
+    }
+
+    const compressed = await compressImageBuffer(req.file.buffer);
+
+    const result = await uploadToCloudinary(
+      compressed,
+      "helping-hands/donations",
+    );
+
+    req.cloudinaryUrl = result.secure_url;
+    req.cloudinaryPublicId = result.public_id;
+
+    return next();
+  } catch (error: any) {
+    console.error("Failed to upload donation image", error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message ?? "Failed to upload donation image.",
+    });
+  }
+};

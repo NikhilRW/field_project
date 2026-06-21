@@ -12,14 +12,14 @@ import { activityDetailQueryKey } from "@/shared/config/queryKeys";
 export const useActivity = (id: string) => {
   const queryClient = useQueryClient();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const deleteActivityMutation = useDeleteActivity();
 
   const activityQuery = useQuery({
     queryKey: activityDetailQueryKey(id),
     queryFn: () => fetchActivityById(id),
-    enabled: Boolean(id),
+    enabled: () => !!id && deleteActivityMutation.isPending === false,
   });
 
-  const deleteActivityMutation = useDeleteActivity();
   const updateActivityStatusMutation = useUpdateActivityStatus();
 
   const openDeleteModal = () => setDeleteModalVisible(true);
@@ -47,8 +47,7 @@ export const useActivity = (id: string) => {
       showMessage({
         message: "Unable to delete activity",
         description:
-          error?.message ??
-          "Please try again once your connection is stable.",
+          error?.message ?? "Please try again once your connection is stable.",
         type: "danger",
       });
     }

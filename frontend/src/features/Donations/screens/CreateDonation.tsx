@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { UniImage } from "@/shared/components/UniComponents";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
-  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -39,15 +39,13 @@ import {
   useCreateMoneyDonation,
   useDeleteDraft,
   useDraft,
-  useMyDonations,
   useSubmitDraft,
   useUpdateDraft,
 } from "../hooks/useDonations";
 import type {
   DonationCategory,
-  DonationPaymentStatus,
-  DonationVerificationStatus,
-  MyDonation,
+  CreateDraftPayload,
+  UpdateDraftPayload,
 } from "../utils/api";
 import { createDonationScreenStyles as styles } from "../styles/createDonationScreenStyles";
 import { UserListItem } from "../types/common";
@@ -88,111 +86,26 @@ const donationTypes: {
   },
 ];
 
-const categoryLabels: Record<DonationCategory, string> = {
-  money: "Money",
-  books: "Books",
-  clothes: "Clothes",
-  other_items: "Other items",
-};
-
-const getStatusColors = (
-  status: DonationVerificationStatus | DonationPaymentStatus,
-) => {
-  if (status === "verified" || status === "paid") {
-    return { bg: Colors.secondaryLight, text: Colors.secondary };
-  }
-
-  if (status === "failed" || status === "rejected") {
-    return { bg: Colors.errorLight, text: Colors.error };
-  }
-
-  if (status === "pending") {
-    return { bg: Colors.accentLight, text: Colors.accent };
-  }
-
-  return { bg: Colors.primaryLight, text: Colors.primary };
-};
-
 const normalizeAmount = (amount: string) =>
   Number(amount.replace(/,/g, "").trim());
-
-const formatCategory = (category: DonationCategory) => categoryLabels[category];
-
-function DonationHistoryRow({ donation }: { donation: MyDonation }) {
-  const isMoney = donation.category === "money";
-  const verificationColors = getStatusColors(donation.verificationStatus);
-  const paymentColors = getStatusColors(donation.paymentStatus);
-
-  return (
-    <View style={styles.historyRow} testID={`my-donation-${donation.id}`}>
-      <View style={styles.historyIcon}>
-        {isMoney ? (
-          <Banknote size={18} color={Colors.secondary} strokeWidth={2.2} />
-        ) : (
-          <Package size={18} color={Colors.primary} strokeWidth={2.2} />
-        )}
-      </View>
-      <View style={styles.historyInfo}>
-        <Text style={styles.historyTitle} numberOfLines={1}>
-          {donation.purpose}
-        </Text>
-        <Text style={styles.historyMeta}>
-          {formatCategory(donation.category)} · {donation.date}
-        </Text>
-        <View style={styles.statusPills}>
-          <View
-            style={[
-              styles.statusPill,
-              { backgroundColor: verificationColors.bg },
-            ]}
-          >
-            <Text
-              style={[styles.statusText, { color: verificationColors.text }]}
-            >
-              {donation.verificationStatus}
-            </Text>
-          </View>
-          {donation.paymentStatus !== "not_applicable" ? (
-            <View
-              style={[styles.statusPill, { backgroundColor: paymentColors.bg }]}
-            >
-              <Text style={[styles.statusText, { color: paymentColors.text }]}>
-                {donation.paymentStatus}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
-      {isMoney ? (
-        <Text style={styles.amountText}>
-          ₹{donation.amount.toLocaleString("en-IN")}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
 
 export const CreateDonation = () => {
   const insets = useSafeAreaInsets();
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const { draftId } = useLocalSearchParams<{ draftId?: string }>();
-  const {
-    data: myDonationPages,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isRefetching: isMyDonationsRefetching,
-    refetch: refetchMyDonations,
-  } = useMyDonations();
   const createItemDonationMutation = useCreateItemDonation();
   const createMoneyDonationMutation = useCreateMoneyDonation();
   const createDraftMutation = useCreateDraft();
   const updateDraftMutation = useUpdateDraft();
   const submitDraftMutation = useSubmitDraft();
   const deleteDraftMutation = useDeleteDraft();
-  const { data: draftData } = useDraft(draftId);
+  const { data: draftData } = useDraft(
+    draftId,
+    submitDraftMutation.isPending || deleteDraftMutation.isPending,
+  );
   const { data: allUsers = [] } = useAllUsers();
 
+  const currentUser = useAuthStore((state) => state.user);
   const isEditingDraft = Boolean(draftId);
   const [selectedType, setSelectedType] = useState<UserDonationType>(
     draftData?.category ?? "money",
@@ -213,24 +126,19 @@ export const CreateDonation = () => {
       setInitialized(true);
       setSelectedType(draftData.category);
       setPurpose(draftData.purpose ?? "");
-      if (draftData.imageUrl) {
-        setPhoto({
-          previewUri: draftData.imageUrl,
-          imageUri: draftData.imageUrl,
-        });
-      }
     }
   }, [draftData, initialized]);
 
   useEffect(() => {
     if (draftData?.donorId && allUsers.length > 0 && !selectedUser) {
+      if (draftData.donorId === currentUser?.id) return;
       const match = allUsers.find((u) => u.id === draftData.donorId);
       if (match) {
         setSelectedUser(match);
         setUserSearch(match.name);
       }
     }
-  }, [draftData?.donorId, allUsers, selectedUser]);
+  }, [draftData?.donorId, allUsers, selectedUser, currentUser?.id]);
 
   const filteredUsers = useMemo(() => {
     if (!userSearch.trim()) return allUsers;
@@ -242,13 +150,9 @@ export const CreateDonation = () => {
   }, [allUsers, userSearch]);
 
   const isMoney = selectedType === "money";
-  const myDonations = useMemo(
-    () => myDonationPages?.pages.flatMap((page) => page.items) ?? [],
-    [myDonationPages],
-  );
-  const totalMyDonations =
-    myDonationPages?.pages[0]?.total ?? myDonations.length;
   const numericAmount = useMemo(() => normalizeAmount(amount), [amount]);
+  const isSavingDraft =
+    createDraftMutation.isPending || updateDraftMutation.isPending;
   const isSubmitting =
     createItemDonationMutation.isPending ||
     createMoneyDonationMutation.isPending ||
@@ -257,11 +161,22 @@ export const CreateDonation = () => {
 
   const canSubmit = isEditingDraft
     ? isMoney
-      ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting && (!isAdmin || selectedUser)
+      ? Number.isFinite(numericAmount) &&
+        numericAmount > 0 &&
+        !isSubmitting &&
+        (!isAdmin || selectedUser)
       : Boolean(draftId && !isSubmitting)
     : isMoney
-      ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting && (!isAdmin || selectedUser)
-      : Boolean(purpose.trim() && photo?.imageUri && !isSubmitting && (!isAdmin || selectedUser));
+      ? Number.isFinite(numericAmount) &&
+        numericAmount > 0 &&
+        !isSubmitting &&
+        (!isAdmin || selectedUser)
+      : Boolean(
+          purpose.trim() &&
+          photo?.imageUri &&
+          !isSubmitting &&
+          (!isAdmin || selectedUser),
+        );
 
   const resetForm = () => {
     setAmount("");
@@ -321,29 +236,42 @@ export const CreateDonation = () => {
   };
 
   const handleSaveDraft = async () => {
-    if (isMoney || !photo?.imageUri) {
-      showMessage({
-        message: "Photo required",
-        description: "Take a photo before saving as draft.",
-        type: "warning",
-      });
-      return;
-    }
+    if (isMoney) return;
 
     try {
-      const payload = {
-        category: selectedType as Exclude<DonationCategory, "money">,
-        purpose: purpose.trim() || null,
-        imageUri: photo.imageUri,
-        fileName: photo.fileName,
-        fileType: photo.fileType,
-        donorId: selectedUser?.id,
-      };
+      const hasNewPhoto = Boolean(
+        photo?.imageUri && !/^https?:\/\//.test(photo.imageUri),
+      );
 
       if (isEditingDraft && draftId) {
+        const payload: UpdateDraftPayload = {
+          category: selectedType as Exclude<DonationCategory, "money">,
+          purpose: purpose.trim() || null,
+        };
+        if (hasNewPhoto) {
+          payload.imageUri = photo!.imageUri;
+          payload.fileName = photo!.fileName;
+          payload.fileType = photo!.fileType;
+        }
         await updateDraftMutation.mutateAsync({ id: draftId, payload });
       } else {
-        await createDraftMutation.mutateAsync(payload);
+        if (!hasNewPhoto) {
+          showMessage({
+            message: "Photo required",
+            description: "Take a photo before saving as draft.",
+            type: "warning",
+          });
+          return;
+        }
+        const createPayload: CreateDraftPayload = {
+          category: selectedType as Exclude<DonationCategory, "money">,
+          purpose: purpose.trim() || null,
+          imageUri: photo!.imageUri,
+          fileName: photo!.fileName,
+          fileType: photo!.fileType,
+          donorId: selectedUser?.id,
+        };
+        await createDraftMutation.mutateAsync(createPayload);
       }
 
       showMessage({
@@ -372,6 +300,19 @@ export const CreateDonation = () => {
         });
         await deleteDraftMutation.mutateAsync(draftId);
       } else {
+        const hasNewPhoto = Boolean(
+          photo?.imageUri && !/^https?:\/\//.test(photo.imageUri),
+        );
+        const payload: UpdateDraftPayload = {
+          purpose: purpose.trim() || null,
+          category: selectedType as Exclude<DonationCategory, "money">,
+        };
+        if (hasNewPhoto) {
+          payload.imageUri = photo!.imageUri;
+          payload.fileName = photo!.fileName;
+          payload.fileType = photo!.fileType;
+        }
+        await updateDraftMutation.mutateAsync({ id: draftId, payload });
         await submitDraftMutation.mutateAsync(draftId);
       }
       showMessage({
@@ -391,7 +332,11 @@ export const CreateDonation = () => {
     }
   };
 
-  const handleFilePick = (file: { uri: string; name: string; type: string }) => {
+  const handleFilePick = (file: {
+    uri: string;
+    name: string;
+    type: string;
+  }) => {
     if (photo?.imageUri?.startsWith("blob:")) {
       URL.revokeObjectURL(photo.imageUri);
     }
@@ -494,14 +439,6 @@ export const CreateDonation = () => {
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={isMyDonationsRefetching && !isFetchingNextPage}
-              onRefresh={refetchMyDonations}
-              tintColor={Colors.primary}
-              colors={[Colors.primary]}
-            />
-          }
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -515,13 +452,21 @@ export const CreateDonation = () => {
             </TouchableOpacity>
             {!isMoney && (
               <TouchableOpacity
-                style={styles.saveDraftBtn}
+                style={[
+                  styles.saveDraftBtn,
+                  isSavingDraft && styles.saveDraftBtnDisabled,
+                ]}
                 onPress={handleSaveDraft}
                 activeOpacity={0.75}
+                disabled={isSavingDraft}
               >
-                <Text style={styles.saveDraftBtnText}>
-                  {isEditingDraft ? "Update Draft" : "Save Draft"}
-                </Text>
+                {isSavingDraft ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.saveDraftBtnText}>
+                    {isEditingDraft ? "Update Draft" : "Save Draft"}
+                  </Text>
+                )}
               </TouchableOpacity>
             )}
           </View>
@@ -696,9 +641,11 @@ export const CreateDonation = () => {
                   activeOpacity={0.82}
                   testID="donation-photo-button"
                 >
-                  {photo?.previewUri ? (
+                  {photo?.previewUri || draftData?.imageUrl ? (
                     <UniImage
-                      source={{ uri: photo.previewUri }}
+                      source={{
+                        uri: photo?.previewUri || draftData!.imageUrl!,
+                      }}
                       style={styles.photoPreview}
                       contentFit="cover"
                     />
@@ -781,39 +728,6 @@ export const CreateDonation = () => {
             </View>
           </View>
 
-          <View style={styles.historyHeader}>
-            <Text style={styles.sectionTitle}>My donations</Text>
-            <Text style={styles.historyCount}>{totalMyDonations} total</Text>
-          </View>
-
-          {myDonations.length > 0 ? (
-            <>
-              {myDonations.map((donation) => (
-                <DonationHistoryRow key={donation.id} donation={donation} />
-              ))}
-              {hasNextPage ? (
-                <TouchableOpacity
-                  style={[
-                    styles.loadMoreButton,
-                    isFetchingNextPage && styles.loadMoreButtonDisabled,
-                  ]}
-                  onPress={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  activeOpacity={0.82}
-                  testID="load-more-donations-button"
-                >
-                  <Text style={styles.loadMoreText}>
-                    {isFetchingNextPage ? "Loading..." : "Load more"}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-            </>
-          ) : (
-            <View style={[styles.panel, styles.emptyPanel]}>
-              <Text style={styles.emptyText}>No donations yet</Text>
-            </View>
-          )}
-
           <View style={{ height: 32 }} />
         </ScrollView>
 
@@ -840,4 +754,4 @@ export const CreateDonation = () => {
       </View>
     </MeshGradientBackground>
   );
-}
+};
