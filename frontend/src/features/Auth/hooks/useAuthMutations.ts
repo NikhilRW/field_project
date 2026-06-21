@@ -88,13 +88,18 @@ export const useLogoutMutation = () => {
 };
 
 export const useUpdateProfileMutation = () => {
+  const queryClient = useQueryClient();
   const setUser = useAuthStore((state) => state.setUser);
   const user = useAuthStore((state) => state.user);
 
   return useMutation({
     mutationFn: updateProfileRequest,
-    onSuccess: (updatedUser) => {
+    onSuccess: async (updatedUser) => {
       setUser({ ...user!, ...updatedUser });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["users", "all"] }),
+        queryClient.invalidateQueries({ queryKey: ["users", "manage"] }),
+      ]);
     },
   });
 };

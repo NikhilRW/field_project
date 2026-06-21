@@ -32,11 +32,6 @@ export default function ActivitiesScreen() {
     (a) => activeTab === "All" || a.status === activeTab,
   );
 
-  const upcoming = activityItems.filter((a) => a.status === "Upcoming").length;
-  const completed = activityItems.filter(
-    (a) => a.status === "Completed",
-  ).length;
-
   return (
     <MeshGradientBackground>
       <View
@@ -69,39 +64,6 @@ export default function ActivitiesScreen() {
                   <Text style={styles.addBtnText}>Add</Text>
                 </TouchableOpacity>
               )}
-            </View>
-          </View>
-
-          <View style={styles.statsRow}>
-            <View
-              style={[
-                styles.miniStat,
-                {
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.5)",
-                },
-              ]}
-            >
-              <Text style={[styles.miniStatNum, { color: Colors.accent }]}>
-                {upcoming}
-              </Text>
-              <Text style={styles.miniStatLabel}>Upcoming</Text>
-            </View>
-            <View
-              style={[
-                styles.miniStat,
-                {
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255, 255, 255, 0.5)",
-                },
-              ]}
-            >
-              <Text style={[styles.miniStatNum, { color: Colors.secondary }]}>
-                {completed}
-              </Text>
-              <Text style={styles.miniStatLabel}>Done</Text>
             </View>
           </View>
 

@@ -65,6 +65,7 @@ export default function ManageUsersScreen() {
     mutationFn: toggleBlockUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "manage"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "all"] });
       setBlockTarget(null);
     },
   });

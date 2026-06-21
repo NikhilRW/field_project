@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native-unistyles";
 import { Colors } from "@/shared/constants/color";
 
-export const userDonationsStyles = StyleSheet.create({
+export const createDonationScreenStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "transparent",
@@ -9,8 +9,42 @@ export const userDonationsStyles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.82)",
+  },
+  saveDraftBtn: {
+    height: 42,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+    backgroundColor: "rgba(13, 92, 145, 0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.82)",
+  },
+  saveDraftBtnText: {
+    fontSize: 13,
+    fontWeight: "700" as const,
+    color: "#ffffff",
+  },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 32,
   },
   titleSection: {

@@ -1,1 +1,1 @@
-export { UserDonationsScreen as default } from "@/features/Donations/screens/UserDonationsScreen";
+export { CreateDonation as default } from "@/features/Donations/screens/CreateDonation";

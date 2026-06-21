@@ -6,6 +6,7 @@ import {
   db,
   emailVerificationTokens,
   passwordResetTokens,
+  refreshTokens,
   users,
 } from "../config/databaseSetup";
 import { comparePassword, hashPassword } from "../utils/password";
@@ -185,10 +186,10 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = signAccessToken(payload);
     const refreshToken = signRefreshToken(payload);
 
-    await db
-      .update(users)
-      .set({ refreshTokenHash: hashToken(refreshToken) })
-      .where(eq(users.id, user.id));
+    await db.insert(refreshTokens).values({
+      userId: user.id,
+      tokenHash: hashToken(refreshToken),
+    });
 
     return res.status(200).json({
       success: true,
@@ -359,10 +360,10 @@ export const googleLogin = async (req: Request, res: Response) => {
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    await db
-      .update(users)
-      .set({ refreshTokenHash: hashToken(refreshToken) })
-      .where(eq(users.id, sessionUser.id));
+    await db.insert(refreshTokens).values({
+      userId: sessionUser.id,
+      tokenHash: hashToken(refreshToken),
+    });
 
     return res.status(200).json({
       success: true,
@@ -398,7 +399,7 @@ export const refreshToken = async (req: Request, res: Response) => {
       .from(users)
       .where(eq(users.id, payload.sub));
 
-    if (!user || !user.refreshTokenHash) {
+    if (!user) {
       return res
         .status(401)
         .json({ success: false, error: "Invalid refresh token." });
@@ -413,7 +414,12 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     const incomingHash = hashToken(refreshToken);
 
-    if (incomingHash !== user.refreshTokenHash) {
+    const [storedToken] = await db
+      .select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.tokenHash, incomingHash));
+
+    if (!storedToken) {
       return res
         .status(401)
         .json({ success: false, error: "Invalid refresh token." });
@@ -424,9 +430,13 @@ export const refreshToken = async (req: Request, res: Response) => {
     const newRefreshToken = signRefreshToken(newPayload);
 
     await db
-      .update(users)
-      .set({ refreshTokenHash: hashToken(newRefreshToken) })
-      .where(eq(users.id, user.id));
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.id, storedToken.id));
+
+    await db.insert(refreshTokens).values({
+      userId: user.id,
+      tokenHash: hashToken(newRefreshToken),
+    });
 
     return res.status(200).json({
       success: true,
@@ -450,9 +460,8 @@ export const logout = async (req: AuthRequest, res: Response) => {
     }
 
     await db
-      .update(users)
-      .set({ refreshTokenHash: null })
-      .where(eq(users.id, req.user.id));
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.userId, req.user.id));
 
     return res.status(200).json({ success: true });
   } catch (error) {
@@ -739,8 +748,12 @@ export const resetPassword = async (req: Request, res: Response) => {
     const newPasswordHash = await hashPassword(password);
 
     await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.userId, record.userId));
+
+    await db
       .update(users)
-      .set({ passwordHash: newPasswordHash, refreshTokenHash: null })
+      .set({ passwordHash: newPasswordHash })
       .where(eq(users.id, record.userId));
 
     await db

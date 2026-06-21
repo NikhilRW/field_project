@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { X } from "lucide-react-native";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
 import { createUser } from "@/features/Donations/utils/usersApi";
@@ -15,6 +15,7 @@ export const AddUserModal = ({
   onClose: () => void;
   onCreated: () => void;
 }) => {
+  const queryClient = useQueryClient();
   const [role, setRole] = useState<"User" | "Admin">("User");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,7 +23,10 @@ export const AddUserModal = ({
 
   const createMutation = useMutation({
     mutationFn: createUser,
-    onSuccess: onCreated,
+    onSuccess: () => {
+      onCreated();
+      queryClient.invalidateQueries({ queryKey: ["users", "all"] });
+    },
   });
 
   const canSubmit =

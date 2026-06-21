@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { UniImage } from "@/shared/components/UniComponents";
 import {
   ActivityIndicator,
-  FlatList,
   Modal,
   ScrollView,
   Text,
@@ -15,6 +14,7 @@ import {
   Check,
   CirclePlus,
   ChevronRight,
+  FileEdit,
   PackageCheck,
   IndianRupee,
   ListChecks,
@@ -25,55 +25,80 @@ import AppHeader from "@/shared/components/AppHeader";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
-import { useAllDonations, useBatchMarkItemsDonated } from "../hooks/useDonations";
-import type { AllDonation, DonationCategory } from "../utils/api";
+import { donationsStyles as s } from "../styles/donationsStyles";
+import {
+  useAllDonations,
+  useBatchMarkItemsDonated,
+  useDrafts,
+} from "../hooks/useDonations";
+import type { AllDonation, DraftDonation } from "../utils/api";
 import DonatedItemsScreen from "./DonatedItemsScreen";
+import Animated, { LinearTransition } from "react-native-reanimated";
 
-const filters: { label: string; value: DonationCategory | "all" }[] = [
+// TODO: abstract out this component in every way.
+
+type DisplayItem =
+  | (AllDonation & { __kind: "donation" })
+  | (DraftDonation & { __kind: "draft" });
+
+const filters: { label: string; value: string }[] = [
   { label: "All", value: "all" },
   { label: "Money", value: "money" },
   { label: "Clothes", value: "clothes" },
   { label: "Books", value: "books" },
   { label: "Others", value: "other_items" },
+  { label: "Drafts", value: "drafts" },
 ];
 
 function AdminDonationsScreen() {
   const insets = useSafeAreaInsets();
   const { data: allDonations = [], isLoading } = useAllDonations();
+  const { data: drafts = [] } = useDrafts();
   const batchMarkMutation = useBatchMarkItemsDonated();
 
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<DonationCategory | "all">(
-    "all",
-  );
+  const [activeFilter, setActiveFilter] = useState("all");
+  const isDraftsView = activeFilter === "drafts";
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const filtered = useMemo(() => {
-    let list = allDonations;
-    if (activeFilter !== "all") {
-      list = list.filter((d) => d.category === activeFilter);
+  const displayList = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const matchesSearch = (text: string) =>
+      !q || text.toLowerCase().includes(q);
+
+    if (isDraftsView) {
+      return drafts
+        .filter((d) => !search.trim() || matchesSearch(d.purpose ?? ""))
+        .map((d) => ({ ...d, __kind: "draft" as const }));
     }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (d) =>
-          d.purpose.toLowerCase().includes(q) ||
-          d.donor.toLowerCase().includes(q),
-      );
-    }
-    return list;
-  }, [allDonations, activeFilter, search]);
+
+    const draftItems: DisplayItem[] = drafts
+      .filter((d) => {
+        if (activeFilter !== "all" && d.category !== activeFilter) return false;
+        if (search.trim()) return matchesSearch(d.purpose ?? "");
+        return true;
+      })
+      .map((d) => ({ ...d, __kind: "draft" as const }));
+
+    const donationItems: DisplayItem[] = allDonations
+      .filter((d) => {
+        if (activeFilter !== "all" && d.category !== activeFilter) return false;
+        if (search.trim())
+          return matchesSearch(d.purpose) || matchesSearch(d.donor);
+        return true;
+      })
+      .map((d) => ({ ...d, __kind: "donation" as const }));
+
+    return [...draftItems, ...donationItems];
+  }, [allDonations, drafts, activeFilter, search, isDraftsView]);
 
   const toggleSelectItem = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
@@ -86,17 +111,13 @@ function AdminDonationsScreen() {
   const handleConfirmBatch = useCallback(() => {
     setShowConfirmModal(false);
     batchMarkMutation.mutate(Array.from(selectedIds), {
-      onSuccess: () => {
-        exitSelectMode();
-      },
+      onSuccess: () => exitSelectMode(),
     });
   }, [selectedIds, batchMarkMutation, exitSelectMode]);
 
-  const handleCardPress = (item: AllDonation) => {
+  const handleDonationPress = (item: AllDonation) => {
     if (selectMode) {
-      if (item.category !== "money") {
-        toggleSelectItem(item.id);
-      }
+      if (item.category !== "money") toggleSelectItem(item.id);
       return;
     }
     if (item.category === "money") {
@@ -108,65 +129,38 @@ function AdminDonationsScreen() {
     }
   };
 
+  const handleDraftPress = (draft: DraftDonation) => {
+    router.push({ pathname: "/(main)/donate", params: { draftId: draft.id } });
+  };
+
   return (
     <MeshGradientBackground>
       <View
-        style={{
-          flex: 1,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom + 20,
-        }}
+        style={[
+          s.container,
+          { paddingTop: insets.top, paddingBottom: insets.bottom + 20 },
+        ]}
       >
         <AppHeader />
-        <View style={{ flex: 1, paddingHorizontal: 20 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 12,
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "rgba(255,255,255,0.35)",
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.8)",
-                paddingHorizontal: 14,
-                height: 44,
-              }}
-            >
+        <View style={s.content}>
+          <View style={s.actionRow}>
+            <View style={s.searchWrap}>
               <TextInput
-                placeholder="Search Donations By Item Name Or Person"
+                placeholder={
+                  isDraftsView ? "Search drafts..." : "Search donations..."
+                }
                 placeholderTextColor={Colors.textTertiary}
                 value={search}
                 onChangeText={setSearch}
-                style={{
-                  flex: 1,
-                  fontSize: 13,
-                  color: Colors.textPrimary,
-                }}
+                style={s.searchInput}
               />
             </View>
-            {selectMode ? (
+            {!isDraftsView && selectMode ? (
               <>
                 <TouchableOpacity
                   onPress={exitSelectMode}
                   activeOpacity={0.75}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    backgroundColor: "rgba(255,255,255,0.35)",
-                    borderWidth: 1,
-                    borderColor: "rgba(255,255,255,0.8)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+                  style={s.glassyBtn}
                 >
                   <X size={20} color={Colors.textPrimary} strokeWidth={2.2} />
                 </TouchableOpacity>
@@ -174,44 +168,18 @@ function AdminDonationsScreen() {
                   <TouchableOpacity
                     onPress={() => setShowConfirmModal(true)}
                     activeOpacity={0.75}
-                    style={{
-                      height: 44,
-                      borderRadius: 14,
-                      paddingHorizontal: 14,
-                      backgroundColor: "#16a34a",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "row",
-                      gap: 6,
-                    }}
+                    style={s.batchBtn}
                   >
                     <Check size={18} color="#fff" strokeWidth={2.5} />
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: "700",
-                        color: "#fff",
-                      }}
-                    >
-                      {selectedIds.size}
-                    </Text>
+                    <Text style={s.batchBtnText}>{selectedIds.size}</Text>
                   </TouchableOpacity>
                 )}
               </>
-            ) : (
+            ) : !isDraftsView ? (
               <TouchableOpacity
                 onPress={() => setSelectMode(true)}
                 activeOpacity={0.75}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  backgroundColor: "rgba(255,255,255,0.35)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.8)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={s.glassyBtn}
               >
                 <ListChecks
                   size={20}
@@ -219,53 +187,32 @@ function AdminDonationsScreen() {
                   strokeWidth={2.2}
                 />
               </TouchableOpacity>
+            ) : null}
+            {!isDraftsView && (
+              <TouchableOpacity
+                onPress={() => router.push("/(main)/donate")}
+                activeOpacity={0.75}
+                style={s.addBtn}
+              >
+                <CirclePlus size={20} color="#fff" strokeWidth={2.2} />
+              </TouchableOpacity>
             )}
-            <TouchableOpacity
-              onPress={() => router.push("/(main)/donate")}
-              activeOpacity={0.75}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                backgroundColor: Colors.primary,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CirclePlus size={20} color="#fff" strokeWidth={2.2} />
-            </TouchableOpacity>
           </View>
 
           {isLoading ? (
-            <View
-              style={{
-                flex: 1,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <View style={s.loadingView}>
               <ActivityIndicator size="large" color={Colors.primary} />
             </View>
           ) : (
-            <FlatList
-              data={filtered}
-              keyExtractor={(item) => item.id}
+            <Animated.FlatList<DisplayItem>
+              data={displayList}
+              keyExtractor={(item) => `display-${item.id}`}
+              itemLayoutAnimation={LinearTransition.springify()}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 32 }}
+              contentContainerStyle={s.listPadding}
               ListEmptyComponent={
-                <View
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.38)",
-                    borderRadius: 14,
-                    borderWidth: 1,
-                    borderColor: "rgba(255,255,255,0.82)",
-                    padding: 28,
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 13, color: Colors.textSecondary }}>
-                    No donations found
-                  </Text>
+                <View style={s.emptyCard}>
+                  <Text style={s.emptyText}>No donations found</Text>
                 </View>
               }
               ListHeaderComponent={
@@ -273,7 +220,7 @@ function AdminDonationsScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ gap: 8 }}
-                  style={{ marginBottom: 8 }}
+                  style={s.filterScroll}
                 >
                   {filters.map((f) => {
                     const isActive = activeFilter === f.value;
@@ -282,28 +229,13 @@ function AdminDonationsScreen() {
                         key={f.value}
                         onPress={() => setActiveFilter(f.value)}
                         activeOpacity={0.75}
-                        style={{
-                          flexShrink: 0,
-                          height: 36,
-                          borderRadius: 999,
-                          paddingHorizontal: 16,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: isActive
-                            ? Colors.primary
-                            : "rgba(255,255,255,0.34)",
-                          borderWidth: 1,
-                          borderColor: isActive
-                            ? Colors.primary
-                            : "rgba(255,255,255,0.72)",
-                        }}
+                        style={[s.filterChip, isActive && s.filterChipActive]}
                       >
                         <Text
-                          style={{
-                            fontSize: 13,
-                            fontWeight: "700",
-                            color: isActive ? "#fff" : Colors.textSecondary,
-                          }}
+                          style={[
+                            s.filterChipText,
+                            isActive && s.filterChipTextActive,
+                          ]}
                         >
                           {f.label}
                         </Text>
@@ -313,62 +245,68 @@ function AdminDonationsScreen() {
                 </ScrollView>
               }
               renderItem={({ item }) => {
+                if (item.__kind === "draft") {
+                  return (
+                    <TouchableOpacity
+                      onPress={() => handleDraftPress(item)}
+                      activeOpacity={0.75}
+                      style={[s.card, s.draftCard]}
+                    >
+                      <View style={s.itemImage}>
+                        {item.imageUrl ? (
+                          <UniImage
+                            source={{ uri: item.imageUrl }}
+                            style={s.itemImageFilled}
+                            contentFit="cover"
+                          />
+                        ) : (
+                          <FileEdit
+                            size={22}
+                            color={Colors.primary}
+                            strokeWidth={2.2}
+                          />
+                        )}
+                      </View>
+                      <View style={s.itemInfo}>
+                        <Text style={s.itemTitle} numberOfLines={1}>
+                          {item.purpose || "Untitled Draft"}
+                        </Text>
+                        <Text style={s.itemSub} numberOfLines={1}>
+                          Draft · {item.createdAt?.split("T")[0] || ""}
+                        </Text>
+                      </View>
+                      <ChevronRight
+                        size={18}
+                        color={Colors.textTertiary}
+                        strokeWidth={2}
+                      />
+                    </TouchableOpacity>
+                  );
+                }
+
                 const isSelected = selectedIds.has(item.id);
                 const isItem = item.category !== "money";
 
                 return (
                   <TouchableOpacity
-                    onPress={() => handleCardPress(item)}
+                    onPress={() => handleDonationPress(item)}
                     activeOpacity={0.75}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 12,
-                      backgroundColor: isSelected
-                        ? "rgba(22,163,74,0.15)"
-                        : "rgba(255,255,255,0.38)",
-                      borderRadius: 14,
-                      padding: 12,
-                      borderWidth: 1,
-                      borderColor: isSelected
-                        ? "#16a34a"
-                        : "rgba(255,255,255,0.82)",
-                      marginBottom: 10,
-                    }}
+                    style={[s.card, isSelected && s.cardSelected]}
                   >
                     {selectMode && isItem && (
                       <View
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 6,
-                          borderWidth: 2,
-                          borderColor: isSelected ? "#16a34a" : Colors.textTertiary,
-                          backgroundColor: isSelected ? "#16a34a" : "transparent",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
+                        style={[s.checkbox, isSelected && s.checkboxChecked]}
                       >
                         {isSelected && (
                           <Check size={14} color="#fff" strokeWidth={3} />
                         )}
                       </View>
                     )}
-
                     <View
-                      style={{
-                        width: 62,
-                        height: 62,
-                        borderRadius: 12,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor:
-                          item.category === "money"
-                            ? Colors.secondaryLight
-                            : Colors.inputBg,
-                        borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.78)",
-                      }}
+                      style={[
+                        s.itemImage,
+                        item.category === "money" && s.itemImageMoney,
+                      ]}
                     >
                       {item.category === "money" ? (
                         <IndianRupee
@@ -379,11 +317,7 @@ function AdminDonationsScreen() {
                       ) : item.imageUrl ? (
                         <UniImage
                           source={{ uri: item.imageUrl }}
-                          style={{
-                            width: 62,
-                            height: 62,
-                            borderRadius: 12,
-                          }}
+                          style={s.itemImageFilled}
                           contentFit="cover"
                         />
                       ) : (
@@ -394,34 +328,18 @@ function AdminDonationsScreen() {
                         />
                       )}
                     </View>
-
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: "700",
-                          color: Colors.textPrimary,
-                        }}
-                        numberOfLines={1}
-                      >
+                    <View style={s.itemInfo}>
+                      <Text style={s.itemTitle} numberOfLines={1}>
                         {item.category === "money"
                           ? `₹${item.amount.toLocaleString("en-IN")}`
                           : item.purpose}
                       </Text>
-                      <Text
-                        style={{
-                          marginTop: 3,
-                          fontSize: 12,
-                          color: Colors.textTertiary,
-                        }}
-                        numberOfLines={1}
-                      >
+                      <Text style={s.itemSub} numberOfLines={1}>
                         {item.category === "money"
                           ? item.donor
                           : `${item.donor} · ${item.date}`}
                       </Text>
                     </View>
-
                     {!selectMode && (
                       <ChevronRight
                         size={18}
@@ -443,87 +361,30 @@ function AdminDonationsScreen() {
         animationType="fade"
         onRequestClose={() => setShowConfirmModal(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 32,
-          }}
-        >
-          <View
-            style={{
-              width: "100%",
-              backgroundColor: "#fff",
-              borderRadius: 20,
-              padding: 24,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                color: "#1a1a1a",
-                marginBottom: 8,
-              }}
-            >
-              Mark as Donated
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#666",
-                lineHeight: 20,
-                marginBottom: 24,
-              }}
-            >
+        <View style={s.modalOverlay}>
+          <View style={s.modalContent}>
+            <Text style={s.modalTitle}>Mark as Donated</Text>
+            <Text style={s.modalText}>
               Are you sure you want to mark {selectedIds.size} item
               {selectedIds.size !== 1 ? "s" : ""} as donated? This action can be
               undone later.
             </Text>
-            <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={s.modalBtnRow}>
               <TouchableOpacity
                 onPress={() => setShowConfirmModal(false)}
                 activeOpacity={0.75}
-                style={{
-                  flex: 1,
-                  height: 44,
-                  borderRadius: 12,
-                  backgroundColor: "#f0f0f0",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[s.modalBtn, s.modalBtnCancel]}
               >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: "#666",
-                  }}
-                >
+                <Text style={[s.modalBtnText, s.modalBtnTextCancel]}>
                   Cancel
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleConfirmBatch}
                 activeOpacity={0.75}
-                style={{
-                  flex: 1,
-                  height: 44,
-                  borderRadius: 12,
-                  backgroundColor: "#16a34a",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[s.modalBtn, s.modalBtnConfirm]}
               >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: "#fff",
-                  }}
-                >
+                <Text style={[s.modalBtnText, s.modalBtnTextConfirm]}>
                   Confirm
                 </Text>
               </TouchableOpacity>
@@ -533,18 +394,7 @@ function AdminDonationsScreen() {
       </Modal>
 
       {batchMarkMutation.isPending && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "rgba(0,0,0,0.3)",
-          }}
-        >
+        <View style={s.loadingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
         </View>
       )}

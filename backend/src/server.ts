@@ -14,6 +14,7 @@ import donationRoutes from "./routes/donationRoutes";
 import surveyRoutes from "./routes/surveyRoutes";
 import userRoutes from "./routes/userRoutes";
 import analyticsRoutes from "./routes/analyticsRoutes";
+import draftRoutes from "./routes/draftRoutes";
 import {
   sendBulkTestNotification,
   sendTestNotification,
@@ -45,10 +46,17 @@ app.use("/api/donations", donationRoutes);
 app.use("/api/surveys", surveyRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/donations/drafts", draftRoutes);
 app.post("/test/send", sendTestNotification);
 app.post("/test/send-bulk", sendBulkTestNotification);
 app.get("/", (_, res) => {
   res.status(200).json({ status: "healthy", message: "backend is running" });
+});
+app.set("etag", false);
+
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
 });
 
 httpServer.listen(PORT, "0.0.0.0", () => {

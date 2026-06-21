@@ -195,6 +195,141 @@ export const createItemDonation = async (
   );
   return response.data.data;
 };
+// TODO: put types in another files.
+export type DraftDonation = {
+  id: string;
+  donorId?: string | null;
+  category: DonationCategory;
+  purpose: string | null;
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateDraftPayload = {
+  category: Exclude<DonationCategory, "money">;
+  purpose?: string | null;
+  imageUri: string;
+  fileName?: string | null;
+  fileType?: string | null;
+  donorId?: string;
+};
+
+export type UpdateDraftPayload = {
+  purpose?: string | null;
+  category?: Exclude<DonationCategory, "money">;
+  imageUri?: string;
+  fileName?: string | null;
+  fileType?: string | null;
+};
+
+export const createDraft = async (payload: CreateDraftPayload) => {
+  const formData = new FormData();
+  const fallbackFileName =
+    payload.imageUri.split("/").pop() || "draft.jpg";
+  const fileName = payload.fileName || fallbackFileName;
+  const fileType = payload.fileType || "image/jpeg";
+
+  if (isWeb) {
+    const res = await fetch(payload.imageUri);
+    const blob = await res.blob();
+    const file = new File([blob], fileName, { type: fileType });
+    formData.append("itemImage", file);
+  } else {
+    formData.append("itemImage", {
+      uri: payload.imageUri,
+      name: fileName,
+      type: fileType,
+    } as any);
+  }
+
+  formData.append("category", payload.category);
+  if (payload.purpose) {
+    formData.append("purpose", payload.purpose);
+  }
+  if (payload.donorId) {
+    formData.append("donorId", payload.donorId);
+  }
+
+  const response = await http.post<{ success: boolean; data: DraftDonation }>(
+    "/api/donations/drafts",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
+  return response.data.data;
+};
+
+export const fetchDrafts = async () => {
+  const response = await http.get<{
+    success: boolean;
+    data: DraftDonation[];
+  }>("/api/donations/drafts");
+  return response.data.data;
+};
+
+export const fetchDraftById = async (id: string) => {
+  const response = await http.get<{ success: boolean; data: DraftDonation }>(
+    `/api/donations/drafts/${id}`,
+  );
+  return response.data.data;
+};
+
+export const updateDraft = async (id: string, payload: UpdateDraftPayload) => {
+  const formData = new FormData();
+
+  if (payload.imageUri) {
+    const fallbackFileName =
+      payload.imageUri.split("/").pop() || "draft.jpg";
+    const fileName = payload.fileName || fallbackFileName;
+    const fileType = payload.fileType || "image/jpeg";
+
+    if (isWeb) {
+      const res = await fetch(payload.imageUri);
+      const blob = await res.blob();
+      const file = new File([blob], fileName, { type: fileType });
+      formData.append("itemImage", file);
+    } else {
+      formData.append("itemImage", {
+        uri: payload.imageUri,
+        name: fileName,
+        type: fileType,
+      } as any);
+    }
+  }
+
+  if (payload.purpose !== undefined) {
+    formData.append("purpose", payload.purpose ?? "");
+  }
+  if (payload.category) {
+    formData.append("category", payload.category);
+  }
+
+  const response = await http.put<{ success: boolean; data: DraftDonation }>(
+    `/api/donations/drafts/${id}`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
+  return response.data.data;
+};
+
+export const deleteDraft = async (id: string) => {
+  const response = await http.delete<{ success: boolean }>(
+    `/api/donations/drafts/${id}`,
+  );
+  return response.data;
+};
+
+export const submitDraft = async (id: string) => {
+  const response = await http.post<{
+    success: boolean;
+    data: MyDonation;
+  }>(`/api/donations/drafts/${id}/submit`);
+  return response.data.data;
+};
 
 export const createMoneyDonation = async (
   payload: CreateMoneyDonationPayload,

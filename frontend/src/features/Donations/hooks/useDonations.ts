@@ -6,20 +6,28 @@ import {
 } from "@tanstack/react-query";
 import {
   batchMarkItemsDonated,
+  createDraft,
   createItemDonation,
   createMoneyDonation,
+  deleteDraft,
   fetchAllDonations,
   fetchDonatedItemDonations,
   fetchDonations,
+  fetchDraftById,
+  fetchDrafts,
   fetchItemDonationById,
   fetchMonthlyDonations,
   fetchMyDonations,
   fetchPendingItemDonations,
   rejectItemDonation,
+  submitDraft,
   toggleItemDonatedStatus,
+  updateDraft,
   verifyItemDonation,
+  type CreateDraftPayload,
   type CreateItemDonationPayload,
   type CreateMoneyDonationPayload,
+  type UpdateDraftPayload,
 } from "../utils/api";
 import { fetchAllUsers } from "../utils/usersApi";
 
@@ -107,12 +115,17 @@ export const useBatchMarkItemsDonated = () => {
 
   return useMutation({
     mutationFn: (ids: string[]) => batchMarkItemsDonated(ids),
-    onSuccess: async () => {
+    onSuccess: async (_data, ids) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
-        queryClient.invalidateQueries({
-          queryKey: donatedItemDonationsQueryKey,
-        }),
+        queryClient.invalidateQueries({ queryKey: pendingItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donatedItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
+        ...ids.map((id) =>
+          queryClient.invalidateQueries({ queryKey: itemDonationQueryKey(id) }),
+        ),
       ]);
     },
   });
@@ -126,10 +139,12 @@ export const useToggleItemDonatedStatus = () => {
     onSuccess: async (donation) => {
       queryClient.setQueryData(itemDonationQueryKey(donation.id), donation);
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: donatedItemDonationsQueryKey,
-        }),
         queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: pendingItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donatedItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
       ]);
     },
   });
@@ -145,10 +160,10 @@ export const useCreateItemDonation = () => {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
-        queryClient.invalidateQueries({
-          queryKey: pendingItemDonationsQueryKey,
-        }),
+        queryClient.invalidateQueries({ queryKey: pendingItemDonationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donatedItemDonationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
       ]);
     },
@@ -181,13 +196,100 @@ export const useVerifyItemDonation = () => {
     onSuccess: async (donation) => {
       queryClient.setQueryData(itemDonationQueryKey(donation.id), donation);
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: pendingItemDonationsQueryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: donatedItemDonationsQueryKey,
-        }),
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: pendingItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donatedItemDonationsQueryKey }),
         queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
+      ]);
+    },
+  });
+};
+
+export const draftsQueryKey = ["donations", "drafts"];
+
+export const draftQueryKey = (id: string) => ["drafts", id];
+
+export const useDraft = (id: string | undefined) =>
+  useQuery({
+    queryKey: draftQueryKey(id!),
+    queryFn: () => fetchDraftById(id!),
+    enabled: Boolean(id),
+  });
+
+export const useDrafts = () =>
+  useQuery({
+    queryKey: draftsQueryKey,
+    queryFn: fetchDrafts,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
+export const useCreateDraft = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateDraftPayload) => createDraft(payload),
+    onSuccess: async (draft) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: draftsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: draftQueryKey(draft.id) }),
+      ]);
+    },
+  });
+};
+
+export const useUpdateDraft = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateDraftPayload;
+    }) => updateDraft(id, payload),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: draftsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: draftQueryKey(variables.id) }),
+      ]);
+    },
+  });
+};
+
+export const useDeleteDraft = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteDraft(id),
+    onSuccess: async (_data, id) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: draftsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: draftQueryKey(id) }),
+      ]);
+    },
+  });
+};
+
+export const useSubmitDraft = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => submitDraft(id),
+    onSuccess: async (_data, id) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: draftsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: draftQueryKey(id) }),
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: pendingItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donatedItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: monthlyDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
       ]);
     },
   });
@@ -200,9 +302,15 @@ export const useRejectItemDonation = () => {
     mutationFn: (id: string) => rejectItemDonation(id),
     onSuccess: async (donation) => {
       queryClient.setQueryData(itemDonationQueryKey(donation.id), donation);
-      await queryClient.invalidateQueries({
-        queryKey: pendingItemDonationsQueryKey,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: allDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: pendingItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donatedItemDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: donationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: myDonationsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey }),
+      ]);
     },
   });
 };
+// TODO: separate the mutations right here.

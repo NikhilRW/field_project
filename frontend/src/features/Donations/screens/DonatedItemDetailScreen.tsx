@@ -179,12 +179,7 @@ export default function DonatedItemDetailScreen() {
                     Handed over to beneficiary
                   </Text>
                   <View style={styles.editBadgeButton}>
-                    <RotateCcw
-                      size={14}
-                      color={Colors.secondary}
-                      strokeWidth={2.2}
-                    />
-                    <Text style={styles.editBadgeText}>Edit</Text>
+                    <Text style={styles.editBadgeText}>Revert</Text>
                   </View>
                 </TouchableOpacity>
               ) : (

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { UniImage } from "@/shared/components/UniComponents";
 import {
   Alert,
@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  ArrowLeft,
   Banknote,
   BookOpen,
   Camera,
@@ -21,21 +22,26 @@ import {
   Package,
   Shirt,
 } from "lucide-react-native";
+import { router, useLocalSearchParams } from "expo-router";
 import { showMessage } from "react-native-flash-message";
-import AppHeader from "@/shared/components/AppHeader";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
-import { isDesktopBrowser } from "@/shared/constants/platform";
+import { isDesktopBrowser, isWeb } from "@/shared/constants/platform";
 import WebcamCaptureOverlay from "../components/WebcamCaptureOverlay";
 import WebFileInput from "../components/WebFileInput";
 import type { WebFileInputRef } from "../components/WebFileInput";
 import PhotoSourcePicker from "../components/PhotoSourcePicker";
 import { useAuthStore } from "@/shared/stores/authStore";
 import {
+  useAllUsers,
+  useCreateDraft,
   useCreateItemDonation,
   useCreateMoneyDonation,
-  useAllUsers,
+  useDeleteDraft,
+  useDraft,
   useMyDonations,
+  useSubmitDraft,
+  useUpdateDraft,
 } from "../hooks/useDonations";
 import type {
   DonationCategory,
@@ -43,7 +49,7 @@ import type {
   DonationVerificationStatus,
   MyDonation,
 } from "../utils/api";
-import { userDonationsStyles as styles } from "../styles/userDonationsStyles";
+import { createDonationScreenStyles as styles } from "../styles/createDonationScreenStyles";
 import { UserListItem } from "../types/common";
 
 type UserDonationType = DonationCategory;
@@ -166,9 +172,10 @@ function DonationHistoryRow({ donation }: { donation: MyDonation }) {
   );
 }
 
-export const UserDonationsScreen = () => {
+export const CreateDonation = () => {
   const insets = useSafeAreaInsets();
   const isAdmin = useAuthStore((state) => state.isAdmin);
+  const { draftId } = useLocalSearchParams<{ draftId?: string }>();
   const {
     data: myDonationPages,
     fetchNextPage,
@@ -179,18 +186,51 @@ export const UserDonationsScreen = () => {
   } = useMyDonations();
   const createItemDonationMutation = useCreateItemDonation();
   const createMoneyDonationMutation = useCreateMoneyDonation();
+  const createDraftMutation = useCreateDraft();
+  const updateDraftMutation = useUpdateDraft();
+  const submitDraftMutation = useSubmitDraft();
+  const deleteDraftMutation = useDeleteDraft();
+  const { data: draftData } = useDraft(draftId);
   const { data: allUsers = [] } = useAllUsers();
 
-  const [selectedType, setSelectedType] = useState<UserDonationType>("money");
+  const isEditingDraft = Boolean(draftId);
+  const [selectedType, setSelectedType] = useState<UserDonationType>(
+    draftData?.category ?? "money",
+  );
   const [amount, setAmount] = useState("");
-  const [purpose, setPurpose] = useState("");
+  const [purpose, setPurpose] = useState(draftData?.purpose ?? "");
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showWebcam, setShowWebcam] = useState(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const fileInputRef = useRef<WebFileInputRef>(null);
+
+  useEffect(() => {
+    if (draftData && !initialized) {
+      setInitialized(true);
+      setSelectedType(draftData.category);
+      setPurpose(draftData.purpose ?? "");
+      if (draftData.imageUrl) {
+        setPhoto({
+          previewUri: draftData.imageUrl,
+          imageUri: draftData.imageUrl,
+        });
+      }
+    }
+  }, [draftData, initialized]);
+
+  useEffect(() => {
+    if (draftData?.donorId && allUsers.length > 0 && !selectedUser) {
+      const match = allUsers.find((u) => u.id === draftData.donorId);
+      if (match) {
+        setSelectedUser(match);
+        setUserSearch(match.name);
+      }
+    }
+  }, [draftData?.donorId, allUsers, selectedUser]);
 
   const filteredUsers = useMemo(() => {
     if (!userSearch.trim()) return allUsers;
@@ -211,11 +251,17 @@ export const UserDonationsScreen = () => {
   const numericAmount = useMemo(() => normalizeAmount(amount), [amount]);
   const isSubmitting =
     createItemDonationMutation.isPending ||
-    createMoneyDonationMutation.isPending;
+    createMoneyDonationMutation.isPending ||
+    submitDraftMutation.isPending ||
+    deleteDraftMutation.isPending;
 
-  const canSubmit = isMoney
-    ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting && (!isAdmin || selectedUser)
-    : Boolean(purpose.trim() && photo?.imageUri && !isSubmitting && (!isAdmin || selectedUser));
+  const canSubmit = isEditingDraft
+    ? isMoney
+      ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting && (!isAdmin || selectedUser)
+      : Boolean(draftId && !isSubmitting)
+    : isMoney
+      ? Number.isFinite(numericAmount) && numericAmount > 0 && !isSubmitting && (!isAdmin || selectedUser)
+      : Boolean(purpose.trim() && photo?.imageUri && !isSubmitting && (!isAdmin || selectedUser));
 
   const resetForm = () => {
     setAmount("");
@@ -272,6 +318,77 @@ export const UserDonationsScreen = () => {
     }
     setPhoto(captured);
     setShowWebcam(false);
+  };
+
+  const handleSaveDraft = async () => {
+    if (isMoney || !photo?.imageUri) {
+      showMessage({
+        message: "Photo required",
+        description: "Take a photo before saving as draft.",
+        type: "warning",
+      });
+      return;
+    }
+
+    try {
+      const payload = {
+        category: selectedType as Exclude<DonationCategory, "money">,
+        purpose: purpose.trim() || null,
+        imageUri: photo.imageUri,
+        fileName: photo.fileName,
+        fileType: photo.fileType,
+        donorId: selectedUser?.id,
+      };
+
+      if (isEditingDraft && draftId) {
+        await updateDraftMutation.mutateAsync({ id: draftId, payload });
+      } else {
+        await createDraftMutation.mutateAsync(payload);
+      }
+
+      showMessage({
+        message: isEditingDraft ? "Draft updated" : "Draft saved",
+        description: "You can continue editing later.",
+        type: "success",
+      });
+      if (!isEditingDraft) resetForm();
+    } catch (error: any) {
+      showMessage({
+        message: "Unable to save draft",
+        description: error?.message ?? "Please try again.",
+        type: "danger",
+      });
+    }
+  };
+
+  const handleSubmitDraft = async () => {
+    if (!draftId) return;
+    try {
+      if (isMoney) {
+        await createMoneyDonationMutation.mutateAsync({
+          amount: numericAmount,
+          purpose: purpose.trim() || "Donation",
+          donorId: selectedUser?.id,
+        });
+        await deleteDraftMutation.mutateAsync(draftId);
+      } else {
+        await submitDraftMutation.mutateAsync(draftId);
+      }
+      showMessage({
+        message: "Donation submitted",
+        description: isMoney
+          ? "Money donation recorded from draft."
+          : "Draft has been converted to a donation.",
+        type: "success",
+      });
+      router.back();
+    } catch (error: any) {
+      showMessage({
+        message: "Unable to submit",
+        description: error?.message ?? "Please try again.",
+        type: "danger",
+      });
+    }
   };
 
   const handleFilePick = (file: { uri: string; name: string; type: string }) => {
@@ -369,12 +486,11 @@ export const UserDonationsScreen = () => {
           styles.container,
           {
             paddingTop: insets.top,
-            paddingBottom: insets.bottom + 20,
+            paddingBottom: !isWeb ? insets.bottom + 20 : 0,
             backgroundColor: "transparent",
           },
         ]}
       >
-        <AppHeader />
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -389,6 +505,26 @@ export const UserDonationsScreen = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => router.navigate("/donations")}
+              style={styles.backButton}
+              activeOpacity={0.75}
+            >
+              <ArrowLeft size={20} color={Colors.primary} strokeWidth={2.2} />
+            </TouchableOpacity>
+            {!isMoney && (
+              <TouchableOpacity
+                style={styles.saveDraftBtn}
+                onPress={handleSaveDraft}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.saveDraftBtnText}>
+                  {isEditingDraft ? "Update Draft" : "Save Draft"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.titleSection}>
             <Text style={styles.title}>Donate</Text>
             <Text style={styles.titleSub}>
@@ -518,7 +654,7 @@ export const UserDonationsScreen = () => {
                     ]}
                     onPress={() => {
                       setSelectedType(type.value);
-                      setPhoto(null);
+                      if (!isEditingDraft) setPhoto(null);
                     }}
                     activeOpacity={0.8}
                     testID={`donation-type-${type.value}`}
@@ -610,12 +746,14 @@ export const UserDonationsScreen = () => {
                 styles.submitButton,
                 !canSubmit && styles.submitButtonDisabled,
               ]}
-              onPress={handleSubmit}
+              onPress={isEditingDraft ? handleSubmitDraft : handleSubmit}
               disabled={!canSubmit}
               activeOpacity={0.85}
               testID="submit-donation-button"
             >
-              {isMoney ? (
+              {isEditingDraft ? (
+                <CheckCircle2 size={18} color="#fff" strokeWidth={2.2} />
+              ) : isMoney ? (
                 <Banknote size={18} color="#fff" strokeWidth={2.2} />
               ) : (
                 <CheckCircle2 size={18} color="#fff" strokeWidth={2.2} />
@@ -623,8 +761,8 @@ export const UserDonationsScreen = () => {
               <Text style={styles.submitButtonText}>
                 {isSubmitting
                   ? "Processing..."
-                  : isMoney
-                    ? "Create donation"
+                  : isEditingDraft
+                    ? "Submit Draft"
                     : "Create donation"}
               </Text>
             </TouchableOpacity>

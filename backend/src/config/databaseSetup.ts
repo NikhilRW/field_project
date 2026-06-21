@@ -119,7 +119,7 @@ export const emailVerificationTokens = pgTable(
     userIdIdx: index("email_verification_tokens_user_id_idx").on(table.userId),
   }),
 );
-
+// TODO: use non deprecated version of pgTable.
 export const passwordResetTokens = pgTable(
   "password_reset_tokens",
   {
@@ -139,6 +139,47 @@ export const passwordResetTokens = pgTable(
   },
   (table) => ({
     userIdIdx: index("password_reset_tokens_user_id_idx").on(table.userId),
+  }),
+);
+
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    tokenHash: text("token_hash").notNull(),
+    deviceName: text("device_name"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("refresh_tokens_user_id_idx").on(table.userId),
+    tokenHashIdx: index("refresh_tokens_token_hash_idx").on(table.tokenHash),
+  }),
+);
+
+export const draftDonations = pgTable(
+  "draft_donations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    donorId: uuid("donor_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    category: donationCategoryEnum("category").notNull(),
+    purpose: text("purpose"),
+    imageUrl: text("image_url"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    donorIdx: index("draft_donations_donor_idx").on(table.donorId),
   }),
 );
 
@@ -322,6 +363,8 @@ export const schema = {
   surveys,
   emailVerificationTokens,
   passwordResetTokens,
+  refreshTokens,
+  draftDonations,
   notifications,
 };
 
