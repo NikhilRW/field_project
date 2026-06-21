@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react-native";
-import type { DonationType } from "./common";
 
 export interface DateRangePickerProps {
   visible: boolean;
@@ -9,11 +8,6 @@ export interface DateRangePickerProps {
 
 export interface DonationChartProps {
   data: { date: string; count: number }[];
-}
-
-export interface FilterDropdownProps {
-  value: DonationType;
-  onChange: (value: DonationType) => void;
 }
 
 export interface StatsCardProps {

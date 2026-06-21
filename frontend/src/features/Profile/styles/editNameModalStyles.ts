@@ -17,20 +17,6 @@ export const editNameModalStyles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 24,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.transparent,
-  },
   title: {
     fontSize: 17,
     fontWeight: "700" as const,

@@ -1,7 +1,6 @@
 import React from "react";
 import { ActivityIndicator, Modal, Text, TouchableOpacity, View } from "react-native";
-import { X, Trash2 } from "lucide-react-native";
-import { Colors } from "@/shared/constants/color";
+import { Trash2 } from "lucide-react-native";
 import { deleteActivityModalStyles as styles } from "../styles/deleteActivityModalStyles";
 
 type Props = {
@@ -26,17 +25,7 @@ export default function DeleteActivityModal({
     >
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeBtn}
-              activeOpacity={0.7}
-            >
-              <X size={18} color={Colors.textSecondary} strokeWidth={2} />
-            </TouchableOpacity>
-            <Text style={styles.title}>Delete activity?</Text>
-            <View style={styles.closeBtn} />
-          </View>
+          <Text style={styles.title}>Delete activity?</Text>
 
           <Text style={styles.body}>
             This will permanently remove the activity and it's all details.

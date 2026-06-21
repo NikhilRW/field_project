@@ -17,20 +17,6 @@ export const deleteActivityModalStyles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 24,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
   title: {
     fontSize: 17,
     fontWeight: "700" as const,

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
@@ -47,7 +47,7 @@ export const AddUserModal = ({
               flexDirection: "row",
               alignItems: "center",
               gap: 10,
-              paddingTop: 60,
+              paddingTop: 20,
               marginBottom: 28,
             }}
           >
@@ -65,7 +65,7 @@ export const AddUserModal = ({
                 borderColor: "rgba(255,255,255,0.82)",
               }}
             >
-              <ArrowLeft size={20} color={Colors.primary} strokeWidth={2.2} />
+              <X size={20} color={Colors.primary} strokeWidth={2.2} />
             </TouchableOpacity>
             <Text
               style={{

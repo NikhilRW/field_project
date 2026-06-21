@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { X } from "lucide-react-native";
+
 import { Colors } from "@/shared/constants/color";
 import { useUpdateProfileMutation } from "@/features/Auth/hooks/useAuthMutations";
 import { editNameModalStyles as styles } from "../styles/editNameModalStyles";
@@ -63,17 +63,7 @@ export default function EditNameModal({
     >
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeBtn}
-              activeOpacity={0.7}
-            >
-              <X size={18} color={Colors.textSecondary} strokeWidth={2} />
-            </TouchableOpacity>
-            <Text style={styles.title}>Edit Name</Text>
-            <View style={styles.closeBtn} />
-          </View>
+          <Text style={styles.title}>Edit Name</Text>
 
           <View style={styles.body}>
             <TextInput

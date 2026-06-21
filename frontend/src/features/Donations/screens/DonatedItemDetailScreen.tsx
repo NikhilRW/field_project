@@ -9,7 +9,13 @@ import {
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Hand, PackageCheck, RotateCcw } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Hand,
+  PackageCheck,
+  RotateCcw,
+  HelpingHand,
+} from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
@@ -163,24 +169,24 @@ export default function DonatedItemDetailScreen() {
           {isAdmin && (
             <>
               {item.isDonated ? (
-                <View style={styles.donatedBadge}>
-                  <TouchableOpacity
-                    style={styles.editBadgeButton}
-                    onPress={() => setShowModal(true)}
-                    activeOpacity={0.7}
-                  >
+                <TouchableOpacity
+                  style={styles.donatedBadge}
+                  onPress={() => setShowModal(true)}
+                  activeOpacity={0.75}
+                >
+                  <Hand size={18} color={Colors.secondary} strokeWidth={2.2} />
+                  <Text style={styles.donatedBadgeText}>
+                    Handed over to beneficiary
+                  </Text>
+                  <View style={styles.editBadgeButton}>
                     <RotateCcw
                       size={14}
                       color={Colors.secondary}
                       strokeWidth={2.2}
                     />
                     <Text style={styles.editBadgeText}>Edit</Text>
-                  </TouchableOpacity>
-                  <Hand size={18} color={Colors.secondary} strokeWidth={2.2} />
-                  <Text style={styles.donatedBadgeText}>
-                    Handed over to beneficiary
-                  </Text>
-                </View>
+                  </View>
+                </TouchableOpacity>
               ) : (
                 <TouchableOpacity
                   style={styles.donateButton}
@@ -189,13 +195,15 @@ export default function DonatedItemDetailScreen() {
                   disabled={isToggling}
                 >
                   {isToggling ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={Colors.secondary} />
                   ) : (
                     <>
-                      <Hand size={20} color="#fff" strokeWidth={2.2} />
-                      <Text style={styles.donateButtonText}>
-                        Mark as Donated
-                      </Text>
+                      <HelpingHand
+                        size={22}
+                        color={Colors.secondary}
+                        strokeWidth={2.2}
+                      />
+                      <Text style={styles.donateButtonText}>Donate Item</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -220,9 +228,10 @@ export default function DonatedItemDetailScreen() {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
-                <Hand size={32} color={Colors.secondary} strokeWidth={2} />
                 <Text style={styles.modalTitle}>
-                  {item.isDonated ? "Revert Donation Status" : "Mark as Donated"}
+                  {item.isDonated
+                    ? "Revert Donation Status"
+                    : "Mark as Donated"}
                 </Text>
                 <Text style={styles.modalBody}>
                   {item.isDonated
