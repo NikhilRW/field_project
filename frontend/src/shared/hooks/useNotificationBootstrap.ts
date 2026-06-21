@@ -11,11 +11,8 @@ import { useAuthStore } from "@/shared/stores/authStore";
 import { createNotificationStore } from "@/shared/stores/notificationStore";
 import { firebaseMessaging } from "../constants/firebase";
 import { webFirebaseApp } from "../config/firebase";
-import { isWeb } from "../constants/platform";
+import { isDesktopBrowser, isWeb } from "../constants/platform";
 import { requestNotificationPermission } from "../utils/fcm";
-
-const isDesktopBrowser =
-  isWeb && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 let webMessaging: any = null;
 

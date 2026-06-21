@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { UniImage } from "@/shared/components/UniComponents";
 import {
   Alert,
@@ -25,6 +25,11 @@ import { showMessage } from "react-native-flash-message";
 import AppHeader from "@/shared/components/AppHeader";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
+import { isDesktopBrowser } from "@/shared/constants/platform";
+import WebcamCaptureOverlay from "../components/WebcamCaptureOverlay";
+import WebFileInput from "../components/WebFileInput";
+import type { WebFileInputRef } from "../components/WebFileInput";
+import PhotoSourcePicker from "../components/PhotoSourcePicker";
 import { useAuthStore } from "@/shared/stores/authStore";
 import {
   useCreateItemDonation,
@@ -183,6 +188,9 @@ export const UserDonationsScreen = () => {
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showWebcam, setShowWebcam] = useState(false);
+  const [showSourcePicker, setShowSourcePicker] = useState(false);
+  const fileInputRef = useRef<WebFileInputRef>(null);
 
   const filteredUsers = useMemo(() => {
     if (!userSearch.trim()) return allUsers;
@@ -212,14 +220,22 @@ export const UserDonationsScreen = () => {
   const resetForm = () => {
     setAmount("");
     setPurpose("");
-    setPhoto(null);
+    setPhoto((prev) => {
+      if (prev?.imageUri?.startsWith("blob:")) {
+        URL.revokeObjectURL(prev.imageUri);
+      }
+      return null;
+    });
     setSelectedUser(null);
     setUserSearch("");
   };
-  
-
 
   const handleCapturePhoto = async () => {
+    if (isDesktopBrowser) {
+      setShowSourcePicker(true);
+      return;
+    }
+
     const permission = await ImagePicker.requestCameraPermissionsAsync();
 
     if (!permission.granted) {
@@ -247,6 +263,26 @@ export const UserDonationsScreen = () => {
       imageUri: asset.uri,
       fileName: asset.fileName,
       fileType: asset.mimeType,
+    });
+  };
+
+  const handleWebcamCapture = (captured: CapturedPhoto) => {
+    if (photo?.imageUri?.startsWith("blob:")) {
+      URL.revokeObjectURL(photo.imageUri);
+    }
+    setPhoto(captured);
+    setShowWebcam(false);
+  };
+
+  const handleFilePick = (file: { uri: string; name: string; type: string }) => {
+    if (photo?.imageUri?.startsWith("blob:")) {
+      URL.revokeObjectURL(photo.imageUri);
+    }
+    setPhoto({
+      previewUri: file.uri,
+      imageUri: file.uri,
+      fileName: file.name,
+      fileType: file.type,
     });
   };
 
@@ -642,6 +678,27 @@ export const UserDonationsScreen = () => {
 
           <View style={{ height: 32 }} />
         </ScrollView>
+
+        <WebcamCaptureOverlay
+          visible={showWebcam}
+          onCapture={handleWebcamCapture}
+          onClose={() => setShowWebcam(false)}
+        />
+
+        <WebFileInput ref={fileInputRef} onFile={handleFilePick} />
+
+        <PhotoSourcePicker
+          visible={showSourcePicker}
+          onTakePhoto={() => {
+            setShowSourcePicker(false);
+            setShowWebcam(true);
+          }}
+          onChooseFile={() => {
+            setShowSourcePicker(false);
+            fileInputRef.current?.open();
+          }}
+          onClose={() => setShowSourcePicker(false)}
+        />
       </View>
     </MeshGradientBackground>
   );
