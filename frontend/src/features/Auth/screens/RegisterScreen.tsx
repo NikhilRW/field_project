@@ -7,7 +7,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react-native";
@@ -24,6 +23,7 @@ import {
   getGoogleIdToken,
   getGoogleSignInErrorMessage,
 } from "../utils/googleAuth";
+import { showAppMessage } from "@/shared/utils/flashMessage";
 
 // TODO: use react hook form for all forms in the app
 
@@ -46,12 +46,20 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Missing details", "Please fill in all required fields.");
+      showAppMessage({
+        message: "Missing details",
+        description: "Please fill in all required fields.",
+        type: "warning",
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Passwords do not match", "Please confirm your password.");
+      showAppMessage({
+        message: "Passwords do not match",
+        description: "Please confirm your password.",
+        type: "warning",
+      });
       return;
     }
 
@@ -62,16 +70,18 @@ export default function RegisterScreen() {
         password,
       });
 
-      Alert.alert(
-        "Account created",
-        "Your account is ready. Please sign in.",
-      );
-      router.replace("/(auth)/login" as any);
+      showAppMessage({
+        message: "Account created",
+        description: "Please verify your email to sign in.",
+        type: "success",
+      });
+      router.replace(`/(auth)/verify-email?email=${encodeURIComponent(email)}` as any);
     } catch (error: any) {
-      Alert.alert(
-        "Registration failed",
-        error?.message ?? "Unable to create account.",
-      );
+      showAppMessage({
+        message: "Registration failed",
+        description: error?.message ?? "Unable to create account.",
+        type: "danger",
+      });
     }
   };
 
@@ -86,7 +96,11 @@ export default function RegisterScreen() {
       await googleLoginMutation.mutateAsync({ idToken });
       router.replace("/(tabs)/activities" as any);
     } catch (error: any) {
-      Alert.alert("Google sign-in failed", getGoogleSignInErrorMessage(error));
+      showAppMessage({
+        message: "Google sign-in failed",
+        description: getGoogleSignInErrorMessage(error),
+        type: "danger",
+      });
     }
   };
 

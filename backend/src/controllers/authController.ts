@@ -15,10 +15,10 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt";
-import { addMinutes, generateTokenPair, hashToken } from "../utils/tokens";
+import { addMinutes, hashToken } from "../utils/tokens";
 import {
   sendPasswordResetOtpEmail,
-  sendVerificationEmail as sendVerificationEmailMessage,
+  sendVerificationOtpEmail,
 } from "../utils/email";
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -92,8 +92,7 @@ export const register = async (req: Request, res: Response) => {
         email: normalizedEmail,
         passwordHash,
         role: role ?? "User",
-        // TODO: restore email verification before production signups.
-        isEmailVerified: true,
+        isEmailVerified: false,
       })
       .returning({
         id: users.id,
@@ -158,6 +157,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(403).json({
         success: false,
         error: "Email not verified. Please verify your email.",
+        data: { email: user.email },
       });
     }
 
@@ -445,6 +445,7 @@ export const refreshToken = async (req: Request, res: Response) => {
         refreshToken: newRefreshToken,
       },
     });
+    // TODO: using token hash used proper otp field from the database
   } catch (error) {
     console.error("Refresh error:", error);
     return res
@@ -552,14 +553,14 @@ export const sendVerificationEmail = async (req: Request, res: Response) => {
       return res.status(200).json({ success: true });
     }
 
-    const { token, tokenHash } = generateTokenPair();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await db.insert(emailVerificationTokens).values({
       userId: user.id,
-      tokenHash,
-      expiresAt: addMinutes(60),
+      tokenHash: otp,
+      expiresAt: addMinutes(10),
     });
 
-    await sendVerificationEmailMessage(user.email, token);
+    await sendVerificationOtpEmail(user.email, otp);
 
     return res.status(200).json({ success: true });
   } catch (error) {
@@ -572,22 +573,34 @@ export const sendVerificationEmail = async (req: Request, res: Response) => {
 
 export const verifyEmail = async (req: Request, res: Response) => {
   try {
-    const { token } = req.body as { token?: string };
+    const { email, otp } = req.body as { email?: string; otp?: string };
 
-    if (!token) {
+    if (!email || !otp) {
       return res
         .status(400)
-        .json({ success: false, error: "Token is required." });
+        .json({ success: false, error: "Email and OTP are required." });
     }
 
-    const tokenHash = hashToken(token);
+    const normalizedEmail = normalizeEmail(email);
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail));
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid or expired OTP." });
+    }
 
     const [record] = await db
       .select()
       .from(emailVerificationTokens)
       .where(
         and(
-          eq(emailVerificationTokens.tokenHash, tokenHash),
+          eq(emailVerificationTokens.userId, user.id),
+          eq(emailVerificationTokens.tokenHash, otp),
           isNull(emailVerificationTokens.usedAt),
           gt(emailVerificationTokens.expiresAt, new Date()),
         ),
@@ -596,13 +609,13 @@ export const verifyEmail = async (req: Request, res: Response) => {
     if (!record) {
       return res
         .status(400)
-        .json({ success: false, error: "Invalid or expired token." });
+        .json({ success: false, error: "Invalid or expired OTP." });
     }
 
     await db
       .update(users)
       .set({ isEmailVerified: true })
-      .where(eq(users.id, record.userId));
+      .where(eq(users.id, user.id));
 
     await db
       .update(emailVerificationTokens)

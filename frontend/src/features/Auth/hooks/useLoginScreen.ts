@@ -1,4 +1,3 @@
-import { Alert } from "react-native";
 import { useLoginForm } from "../hooks/useLoginForm";
 import {
   useGoogleLoginMutation,
@@ -48,8 +47,16 @@ export const useLoginScreen = () => {
 
       router.replace(destination);
     } catch (error: any) {
-      const message = error?.message ?? "Unable to sign in. Please try again.";
-      Alert.alert("Login failed", message);
+      if (error.response?.data?.error?.includes("Email not verified")) {
+        const unverifiedEmail = error.response.data.data?.email || email;
+        router.replace(`/(auth)/verify-email?email=${encodeURIComponent(unverifiedEmail)}` as any);
+        return;
+      }
+      showAppMessage({
+        message: "Login failed",
+        description: error?.message ?? "Unable to sign in. Please try again.",
+        type: "danger",
+      });
     }
   };
 

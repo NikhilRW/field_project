@@ -115,6 +115,12 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="(auth)/verify-email"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

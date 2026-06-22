@@ -58,10 +58,13 @@ export const sendVerificationEmailRequest = async (email: string) => {
   return response.data;
 };
 
-export const verifyEmailRequest = async (token: string) => {
+export const verifyEmailRequest = async (payload: {
+  email: string;
+  otp: string;
+}) => {
   const response = await http.post<{ success: boolean }>(
     "/api/auth/verify-email",
-    { token },
+    payload,
   );
   return response.data;
 };

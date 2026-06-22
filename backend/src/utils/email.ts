@@ -35,20 +35,14 @@ export const sendEmail = async ({
   }
 };
 
-export const sendVerificationEmail = async (to: string, token: string) => {
-  const baseUrl = process.env.APP_BASE_URL ?? "https://helpinghands.com";
-  const verifyUrl = `${baseUrl}/auth/verify-email?token=${encodeURIComponent(
-    token,
-  )}&email=${encodeURIComponent(to)}`;
-
+export const sendVerificationOtpEmail = async (to: string, otp: string) => {
   const subject = "Verify your email";
-  const text = `Please verify your email using this token: ${token}\n\nOr open: ${verifyUrl}`;
+  const text = `Your email verification OTP is: ${otp}\n\nThis code expires in 10 minutes.`;
 
   const html = `
-    <p>Please verify your email using this token:</p>
-    <p><strong>${token}</strong></p>
-    <p>Or open this link:</p>
-    <a href="${verifyUrl}">${verifyUrl}</a>
+    <p>Your email verification OTP:</p>
+    <p style="font-size:24px;font-weight:bold;letter-spacing:4px">${otp}</p>
+    <p>This code expires in 10 minutes.</p>
   `;
 
   await sendEmail({ to, subject, text, html });
