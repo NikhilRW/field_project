@@ -14,14 +14,19 @@ import { sendActivityNotification } from "../utils/sendNotification";
 const notifyUsersAboutActivity = async (
   activityId: string,
   activityName: string,
+  excludeUserId?: string,
 ) => {
-  const userRows = await db
+  let userRows = await db
     .select({
       id: users.id,
       expoPushToken: users.expoPushToken,
     })
     .from(users)
     .where(eq(users.role, "User"));
+
+  if (excludeUserId) {
+    userRows = userRows.filter((row) => row.id !== excludeUserId);
+  }
 
   if (userRows.length === 0) {
     return;
@@ -185,7 +190,7 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         .json({ success: false, error: "Failed to create activity." });
     }
 
-    await notifyUsersAboutActivity(created.id, created.name);
+    await notifyUsersAboutActivity(created.id, created.name, req.user?.id);
 
     return res.status(201).json({
       success: true,
@@ -337,24 +342,31 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
       }
 
       if (title && body) {
-        await sendActivityNotification({
-          title,
-          body,
-          activityId: id,
-        });
+        let allUsers = await db.select({ id: users.id }).from(users);
+        if (req.user?.id) {
+          allUsers = allUsers.filter((u) => u.id !== req.user!.id);
+        }
 
-        const allUsers = await db.select({ id: users.id }).from(users);
-        const notificationRows = allUsers.map((v) => ({
-          userId: v.id,
-          title,
-          body,
-          data: JSON.stringify({
+        const userIds = allUsers.map((u) => u.id);
+
+        if (userIds.length > 0) {
+          await sendActivityNotification({
+            title,
+            body,
             activityId: id,
-            type: "activity_status_change",
-          }),
-        }));
+            userIds,
+          });
 
-        if (notificationRows.length > 0) {
+          const notificationRows = allUsers.map((v) => ({
+            userId: v.id,
+            title,
+            body,
+            data: JSON.stringify({
+              activityId: id,
+              type: "activity_status_change",
+            }),
+          }));
+
           await db.insert(notifications).values(notificationRows);
         }
       }

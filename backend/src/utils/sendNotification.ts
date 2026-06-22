@@ -1,7 +1,6 @@
 import { messaging } from "@services/firebase";
 import { db, users } from "@config/databaseSetup";
-import { eq } from "drizzle-orm";
-import { log } from "console";
+import { eq, inArray } from "drizzle-orm";
 
 interface SendActivityNotificationParams {
   title: string;
@@ -22,23 +21,23 @@ export const sendActivityNotification = async ({
   try {
     let tokens: string[] = [];
 
-    if (userIds.length > 0) {
-      const userRows = await db
-        .select({ fcmToken: users.expoPushToken })
-        .from(users);
-
-      tokens = userRows
-        .filter((u) => u.fcmToken != undefined && u.fcmToken != null)
-        .map((u) => u.fcmToken)
-    } else {
+    if (userIds.length === 0) {
       return;
     }
+
+    const userRows = await db
+      .select({ fcmToken: users.expoPushToken })
+      .from(users)
+      .where(inArray(users.id, userIds));
+
+    tokens = userRows
+      .filter((u) => u.fcmToken != null)
+      .map((u) => u.fcmToken!);
 
     if (tokens.length === 0) {
       console.warn("No FCM tokens available for activity notification");
       return;
     }
-    log("tokens : ", tokens)
     // Send multicast notification
     const response = await messaging.sendEachForMulticast({
       tokens,
