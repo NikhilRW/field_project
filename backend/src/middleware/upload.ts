@@ -1,7 +1,7 @@
 import type { NextFunction, Response } from "express";
 import multer from "multer";
 import type { AuthRequest } from "../types/auth";
-import { uploadToCloudinary } from "../config/cloudinaryConfig";
+import { uploadImageToS3 } from "../utils/s3Upload";
 import { compressImageBuffer } from "../utils/compressImage";
 
 const storage = multer.memoryStorage();
@@ -35,13 +35,12 @@ export const uploadDonationImage = async (
 
     const compressed = await compressImageBuffer(req.file.buffer);
 
-    const result = await uploadToCloudinary(
-      compressed,
-      "helping-hands/donations",
-    );
+    const result = await uploadImageToS3(compressed, "helping-hands/donations");
 
-    req.cloudinaryUrl = result.secure_url;
-    req.cloudinaryPublicId = result.public_id;
+    req.s3Url = result.url;
+    req.s3Key = result.key;
+    
+    console.log(req.s3Url);
 
     return next();
   } catch (error: any) {
@@ -65,13 +64,10 @@ export const uploadDonationImageOptional = async (
 
     const compressed = await compressImageBuffer(req.file.buffer);
 
-    const result = await uploadToCloudinary(
-      compressed,
-      "helping-hands/donations",
-    );
+    const result = await uploadImageToS3(compressed, "helping-hands/donations");
 
-    req.cloudinaryUrl = result.secure_url;
-    req.cloudinaryPublicId = result.public_id;
+    req.s3Url = result.url;
+    req.s3Key = result.key;
 
     return next();
   } catch (error: any) {

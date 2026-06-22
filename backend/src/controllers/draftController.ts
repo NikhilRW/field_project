@@ -30,7 +30,7 @@ const mapDraftRow = (row: typeof draftDonations.$inferSelect) => ({
 export const createDraft = async (req: AuthRequest, res: Response) => {
   try {
     const { category, purpose, donorId } = req.body;
-    const imageUrl = req.cloudinaryUrl;
+    const imageUrl = req.s3Url;
 
     if (!category || category === "money") {
       return res.status(400).json({
@@ -134,7 +134,7 @@ export const updateDraft = async (req: AuthRequest, res: Response) => {
   try {
     const id = String(req.params.id);
     const { purpose, category } = req.body;
-    const imageUrl = req.cloudinaryUrl;
+    const imageUrl = req.s3Url;
 
     const [draft] = await db
       .select()

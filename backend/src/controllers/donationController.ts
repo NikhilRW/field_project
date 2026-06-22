@@ -429,7 +429,7 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
       purpose?: string;
       donorId?: string;
     };
-    const imageUrl = req.cloudinaryUrl;
+    const imageUrl = req.s3Url;
 
     if (!userId) {
       return res.status(401).json({ success: false, error: "Unauthorized." });

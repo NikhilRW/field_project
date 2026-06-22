@@ -8,8 +8,8 @@ declare global {
         email: string;
         role: "Admin" | "User";
       };
-      cloudinaryUrl?: string;
-      cloudinaryPublicId?: string;
+      s3Url?: string;
+      s3Key?: string;
     }
   }
 }

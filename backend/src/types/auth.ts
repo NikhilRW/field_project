@@ -10,6 +10,6 @@ export type AuthUser = {
 
 export interface AuthRequest extends Request {
   user?: AuthUser;
-  cloudinaryUrl?: string;
-  cloudinaryPublicId?: string;
+  s3Url?: string;
+  s3Key?: string;
 }
