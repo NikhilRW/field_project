@@ -261,9 +261,7 @@ export const donations = pgTable(
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
     type: donationTypeEnum("type").notNull(),
     category: donationCategoryEnum("category").notNull().default("money"),
-    verificationStatus: donationVerificationStatusEnum(
-      "verification_status",
-    )
+    verificationStatus: donationVerificationStatusEnum("verification_status")
       .notNull()
       .default("verified"),
     paymentStatus: donationPaymentStatusEnum("payment_status")
@@ -372,4 +370,6 @@ export const pool = new Pool({
   connectionString: databaseUrl,
 });
 
-export const db = drizzle(pool, { schema });
+export const db = drizzle(pool, {
+  schema,
+});
