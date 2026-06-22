@@ -17,7 +17,7 @@ import {
 } from "../utils/jwt";
 import { addMinutes, generateTokenPair, hashToken } from "../utils/tokens";
 import {
-  sendPasswordResetEmail,
+  sendPasswordResetOtpEmail,
   sendVerificationEmail as sendVerificationEmailMessage,
 } from "../utils/email";
 
@@ -639,14 +639,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
       return res.status(200).json({ success: true });
     }
 
-    const { token, tokenHash } = generateTokenPair();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await db.insert(passwordResetTokens).values({
       userId: user.id,
-      tokenHash,
-      expiresAt: addMinutes(30),
+      tokenHash: otp,
+      expiresAt: addMinutes(10),
     });
 
-    await sendPasswordResetEmail(user.email, token);
+    await sendPasswordResetOtpEmail(user.email, otp);
 
     return res.status(200).json({ success: true });
   } catch (error) {
@@ -714,26 +714,39 @@ export const verifyResetToken = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { token, password } = req.body as {
-      token?: string;
+    const { email, otp, password } = req.body as {
+      email?: string;
+      otp?: string;
       password?: string;
     };
 
-    if (!token || !password) {
+    if (!email || !otp || !password) {
       return res.status(400).json({
         success: false,
-        error: "Token and new password are required.",
+        error: "Email, OTP, and new password are required.",
       });
     }
 
-    const tokenHash = hashToken(token);
+    const normalizedEmail = normalizeEmail(email);
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail));
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid or expired OTP." });
+    }
 
     const [record] = await db
       .select()
       .from(passwordResetTokens)
       .where(
         and(
-          eq(passwordResetTokens.tokenHash, tokenHash),
+          eq(passwordResetTokens.userId, user.id),
+          eq(passwordResetTokens.tokenHash, otp),
           isNull(passwordResetTokens.usedAt),
           gt(passwordResetTokens.expiresAt, new Date()),
         ),
@@ -742,19 +755,19 @@ export const resetPassword = async (req: Request, res: Response) => {
     if (!record) {
       return res
         .status(400)
-        .json({ success: false, error: "Invalid or expired token." });
+        .json({ success: false, error: "Invalid or expired OTP." });
     }
 
     const newPasswordHash = await hashPassword(password);
 
     await db
       .delete(refreshTokens)
-      .where(eq(refreshTokens.userId, record.userId));
+      .where(eq(refreshTokens.userId, user.id));
 
     await db
       .update(users)
       .set({ passwordHash: newPasswordHash })
-      .where(eq(users.id, record.userId));
+      .where(eq(users.id, user.id));
 
     await db
       .update(passwordResetTokens)

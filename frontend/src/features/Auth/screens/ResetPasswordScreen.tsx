@@ -7,58 +7,59 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Lock, Eye, EyeOff, KeyRound } from "lucide-react-native";
+import { Lock, Eye, EyeOff, KeyRound, Mail } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useResetPasswordMutation } from "../hooks/useAuthMutations";
+import BrandLogo from "@/shared/components/BrandLogo";
+import { showAppMessage } from "@/shared/utils/flashMessage";
 import { loginStyles as styles } from "../styles/loginStyles";
 
 export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{ token?: string }>();
+  const params = useLocalSearchParams<{ email?: string }>();
   const resetMutation = useResetPasswordMutation();
-  const token = params.token ?? "";
+  const [email, setEmail] = useState(params.email ?? "");
+  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const isDisabled = useMemo(
     () =>
-      !token ||
+      !email.trim() ||
+      otp.length !== 6 ||
       !password ||
       !confirmPassword ||
       password !== confirmPassword ||
       resetMutation.isPending,
-    [token, password, confirmPassword, resetMutation.isPending],
+    [email, otp, password, confirmPassword, resetMutation.isPending],
   );
 
   const handleReset = async () => {
-    if (!token) {
-      Alert.alert(
-        "Reset link missing",
-        "Please open the reset link from your email again.",
-      );
-      return;
-    }
-
     if (password !== confirmPassword) {
-      Alert.alert("Password mismatch", "Please re-enter matching passwords.");
+      showAppMessage({
+        message: "Password mismatch",
+        description: "Please re-enter matching passwords.",
+        type: "warning",
+      });
       return;
     }
 
     try {
-      await resetMutation.mutateAsync({ token, password });
-      Alert.alert(
-        "Password updated",
-        "You can now sign in with your password.",
-      );
+      await resetMutation.mutateAsync({ email: email.trim(), otp, password });
+      showAppMessage({
+        message: "Password updated",
+        description: "You can now sign in with your password.",
+        type: "success",
+      });
       router.replace("/(auth)/login" as any);
     } catch (error: any) {
-      Alert.alert(
-        "Reset failed",
-        error?.message ?? "Unable to reset password. Try again.",
-      );
+      showAppMessage({
+        message: "Reset failed",
+        description: error?.message ?? "Unable to reset password. Try again.",
+        type: "danger",
+      });
     }
   };
 
@@ -74,15 +75,49 @@ export default function ResetPasswordScreen() {
       >
         <View style={styles.topSection}>
           <View style={styles.logoBox}>
-            <KeyRound size={22} color="#fff" />
+            <BrandLogo size={44} />
           </View>
           <Text style={styles.brandName}>Reset Password</Text>
           <Text style={styles.brandSub}>
-            Set a new password for your account
+            Enter the OTP sent to your email and set a new password
           </Text>
         </View>
 
         <View style={styles.formCard}>
+          {!params.email && (
+            <>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrap}>
+                <Mail size={17} color={Colors.textTertiary} strokeWidth={1.6} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="you@example.com"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  testID="reset-email-input"
+                />
+              </View>
+            </>
+          )}
+
+          <Text style={styles.label}>OTP</Text>
+          <View style={styles.inputWrap}>
+            <KeyRound size={17} color={Colors.textTertiary} strokeWidth={1.6} />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter 6-digit OTP"
+              placeholderTextColor={Colors.textTertiary}
+              value={otp}
+              onChangeText={(t) => setOtp(t.replace(/\D/g, "").slice(0, 6))}
+              keyboardType="number-pad"
+              maxLength={6}
+              testID="reset-otp-input"
+            />
+          </View>
+
           <Text style={styles.label}>New Password</Text>
           <View style={styles.inputWrap}>
             <Lock size={17} color={Colors.textTertiary} strokeWidth={1.6} />

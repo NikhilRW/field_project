@@ -75,7 +75,8 @@ export const forgotPasswordRequest = async (email: string) => {
 };
 
 export const resetPasswordRequest = async (payload: {
-  token: string;
+  email: string;
+  otp: string;
   password: string;
 }) => {
   const response = await http.post<{ success: boolean }>(

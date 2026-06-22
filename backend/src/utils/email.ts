@@ -54,20 +54,14 @@ export const sendVerificationEmail = async (to: string, token: string) => {
   await sendEmail({ to, subject, text, html });
 };
 
-export const sendPasswordResetEmail = async (to: string, token: string) => {
-  const baseUrl = process.env.APP_BASE_URL ?? "https://helpinghands.com";
-  const resetUrl = `${baseUrl}/auth/reset-password?token=${encodeURIComponent(
-    token,
-  )}&email=${encodeURIComponent(to)}`;
-
-  const subject = "Reset your password";
-  const text = `Use this token to reset your password: ${token}\n\nOr open: ${resetUrl}`;
+export const sendPasswordResetOtpEmail = async (to: string, otp: string) => {
+  const subject = "Your password reset OTP";
+  const text = `Your OTP for password reset is: ${otp}\n\nThis code expires in 10 minutes.`;
 
   const html = `
-    <p>Use this token to reset your password:</p>
-    <p><strong>${token}</strong></p>
-    <p>Or open this link:</p>
-    <a href="${resetUrl}">${resetUrl}</a>
+    <p>Your OTP for password reset:</p>
+    <p style="font-size:24px;font-weight:bold;letter-spacing:4px">${otp}</p>
+    <p>This code expires in 10 minutes.</p>
   `;
 
   await sendEmail({ to, subject, text, html });

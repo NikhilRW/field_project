@@ -7,12 +7,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { Mail, ArrowLeft } from "lucide-react-native";
 import { router } from "expo-router";
 import { Colors } from "@/shared/constants/color";
 import { useForgotPasswordMutation } from "../hooks/useAuthMutations";
+import BrandLogo from "@/shared/components/BrandLogo";
+import { showAppMessage } from "@/shared/utils/flashMessage";
 import { loginStyles as styles } from "../styles/loginStyles";
 
 export default function ForgotPasswordScreen() {
@@ -22,20 +23,26 @@ export default function ForgotPasswordScreen() {
   const handleSubmit = async () => {
     try {
       if (!email.trim()) {
-        Alert.alert("Missing email", "Please enter your email address.");
+        showAppMessage({
+          message: "Missing email",
+          description: "Please enter your email address.",
+          type: "warning",
+        });
         return;
       }
       await forgotMutation.mutateAsync(email.trim());
-      Alert.alert(
-        "Check your email",
-        "If an account exists for this email, a reset password link has been sent to your email address.",
-      );
-      router.replace("/(auth)/reset-password" as any);
+      showAppMessage({
+        message: "Check your email",
+        description: "If an account exists for this email, a 6-digit OTP has been sent to your email address.",
+        type: "success",
+      });
+      router.replace(`/(auth)/reset-password?email=${encodeURIComponent(email.trim())}` as any);
     } catch (error: any) {
-      Alert.alert(
-        "Request failed",
-        error?.message ?? "Unable to send reset email. Please try again.",
-      );
+      showAppMessage({
+        message: "Request failed",
+        description: error?.message ?? "Unable to send reset email. Please try again.",
+        type: "danger",
+      });
     }
   };
 
@@ -57,9 +64,12 @@ export default function ForgotPasswordScreen() {
           <ArrowLeft size={18} color={Colors.textPrimary} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.topSection}>
+          <View style={styles.logoBox}>
+            <BrandLogo size={44} />
+          </View>
           <Text style={styles.brandName}>Forgot Password</Text>
           <Text style={styles.brandSub}>
-            Enter your email to receive a reset password link.
+            Enter your email to receive a 6-digit OTP.
           </Text>
         </View>
 
@@ -87,7 +97,7 @@ export default function ForgotPasswordScreen() {
             testID="forgot-submit-btn"
           >
             <Text style={styles.loginBtnText}>
-              {forgotMutation.isPending ? "Sending..." : "Send Reset Password Link"}
+              {forgotMutation.isPending ? "Sending..." : "Send OTP"}
             </Text>
           </TouchableOpacity>
         </View>
