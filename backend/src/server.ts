@@ -19,6 +19,9 @@ import {
   sendBulkTestNotification,
   sendTestNotification,
 } from "@controllers/notificationController";
+import { db } from "./config/databaseSetup";
+import { sql } from "drizzle-orm";
+import { schedule } from "node-cron";
 
 const app = express();
 const httpServer = createServer(app);
@@ -62,3 +65,16 @@ app.use((req, res, next) => {
 httpServer.listen(PORT, "0.0.0.0", () => {
   console.log("Server listening on port http://localhost:" + PORT);
 });
+
+schedule(
+  "0 */3 * * *",
+  async () => {
+    try {
+      await db.execute(sql`SELECT 1`);
+      console.log("Database keep-alive ping successful");
+    } catch (error) {
+      console.error("Database keep-alive ping failed", error);
+    }
+  },
+  {},
+);
