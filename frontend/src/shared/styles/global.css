@@ -1,0 +1,12 @@
+input{
+    outline: none;
+}
+input:focus{
+    outline: none;
+}
+textarea{
+    outline: none;
+}
+textarea:focus{
+    outline: none;
+}

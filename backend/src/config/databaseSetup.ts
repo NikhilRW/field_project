@@ -377,7 +377,7 @@ export const pool = new Pool({
   connectionString: databaseUrl,
   ssl: {
     rejectUnauthorized: false,
-    ca: fs.readFileSync(`./personal/ca.pem`).toString(),
+    ca: process.env.DATABASE_CA as string | undefined,
   },
 });
 

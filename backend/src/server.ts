@@ -1,4 +1,6 @@
-import "tsconfig-paths/register";
+try {
+  require("tsconfig-paths/register");
+} catch {}
 import "dotenv/config";
 import cors from "cors";
 import express from "express";

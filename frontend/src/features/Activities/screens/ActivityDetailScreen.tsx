@@ -21,6 +21,7 @@ import {
   getActivityStatusColor,
 } from "../utils/statusColors";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
+import { isWeb } from "@/shared/constants/platform";
 
 export default function ActivityDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -71,7 +72,7 @@ export default function ActivityDetailScreen() {
           styles.container,
           {
             paddingTop: insets.top,
-            paddingBottom: insets.bottom + 40,
+            paddingBottom: insets.bottom + (isWeb ? 0 : 40),
             backgroundColor: "transparent",
           },
         ]}

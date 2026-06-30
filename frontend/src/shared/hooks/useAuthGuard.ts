@@ -52,7 +52,7 @@ export const useAuthGuard = () => {
       return;
     }
 
-    const defaultRoute = "/(tabs)/dashboard";
+    const defaultRoute = "/(tabs)/activities";
 
     if (isInAuthGroup) {
       router.replace(defaultRoute);
@@ -62,7 +62,6 @@ export const useAuthGuard = () => {
     if (!isAdmin) {
       if (isInTabsGroup) {
         const allowedTabs = new Set([
-          "dashboard",
           "activities",
           "donations",
           "profile",

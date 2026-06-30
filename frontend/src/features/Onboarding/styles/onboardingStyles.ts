@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native-unistyles";
 import { Colors } from "@/shared/constants/color";
+import { isWeb } from "@/shared/constants/platform";
 
 export const onboardingStyles = StyleSheet.create({
   container: {
@@ -11,7 +12,7 @@ export const onboardingStyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: isWeb ? 20 : 60,
     paddingBottom: 16,
   },
   stepText: {
@@ -63,6 +64,7 @@ export const onboardingStyles = StyleSheet.create({
     lineHeight: 22,
   },
   bottomArea: {
+    paddingTop: 22,
     paddingBottom: 48,
     gap: 22,
   },
