@@ -8,6 +8,7 @@ import {
 } from "../config/databaseSetup";
 import type { AuthRequest } from "../types/auth";
 import { formatDate } from "../utils/date";
+import { deleteImageFromS3 } from "../utils/s3Upload";
 
 const fetchDonorName = async (userId: string) => {
   const [user] = await db
@@ -209,6 +210,8 @@ export const deleteDraft = async (req: AuthRequest, res: Response) => {
         error: "Access denied.",
       });
     }
+
+    await deleteImageFromS3(draft.imageUrl);
 
     await db.delete(draftDonations).where(eq(draftDonations.id, id));
 

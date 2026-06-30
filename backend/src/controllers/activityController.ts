@@ -10,6 +10,7 @@ import {
 } from "../config/databaseSetup";
 import { formatDate } from "../utils/date";
 import { sendActivityNotification } from "../utils/sendNotification";
+import { deleteImageFromS3 } from "../utils/s3Upload";
 
 const notifyUsersAboutActivity = async (
   activityId: string,
@@ -230,6 +231,7 @@ export const deleteActivity = async (req: AuthRequest, res: Response) => {
     const [existingActivity] = await db
       .select({
         id: activities.id,
+        imageUrl: activities.imageUrl,
       })
       .from(activities)
       .where(eq(activities.id, id));
@@ -239,6 +241,8 @@ export const deleteActivity = async (req: AuthRequest, res: Response) => {
         .status(404)
         .json({ success: false, error: "Activity not found." });
     }
+
+    await deleteImageFromS3(existingActivity.imageUrl);
 
     await db
       .delete(notifications)

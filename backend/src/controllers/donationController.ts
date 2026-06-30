@@ -8,6 +8,7 @@ import {
 } from "../config/databaseSetup";
 import type { AuthRequest } from "../types/auth";
 import { formatDate } from "../utils/date";
+import { deleteImageFromS3 } from "../utils/s3Upload";
 
 const fetchDonorName = async (userId: string) => {
   const [user] = await db
@@ -491,13 +492,15 @@ export const deleteDonation = async (req: AuthRequest, res: Response) => {
     const id = String(req.params.id);
 
     const [existing] = await db
-      .select({ id: donations.id })
+      .select({ id: donations.id, imageUrl: donations.imageUrl })
       .from(donations)
       .where(eq(donations.id, id));
 
     if (!existing) {
       return res.status(404).json({ success: false, error: "Donation not found." });
     }
+
+    await deleteImageFromS3(existing.imageUrl);
 
     await db.delete(donations).where(eq(donations.id, id));
 
