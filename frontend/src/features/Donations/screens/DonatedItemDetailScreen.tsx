@@ -11,10 +11,12 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import {
   ArrowLeft,
+  BookOpen,
   Hand,
   PackageCheck,
-  RotateCcw,
   HelpingHand,
+  Shirt,
+  ShoppingCart,
   Trash2,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,7 +35,8 @@ const categoryLabels: Record<DonationCategory, string> = {
   money: "Money",
   books: "Books",
   clothes: "Clothes",
-  other_items: "Other items",
+  grocery: "Grocery",
+  other_items: "Other",
 };
 
 export default function DonatedItemDetailScreen() {
@@ -161,11 +164,15 @@ export default function DonatedItemDetailScreen() {
               />
             ) : (
               <View style={styles.imagePlaceholder}>
-                <PackageCheck
-                  size={34}
-                  color={Colors.primary}
-                  strokeWidth={2.2}
-                />
+                {item.category === "books" ? (
+                  <BookOpen size={34} color={Colors.primary} strokeWidth={2.2} />
+                ) : item.category === "clothes" ? (
+                  <Shirt size={34} color={Colors.accent} strokeWidth={2.2} />
+                ) : item.category === "grocery" ? (
+                  <ShoppingCart size={34} color={Colors.error} strokeWidth={2.2} />
+                ) : (
+                  <PackageCheck size={34} color={Colors.primary} strokeWidth={2.2} />
+                )}
               </View>
             )}
           </View>

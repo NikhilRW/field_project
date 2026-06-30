@@ -438,10 +438,10 @@ export const createItemDonation = async (req: AuthRequest, res: Response) => {
     const effectiveDonorId =
       req.user?.role === "Admin" && adminDonorId ? adminDonorId : userId;
 
-    if (!category || !purpose || !imageUrl) {
+    if (!category || !purpose) {
       return res.status(400).json({
         success: false,
-        error: "Category, purpose, and image are required.",
+        error: "Category and purpose are required.",
       });
     }
 

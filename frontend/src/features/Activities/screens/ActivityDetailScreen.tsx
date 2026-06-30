@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { ArrowLeft, Trash2, CalendarDays } from "lucide-react-native";
+import { UniImage } from "@/shared/components/UniComponents";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
@@ -38,6 +39,7 @@ export default function ActivityDetailScreen() {
     isDeleting,
     isUpdatingStatus,
   } = useActivity(id ?? "");
+  
 
   if (isLoading) {
     return (
@@ -115,6 +117,16 @@ export default function ActivityDetailScreen() {
             ) : null}
           </View>
           <Text style={styles.subtitle}>{activity.description}</Text>
+
+          {activity.imageUrl ? (
+            <View style={styles.imageCard}>
+              <UniImage
+                source={{ uri: activity.imageUrl }}
+                style={styles.activityImage}
+                contentFit="cover"
+              />
+            </View>
+          ) : null}
 
           <View style={styles.metaCard}>
             <View style={styles.metaRow}>

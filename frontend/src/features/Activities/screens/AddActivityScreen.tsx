@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,24 +7,30 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import DateTimePicker, {
+import  {
   type DateTimePickerEvent as RNDateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { ChevronDown } from "lucide-react-native";
+import { Camera, ChevronDown } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
 import { showMessage } from "react-native-flash-message";
 import NetInfo from "@react-native-community/netinfo";
+import { UniImage } from "@/shared/components/UniComponents";
 import { Colors } from "@/shared/constants/color";
-import type { ActivityStatus } from "@/shared/types/mock";
 import { useActivityDraftStore } from "../hooks/useActivityDraftStore";
 import { useCreateActivity } from "../hooks/useCreateActivity";
 import { formatActivityDate, formatActivityDateLabel } from "../utils/date";
 import { addActivityStyles as styles } from "../styles/addActivityStyles";
 import CustomDateTimePicker from "../components/CustomDateTimePicker";
-import { isWeb } from "@/shared/constants/platform";
-
-const statusOptions: ActivityStatus[] = ["Upcoming", "Ongoing", "Completed"];
+import { isDesktopBrowser, isWeb } from "@/shared/constants/platform";
+import PhotoSourcePicker from "@/features/Donations/components/PhotoSourcePicker";
+import WebcamCaptureOverlay from "@/features/Donations/components/WebcamCaptureOverlay";
+import WebFileInput, {
+  type WebFileInputRef,
+} from "@/features/Donations/components/WebFileInput";
+import { CapturedPhoto } from "../types/photo";
+import { statusOptions } from "../constants/options";
 
 export default function AddActivityScreen() {
   const insets = useSafeAreaInsets();
@@ -37,13 +43,16 @@ export default function AddActivityScreen() {
     status,
     setName,
     setDate,
-
     setDescription,
     setStatus,
     resetDraft,
   } = useActivityDraftStore();
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
+  const [showWebcam, setShowWebcam] = useState(false);
+  const [showSourcePicker, setShowSourcePicker] = useState(false);
+  const fileInputRef = useRef<WebFileInputRef>(null);
 
   const isDisabled = useMemo(
     () =>
@@ -53,6 +62,67 @@ export default function AddActivityScreen() {
       createActivityMutation.isPending,
     [name, date, description, createActivityMutation.isPending],
   );
+
+  const handleCapturePhoto = async () => {
+    if (isDesktopBrowser) {
+      setShowSourcePicker(true);
+      return;
+    }
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permission.granted) {
+      showMessage({
+        message: "Camera permission needed",
+        description: "Allow camera access to take a photo for the activity.",
+        type: "warning",
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.45,
+    });
+
+    if (result.canceled || !result.assets[0]) {
+      return;
+    }
+
+    const asset = result.assets[0];
+    setPhoto({
+      previewUri: asset.uri,
+      imageUri: asset.uri,
+      fileName: asset.fileName,
+      fileType: asset.mimeType,
+    });
+  };
+
+  const handleWebcamCapture = (captured: CapturedPhoto) => {
+    if (photo?.imageUri?.startsWith("blob:")) {
+      URL.revokeObjectURL(photo.imageUri);
+    }
+    setPhoto(captured);
+    setShowWebcam(false);
+  };
+
+  const handleFilePick = (file: {
+    uri: string;
+    name: string;
+    type: string;
+  }) => {
+    if (photo?.imageUri?.startsWith("blob:")) {
+      URL.revokeObjectURL(photo.imageUri);
+    }
+    setPhoto({
+      previewUri: file.uri,
+      imageUri: file.uri,
+      fileName: file.name,
+      fileType: file.type,
+    });
+  };
 
   const handleSave = async () => {
     if (isDisabled) {
@@ -69,6 +139,13 @@ export default function AddActivityScreen() {
       date: formatActivityDate(date!),
       description: description.trim(),
       status,
+      ...(photo?.imageUri
+        ? {
+            imageUri: photo.imageUri,
+            fileName: photo.fileName,
+            fileType: photo.fileType,
+          }
+        : {}),
     };
 
     const netState = await NetInfo.fetch();
@@ -95,6 +172,7 @@ export default function AddActivityScreen() {
         type: "success",
       });
       resetDraft();
+      setPhoto(null);
       router.back();
     } catch (error: any) {
       showMessage({
@@ -111,8 +189,7 @@ export default function AddActivityScreen() {
     selectedDate?: Date,
   ) => {
     if (isWeb) {
-      // TODO: fix the any stuff here.
-      setDate(new Date((event as any).target.value))
+      setDate(new Date((event as any).target.value));
     }
 
     if (Platform.OS !== "ios") {
@@ -191,6 +268,54 @@ export default function AddActivityScreen() {
           />
         </View>
 
+        <Text style={styles.label}>Photo (optional)</Text>
+        <TouchableOpacity
+          onPress={handleCapturePhoto}
+          activeOpacity={0.82}
+          style={{
+            backgroundColor: Colors.surface,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: Colors.borderLight,
+            paddingVertical: 20,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 14,
+            overflow: "hidden",
+          }}
+        >
+          {photo?.previewUri ? (
+            <UniImage
+              source={{ uri: photo.previewUri }}
+              style={{ width: "100%", height: 160, borderRadius: 11 }}
+              contentFit="cover"
+            />
+          ) : (
+            <>
+              <Camera size={22} color={Colors.primary} strokeWidth={2.2} />
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: Colors.textPrimary,
+                  marginTop: 8,
+                }}
+              >
+                Add activity photo
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: Colors.textTertiary,
+                  marginTop: 2,
+                }}
+              >
+                Optional
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+
         <Text style={styles.label}>Status</Text>
         <TouchableOpacity
           style={styles.pickerBtn}
@@ -247,6 +372,27 @@ export default function AddActivityScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <WebcamCaptureOverlay
+        visible={showWebcam}
+        onCapture={handleWebcamCapture}
+        onClose={() => setShowWebcam(false)}
+      />
+
+      <WebFileInput ref={fileInputRef} onFile={handleFilePick} />
+
+      <PhotoSourcePicker
+        visible={showSourcePicker}
+        onTakePhoto={() => {
+          setShowSourcePicker(false);
+          setShowWebcam(true);
+        }}
+        onChooseFile={() => {
+          setShowSourcePicker(false);
+          fileInputRef.current?.open();
+        }}
+        onClose={() => setShowSourcePicker(false)}
+      />
     </View>
   );
 }

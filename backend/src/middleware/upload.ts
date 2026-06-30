@@ -78,3 +78,30 @@ export const uploadDonationImageOptional = async (
     });
   }
 };
+
+export const uploadActivityImageOptional = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.file?.buffer) {
+      return next();
+    }
+
+    const compressed = await compressImageBuffer(req.file.buffer);
+
+    const result = await uploadImageToS3(compressed, "helping-hands/activities");
+
+    req.s3Url = result.url;
+    req.s3Key = result.key;
+
+    return next();
+  } catch (error: any) {
+    console.error("Failed to upload activity image", error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message ?? "Failed to upload activity image.",
+    });
+  }
+};

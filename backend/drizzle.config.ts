@@ -1,12 +1,21 @@
 import { defineConfig } from "drizzle-kit";
 import "dotenv/config";
-console.log(process.env.DATABASE_URL)
+import fs from "fs";
+
 export default defineConfig({
   schema: "./src/config/databaseSetup.ts",
   out: "./drizzle/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    user: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
+    host: process.env.DATABASE_HOST,
+    port: parseInt(process.env.DATABASE_PORT),
+    database: process.env.DATABASE_NAME,
+    ssl: {
+      rejectUnauthorized: false,
+      ca: fs.readFileSync(`./personal/ca.pem`).toString(),
+    },
   },
   verbose: true,
   strict: true,

@@ -10,8 +10,9 @@ export const fetchAllUsers = async () => {
 
 export const createUser = async (payload: {
   name: string;
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  phone?: string;
   role?: string;
 }) => {
   const response = await http.post<{ success: boolean; data: UserListItem }>(

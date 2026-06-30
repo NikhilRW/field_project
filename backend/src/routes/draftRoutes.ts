@@ -17,7 +17,7 @@ router.post(
   authenticate,
   authorizeRoles("Admin", "User"),
   upload.single("itemImage"),
-  uploadDonationImage,
+  uploadDonationImageOptional,
   createDraft,
 );
 router.get(

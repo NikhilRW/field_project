@@ -47,3 +47,4 @@ app-example
 
 eas.json
 public/canvaskit.wasm
+.vercel

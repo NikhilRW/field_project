@@ -13,8 +13,8 @@ import {
   numeric,
   index,
   uniqueIndex,
-  primaryKey,
 } from "drizzle-orm/pg-core";
+import fs from "fs";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -54,6 +54,7 @@ export const donationCategoryEnum = pgEnum("donation_category", [
   "books",
   "clothes",
   "other_items",
+  "grocery",
 ]);
 export const donationVerificationStatusEnum = pgEnum(
   "donation_verification_status",
@@ -71,7 +72,7 @@ export const users = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
-    email: text("email").notNull(),
+    email: text("email"),
     passwordHash: text("password_hash"),
     role: userRoleEnum("role").notNull(),
     isBlocked: boolean("is_blocked").notNull().default(false),
@@ -236,6 +237,7 @@ export const activities = pgTable(
     date: timestamp("date", { withTimezone: true, mode: "date" }).notNull(),
     status: activityStatusEnum("status").notNull(),
     description: text("description").notNull(),
+    imageUrl: text("image_url"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -367,7 +369,16 @@ export const schema = {
 };
 
 export const pool = new Pool({
+  user: process.env.DATABASE_USERNAME,
+  password: process.env.DATABASE_PASSWORD,
+  host: process.env.DATABASE_HOST,
+  port: parseInt(process.env.DATABASE_PORT),
+  database: process.env.DATABASE_NAME,
   connectionString: databaseUrl,
+  ssl: {
+    rejectUnauthorized: false,
+    ca: fs.readFileSync(`./personal/ca.pem`).toString(),
+  },
 });
 
 export const db = drizzle(pool, {

@@ -20,6 +20,7 @@ export interface Activity {
   date: string;
   status: ActivityStatus;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface Donation {

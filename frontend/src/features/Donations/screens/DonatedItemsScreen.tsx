@@ -18,6 +18,7 @@ import {
   Package,
   PackageCheck,
   Shirt,
+  ShoppingCart,
   User,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,6 +35,7 @@ const categoryLabels: Record<DonationCategory, string> = {
   money: "Money",
   books: "Books",
   clothes: "Clothes",
+  grocery: "Grocery",
   other_items: "Other items",
 };
 
@@ -58,6 +60,11 @@ const filterOptions: {
     icon: <Shirt size={15} color={Colors.accent} strokeWidth={2.2} />,
   },
   {
+    value: "grocery",
+    label: "Grocery",
+    icon: <ShoppingCart size={15} color={Colors.error} strokeWidth={2.2} />,
+  },
+  {
     value: "other_items",
     label: "Other",
     icon: <Package size={15} color={Colors.error} strokeWidth={2.2} />,
@@ -68,6 +75,7 @@ const chipColors: Record<FilterCategory, { bg: string; text: string }> = {
   all: { bg: Colors.primaryLight, text: Colors.primary },
   books: { bg: Colors.primaryLight, text: Colors.primary },
   clothes: { bg: Colors.accentLight, text: Colors.accent },
+  grocery: { bg: Colors.errorLight, text: Colors.error },
   other_items: { bg: Colors.errorLight, text: Colors.error },
 };
 
@@ -91,7 +99,15 @@ function DonatedItemRow({ item }: { item: MyDonation }) {
         />
       ) : (
         <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-          <PackageCheck size={22} color={Colors.primary} strokeWidth={2.2} />
+          {item.category === "books" ? (
+            <BookOpen size={22} color={Colors.primary} strokeWidth={2.2} />
+          ) : item.category === "clothes" ? (
+            <Shirt size={22} color={Colors.accent} strokeWidth={2.2} />
+          ) : item.category === "grocery" ? (
+            <ShoppingCart size={22} color={Colors.error} strokeWidth={2.2} />
+          ) : (
+            <PackageCheck size={22} color={Colors.primary} strokeWidth={2.2} />
+          )}
         </View>
       )}
       <View style={styles.itemInfo}>

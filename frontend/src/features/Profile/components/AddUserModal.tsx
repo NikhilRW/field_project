@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
 import { createUser } from "@/features/Donations/utils/usersApi";
+import { showAppMessage } from "@/shared/utils/flashMessage";
 
 export const AddUserModal = ({
   visible,
@@ -20,26 +21,37 @@ export const AddUserModal = ({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const isAdmin = role === "Admin";
 
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
+      showAppMessage({
+        message: "User created",
+        description: "account created.",
+        type: "success",
+      });
       onCreated();
       queryClient.invalidateQueries({ queryKey: ["users", "all"] });
     },
   });
 
-  const canSubmit =
-    name.trim() && email.trim() && password.trim() && !createMutation.isPending;
+  const canSubmit = isAdmin
+    ? name.trim() && email.trim() && password.trim() && !createMutation.isPending
+    : name.trim() && phone.trim().length >= 10 && !createMutation.isPending;
 
   const handleCreate = () => {
     if (!canSubmit) return;
-    createMutation.mutate({
-      name: name.trim(),
-      email: email.trim(),
-      password,
-      role,
-    });
+    const payload: any = { name: name.trim(), role };
+    if (isAdmin) {
+      payload.email = email.trim();
+      payload.password = password;
+    } else {
+      payload.phone = phone.trim();
+    }
+    createMutation.mutate(payload);
   };
 
   return (
@@ -143,7 +155,7 @@ export const AddUserModal = ({
               marginBottom: 8,
             }}
           >
-            Enter Name
+            Full Name
           </Text>
           <View
             style={{
@@ -166,70 +178,108 @@ export const AddUserModal = ({
             />
           </View>
 
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: Colors.textPrimary,
-              marginBottom: 8,
-            }}
-          >
-            Enter Email
-          </Text>
-          <View
-            style={{
-              backgroundColor: "rgba(255,255,255,0.48)",
-              borderRadius: 12,
-              paddingHorizontal: 14,
-              height: 50,
-              justifyContent: "center",
-              marginBottom: 14,
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.72)",
-            }}
-          >
-            <TextInput
-              placeholder="Email address"
-              placeholderTextColor={Colors.textTertiary}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={{ fontSize: 14, color: Colors.textPrimary }}
-            />
-          </View>
+          {isAdmin ? (
+            <>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: Colors.textPrimary,
+                  marginBottom: 8,
+                }}
+              >
+                Enter Email
+              </Text>
+              <View
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.48)",
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  height: 50,
+                  justifyContent: "center",
+                  marginBottom: 14,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.72)",
+                }}
+              >
+                <TextInput
+                  placeholder="Email address"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={{ fontSize: 14, color: Colors.textPrimary }}
+                />
+              </View>
 
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: Colors.textPrimary,
-              marginBottom: 8,
-            }}
-          >
-            Enter Password
-          </Text>
-          <View
-            style={{
-              backgroundColor: "rgba(255,255,255,0.48)",
-              borderRadius: 12,
-              paddingHorizontal: 14,
-              height: 50,
-              justifyContent: "center",
-              marginBottom: 24,
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.72)",
-            }}
-          >
-            <TextInput
-              placeholder="Password"
-              placeholderTextColor={Colors.textTertiary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              style={{ fontSize: 14, color: Colors.textPrimary }}
-            />
-          </View>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: Colors.textPrimary,
+                  marginBottom: 8,
+                }}
+              >
+                Enter Password
+              </Text>
+              <View
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.48)",
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  height: 50,
+                  justifyContent: "center",
+                  marginBottom: 24,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.72)",
+                }}
+              >
+                <TextInput
+                  placeholder="Password"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  style={{ fontSize: 14, color: Colors.textPrimary }}
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: Colors.textPrimary,
+                  marginBottom: 8,
+                }}
+              >
+                Phone Number
+              </Text>
+              <View
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.48)",
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  height: 50,
+                  justifyContent: "center",
+                  marginBottom: 24,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.72)",
+                }}
+              >
+                <TextInput
+                  placeholder="Phone number"
+                  placeholderTextColor={Colors.textTertiary}
+                  value={phone}
+                  onChangeText={(t) => setPhone(t.replace(/\D/g, ""))}
+                  keyboardType="phone-pad"
+                  style={{ fontSize: 14, color: Colors.textPrimary }}
+                />
+              </View>
+            </>
+          )}
 
           <TouchableOpacity
             onPress={handleCreate}
@@ -250,7 +300,7 @@ export const AddUserModal = ({
             <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700" }}>
               {createMutation.isPending
                 ? "Creating..."
-                : `Create ${role === "Admin" ? "Admin" : "User"}`}
+                : `Create ${role}`}
             </Text>
           </TouchableOpacity>
 

@@ -5,7 +5,7 @@ export type AnalyticsDonation = {
   purpose: string;
   amount: number;
   type: "incoming" | "outgoing";
-  category: "money" | "books" | "clothes" | "other_items";
+  category: "money" | "books" | "clothes" | "other_items" | "grocery";
   verificationStatus: "verified" | "unverified" | "rejected";
   date: string;
   createdAt: string;
@@ -13,7 +13,7 @@ export type AnalyticsDonation = {
 };
 
 export type TimeFilter = "7days" | "month" | "year" | "custom";
-export type DonationType = "all" | "money" | "clothes" | "books" | "other_items";
+export type DonationType = "all" | "money" | "clothes" | "books" | "grocery" | "other_items";
 export type GraphMetric = "total" | "newDonators" | "type";
 
 // Set to true to use generated data instead of API
@@ -25,7 +25,7 @@ export type UseAnalyticsReturn = {
   donations: number;
   newDonators: number;
   moneyCollected: number;
-  typeBreakdown: { money: number; clothes: number; books: number; others: number };
+  typeBreakdown: { money: number; clothes: number; books: number; grocery: number; others: number };
   chartData: { date: string; count: number }[];
   timeFilter: TimeFilter;
   donationType: DonationType;

@@ -27,7 +27,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
     
   const { data: allData = [], isLoading, error: queryError } = useQuery({
     queryKey: ANALYTICS_QUERY_KEY,
-    queryFn: fetchAnalyticsData,
+    queryFn: USE_MOCK_DATA ? generateMockData : fetchAnalyticsData,
     staleTime: 0,
     refetchOnMount: "always",
   });
@@ -74,6 +74,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
       money: filtered.filter((d) => d.category === "money").length,
       clothes: filtered.filter((d) => d.category === "clothes").length,
       books: filtered.filter((d) => d.category === "books").length,
+      grocery: filtered.filter((d) => d.category === "grocery").length,
       others: filtered.filter((d) => d.category === "other_items").length,
     };
 

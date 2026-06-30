@@ -17,6 +17,7 @@ export const TYPE_OPTIONS: { value: DonationType; label: string }[] = [
   { value: "money", label: "Money" },
   { value: "clothes", label: "Clothes" },
   { value: "books", label: "Books" },
+  { value: "grocery", label: "Grocery" },
   { value: "other_items", label: "Others" },
 ];
 
@@ -25,6 +26,7 @@ export const DONATION_TYPES: { value: DonationType; label: string }[] = [
   { value: "money", label: "Money" },
   { value: "clothes", label: "Clothes" },
   { value: "books", label: "Books" },
+  { value: "grocery", label: "Grocery" },
   { value: "other_items", label: "Others" },
 ];
 

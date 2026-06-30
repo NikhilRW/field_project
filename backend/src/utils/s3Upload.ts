@@ -10,6 +10,7 @@ export const uploadImageToS3 = async (
   folder: string,
 ): Promise<{ url: string; key: string }> => {
   const key = `${folder}/${uuid()}.jpg`;
+  const folderWithoutRoot = folder.slice(folder.indexOf("/") + 1);
 
   await s3.send(
     new PutObjectCommand({
@@ -23,7 +24,7 @@ export const uploadImageToS3 = async (
   const fileName = key.split("/").pop()!;
 
   return {
-    url: `${CLOUDFRONT_URL}/${fileName}`,
+    url: `${CLOUDFRONT_URL}/${folderWithoutRoot}/${fileName}`,
     key,
   };
 };

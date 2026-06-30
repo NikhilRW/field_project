@@ -15,15 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MeshGradientBackground from "@/shared/components/MeshGradientBackground";
 import { Colors } from "@/shared/constants/color";
 import { usePendingItemDonations } from "../hooks/useDonations";
-import type { DonationCategory } from "../utils/api";
 import { verifyItemsStyles as styles } from "../styles/verifyItemsStyles";
-
-const categoryLabels: Record<DonationCategory, string> = {
-  money: "Money",
-  books: "Books",
-  clothes: "Clothes",
-  other_items: "Other items",
-};
+import { categoryLabels } from "../constants/chart";
 
 export default function VerifyItemsScreen() {
   const insets = useSafeAreaInsets();

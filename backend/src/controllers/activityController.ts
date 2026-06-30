@@ -67,6 +67,7 @@ export const getActivities = async (req: AuthRequest, res: Response) => {
       date: activities.date,
       status: activities.status,
       description: activities.description,
+      imageUrl: activities.imageUrl,
     };
 
     const rows = await db
@@ -80,6 +81,7 @@ export const getActivities = async (req: AuthRequest, res: Response) => {
       date: formatDate(row.date),
       status: row.status,
       description: row.description,
+      imageUrl: row.imageUrl,
     }));
 
     return res.status(200).json({ success: true, data });
@@ -108,6 +110,7 @@ export const getActivityById = async (req: AuthRequest, res: Response) => {
         date: activities.date,
         status: activities.status,
         description: activities.description,
+        imageUrl: activities.imageUrl,
       })
       .from(activities)
       .where(eq(activities.id, id));
@@ -126,6 +129,7 @@ export const getActivityById = async (req: AuthRequest, res: Response) => {
         date: formatDate(activity.date),
         status: activity.status,
         description: activity.description,
+        imageUrl: activity.imageUrl,
       },
     });
   } catch (error) {
@@ -175,6 +179,7 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         date: parsedDate,
         description,
         status: statusValue as any,
+        imageUrl: req.s3Url,
       })
       .returning({
         id: activities.id,
@@ -182,6 +187,7 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         date: activities.date,
         status: activities.status,
         description: activities.description,
+        imageUrl: activities.imageUrl,
       });
 
     if (!created) {
@@ -200,6 +206,7 @@ export const createActivity = async (req: AuthRequest, res: Response) => {
         date: formatDate(created.date),
         status: created.status,
         description: created.description,
+        imageUrl: created.imageUrl,
       },
     });
   } catch (error) {
@@ -318,6 +325,7 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
         date: activities.date,
         status: activities.status,
         description: activities.description,
+        imageUrl: activities.imageUrl,
       });
 
     if (!updatedActivity) {
@@ -382,6 +390,7 @@ export const updateActivityStatus = async (req: AuthRequest, res: Response) => {
         date: formatDate(updatedActivity.date),
         status: updatedActivity.status,
         description: updatedActivity.description,
+        imageUrl: updatedActivity.imageUrl,
       },
     });
   } catch (error) {

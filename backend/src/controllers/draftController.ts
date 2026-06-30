@@ -248,13 +248,6 @@ export const submitDraft = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    if (!draft.imageUrl) {
-      return res.status(400).json({
-        success: false,
-        error: "Draft must have an image before submitting.",
-      });
-    }
-
     const donorName = await fetchDonorName(draft.donorId ?? req.user!.id);
 
     const [createdDonation] = await db

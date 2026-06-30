@@ -17,7 +17,7 @@ export const useActivity = (id: string) => {
   const activityQuery = useQuery({
     queryKey: activityDetailQueryKey(id),
     queryFn: () => fetchActivityById(id),
-    enabled: () => !!id && deleteActivityMutation.isPending === false,
+    enabled: () => !!id && deleteModalVisible === false,
   });
 
   const updateActivityStatusMutation = useUpdateActivityStatus();
@@ -34,9 +34,7 @@ export const useActivity = (id: string) => {
 
     try {
       await deleteActivityMutation.mutateAsync(activityId);
-      closeDeleteModal();
       queryClient.invalidateQueries({ queryKey: activitiesQueryKey });
-      queryClient.removeQueries({ queryKey: activityDetailQueryKey(id) });
       showMessage({
         message: "Activity deleted",
         description: "The activity has been removed successfully.",

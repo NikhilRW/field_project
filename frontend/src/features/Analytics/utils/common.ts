@@ -70,6 +70,7 @@ const generateMockData = (): AnalyticsDonation[] => {
     "money",
     "clothes",
     "books",
+    "grocery",
     "other_items",
   ];
   const donorNames = [

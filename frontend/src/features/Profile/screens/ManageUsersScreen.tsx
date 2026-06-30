@@ -55,7 +55,7 @@ export default function ManageUsersScreen() {
       const q = search.toLowerCase();
       list = list.filter(
         (u) =>
-          u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+          u.name.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.phone?.includes(q),
       );
     }
     return list;
@@ -269,7 +269,7 @@ export default function ManageUsersScreen() {
                       }}
                       numberOfLines={1}
                     >
-                      {item.email}
+                      {item.phone || item.email}
                     </Text>
                   </View>
                   <TouchableOpacity

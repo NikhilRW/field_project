@@ -26,7 +26,8 @@ const categoryLabels: Record<DonationCategory, string> = {
   money: "Money",
   books: "Books",
   clothes: "Clothes",
-  other_items: "Other items",
+  grocery: "Grocery",
+  other_items: "Other",
 };
 
 const getStatusColor = (status: DonationVerificationStatus) => {

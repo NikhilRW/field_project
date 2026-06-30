@@ -19,6 +19,9 @@ import {
   IndianRupee,
   ListChecks,
   X,
+  BookOpen,
+  Shirt,
+  ShoppingCart,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppHeader from "@/shared/components/AppHeader";
@@ -46,6 +49,7 @@ const filters: { label: string; value: string }[] = [
   { label: "Money", value: "money" },
   { label: "Clothes", value: "clothes" },
   { label: "Books", value: "books" },
+  { label: "Grocery", value: "grocery" },
   { label: "Others", value: "other_items" },
   { label: "Drafts", value: "drafts" },
 ];
@@ -259,6 +263,24 @@ function AdminDonationsScreen() {
                             style={s.itemImageFilled}
                             contentFit="cover"
                           />
+                        ) : item.category === "books" ? (
+                          <BookOpen
+                            size={22}
+                            color={Colors.primary}
+                            strokeWidth={2.2}
+                          />
+                        ) : item.category === "clothes" ? (
+                          <Shirt
+                            size={22}
+                            color={Colors.accent}
+                            strokeWidth={2.2}
+                          />
+                        ) : item.category === "grocery" ? (
+                          <ShoppingCart
+                            size={22}
+                            color={Colors.error}
+                            strokeWidth={2.2}
+                          />
                         ) : (
                           <FileEdit
                             size={22}
@@ -319,6 +341,24 @@ function AdminDonationsScreen() {
                           source={{ uri: item.imageUrl }}
                           style={s.itemImageFilled}
                           contentFit="cover"
+                        />
+                      ) : item.category === "books" ? (
+                        <BookOpen
+                          size={22}
+                          color={Colors.primary}
+                          strokeWidth={2.2}
+                        />
+                      ) : item.category === "clothes" ? (
+                        <Shirt
+                          size={22}
+                          color={Colors.accent}
+                          strokeWidth={2.2}
+                        />
+                      ) : item.category === "grocery" ? (
+                        <ShoppingCart
+                          size={22}
+                          color={Colors.error}
+                          strokeWidth={2.2}
                         />
                       ) : (
                         <PackageCheck

@@ -15,7 +15,7 @@ import {
   verifyItemDonation,
 } from "../controllers/donationController";
 import { authenticate, authorizeRoles } from "../middleware/auth";
-import { upload, uploadDonationImage } from "../middleware/upload";
+import { upload, uploadDonationImage, uploadDonationImageOptional } from "../middleware/upload";
 
 const router = Router();
 
@@ -84,7 +84,7 @@ router.post(
   authenticate,
   authorizeRoles("Admin", "User"),
   upload.single("itemImage"),
-  uploadDonationImage,
+  uploadDonationImageOptional,
   createItemDonation,
 );
 router.post(

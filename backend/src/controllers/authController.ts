@@ -133,15 +133,24 @@ export const login = async (req: Request, res: Response) => {
     if (!email || !password) {
       return res
         .status(400)
-        .json({ success: false, error: "Email and password are required." });
+        .json({ success: false, error: "Email/phone and password are required." });
     }
 
-    const normalizedEmail = normalizeEmail(email);
+    const isPhone = /^\d+$/.test(email.trim());
+    let user;
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, normalizedEmail));
+    if (isPhone) {
+      [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.phone, email.trim()));
+    } else {
+      const normalizedEmail = normalizeEmail(email);
+      [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, normalizedEmail));
+    }
 
     if (!user) {
       return res
@@ -153,7 +162,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(403).json({ success: false, error: "Role mismatch." });
     }
 
-    if (!user.isEmailVerified) {
+    if (user.email && !user.isEmailVerified) {
       return res.status(403).json({
         success: false,
         error: "Email not verified. Please verify your email.",

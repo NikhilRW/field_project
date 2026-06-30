@@ -7,7 +7,7 @@ import { Clock, Plus } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import { useAuthStore } from "@/shared/stores/authStore";
 import { useActivities } from "../hooks/useActivities";
-import { activityFilterTabs } from "../constants/filterTabs";
+import { activityFilterTabs } from "../constants/options";
 import type { ActivityFilterTab } from "../types/filter";
 import {
   getActivityStatusBg,

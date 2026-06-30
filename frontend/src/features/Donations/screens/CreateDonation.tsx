@@ -21,6 +21,7 @@ import {
   CircleAlert,
   Package,
   Shirt,
+  ShoppingCart,
 } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { showMessage } from "react-native-flash-message";
@@ -78,6 +79,11 @@ const donationTypes: {
     value: "clothes",
     label: "Clothes",
     icon: <Shirt size={17} color={Colors.accent} strokeWidth={2.2} />,
+  },
+  {
+    value: "grocery",
+    label: "Grocery",
+    icon: <ShoppingCart size={17} color={Colors.accent} strokeWidth={2.2} />,
   },
   {
     value: "other_items",
@@ -145,7 +151,7 @@ export const CreateDonation = () => {
     const q = userSearch.toLowerCase();
     return allUsers.filter(
       (u) =>
-        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+        u.name.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.phone?.includes(q),
     );
   }, [allUsers, userSearch]);
 
@@ -173,7 +179,6 @@ export const CreateDonation = () => {
         (!isAdmin || selectedUser)
       : Boolean(
           purpose.trim() &&
-          photo?.imageUri &&
           !isSubmitting &&
           (!isAdmin || selectedUser),
         );
@@ -255,22 +260,16 @@ export const CreateDonation = () => {
         }
         await updateDraftMutation.mutateAsync({ id: draftId, payload });
       } else {
-        if (!hasNewPhoto) {
-          showMessage({
-            message: "Photo required",
-            description: "Take a photo before saving as draft.",
-            type: "warning",
-          });
-          return;
-        }
         const createPayload: CreateDraftPayload = {
           category: selectedType as Exclude<DonationCategory, "money">,
           purpose: purpose.trim() || null,
-          imageUri: photo!.imageUri,
-          fileName: photo!.fileName,
-          fileType: photo!.fileType,
           donorId: selectedUser?.id,
         };
+        if (hasNewPhoto) {
+          createPayload.imageUri = photo!.imageUri;
+          createPayload.fileName = photo!.fileName;
+          createPayload.fileType = photo!.fileType;
+        }
         await createDraftMutation.mutateAsync(createPayload);
       }
 
@@ -349,10 +348,10 @@ export const CreateDonation = () => {
   };
 
   const handleSubmitItemDonation = async () => {
-    if (isMoney || !photo?.imageUri || !purpose.trim()) {
+    if (isMoney || !purpose.trim()) {
       showMessage({
         message: "Missing details",
-        description: "Add item details and take a photo before submitting.",
+        description: "Add item details before submitting.",
         type: "warning",
       });
       return;
@@ -362,9 +361,13 @@ export const CreateDonation = () => {
       await createItemDonationMutation.mutateAsync({
         category: selectedType,
         purpose: purpose.trim(),
-        imageUri: photo.imageUri,
-        fileName: photo.fileName,
-        fileType: photo.fileType,
+        ...(photo?.imageUri
+          ? {
+              imageUri: photo.imageUri,
+              fileName: photo.fileName,
+              fileType: photo.fileType,
+            }
+          : {}),
         donorId: selectedUser?.id,
       });
 
@@ -493,7 +496,7 @@ export const CreateDonation = () => {
                   ]}
                 >
                   {selectedUser
-                    ? `${selectedUser.name} (${selectedUser.email})`
+                    ? `${selectedUser.name} (${selectedUser.email ?? selectedUser.phone})`
                     : "Select a user (optional)"}
                 </Text>
               </TouchableOpacity>
@@ -563,7 +566,7 @@ export const CreateDonation = () => {
                             marginTop: 1,
                           }}
                         >
-                          {item.email}
+                          {item.email ?? item.phone}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -634,7 +637,7 @@ export const CreateDonation = () => {
               </>
             ) : (
               <>
-                <Text style={styles.label}>Photo</Text>
+                <Text style={styles.label}>Photo (optional)</Text>
                 <TouchableOpacity
                   style={styles.photoButton}
                   onPress={handleCapturePhoto}
@@ -660,7 +663,7 @@ export const CreateDonation = () => {
                       </View>
                       <Text style={styles.photoTitle}>Take item photo</Text>
                       <Text style={styles.photoSub}>
-                        Required before handover verification
+                        Helps with handover verification
                       </Text>
                     </>
                   )}

@@ -7,6 +7,7 @@ import {
   updateActivityStatus,
 } from "../controllers/activityController";
 import { authenticate, authorizeRoles } from "../middleware/auth";
+import { upload, uploadActivityImageOptional } from "../middleware/upload";
 
 const router = Router();
 
@@ -24,7 +25,14 @@ router.get(
   getActivityById,
 );
 
-router.post("/", authenticate, authorizeRoles("Admin"), createActivity);
+router.post(
+  "/",
+  authenticate,
+  authorizeRoles("Admin"),
+  upload.single("activityImage"),
+  uploadActivityImageOptional,
+  createActivity,
+);
 
 router.delete("/:id", authenticate, authorizeRoles("Admin"), deleteActivity);
 

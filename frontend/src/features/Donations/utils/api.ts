@@ -8,7 +8,7 @@ export type MonthlyDonation = {
   spent: number;
 };
 
-export type DonationCategory = "money" | "books" | "clothes" | "other_items";
+export type DonationCategory = "money" | "books" | "clothes" | "other_items" | "grocery";
 export type DonationVerificationStatus = "unverified" | "verified" | "rejected";
 export type DonationPaymentStatus =
   | "not_applicable"
@@ -42,7 +42,7 @@ export type FetchMyDonationsParams = {
 export type CreateItemDonationPayload = {
   category: Exclude<DonationCategory, "money">;
   purpose: string;
-  imageUri: string;
+  imageUri?: string;
   fileName?: string | null;
   fileType?: string | null;
   donorId?: string;
@@ -161,21 +161,24 @@ export const createItemDonation = async (
   payload: CreateItemDonationPayload,
 ) => {
   const formData = new FormData();
-  const fallbackFileName = payload.imageUri.split("/").pop() || "donation.jpg";
-  const fileName = payload.fileName || fallbackFileName;
-  const fileType = payload.fileType || "image/jpeg";
 
-  if (isWeb) {
-    const res = await fetch(payload.imageUri);
-    const blob = await res.blob();
-    const file = new File([blob], fileName, { type: fileType });
-    formData.append("itemImage", file);
-  } else {
-    formData.append("itemImage", {
-      uri: payload.imageUri,
-      name: fileName,
-      type: fileType,
-    } as any);
+  if (payload.imageUri) {
+    const fallbackFileName = payload.imageUri.split("/").pop() || "donation.jpg";
+    const fileName = payload.fileName || fallbackFileName;
+    const fileType = payload.fileType || "image/jpeg";
+
+    if (isWeb) {
+      const res = await fetch(payload.imageUri);
+      const blob = await res.blob();
+      const file = new File([blob], fileName, { type: fileType });
+      formData.append("itemImage", file);
+    } else {
+      formData.append("itemImage", {
+        uri: payload.imageUri,
+        name: fileName,
+        type: fileType,
+      } as any);
+    }
   }
 
   formData.append("category", payload.category);
@@ -216,7 +219,7 @@ export type DraftDonation = {
 export type CreateDraftPayload = {
   category: Exclude<DonationCategory, "money">;
   purpose?: string | null;
-  imageUri: string;
+  imageUri?: string;
   fileName?: string | null;
   fileType?: string | null;
   donorId?: string;
@@ -232,22 +235,25 @@ export type UpdateDraftPayload = {
 
 export const createDraft = async (payload: CreateDraftPayload) => {
   const formData = new FormData();
-  const fallbackFileName =
-    payload.imageUri.split("/").pop() || "draft.jpg";
-  const fileName = payload.fileName || fallbackFileName;
-  const fileType = payload.fileType || "image/jpeg";
 
-  if (isWeb) {
-    const res = await fetch(payload.imageUri);
-    const blob = await res.blob();
-    const file = new File([blob], fileName, { type: fileType });
-    formData.append("itemImage", file);
-  } else {
-    formData.append("itemImage", {
-      uri: payload.imageUri,
-      name: fileName,
-      type: fileType,
-    } as any);
+  if (payload.imageUri) {
+    const fallbackFileName =
+      payload.imageUri.split("/").pop() || "draft.jpg";
+    const fileName = payload.fileName || fallbackFileName;
+    const fileType = payload.fileType || "image/jpeg";
+
+    if (isWeb) {
+      const res = await fetch(payload.imageUri);
+      const blob = await res.blob();
+      const file = new File([blob], fileName, { type: fileType });
+      formData.append("itemImage", file);
+    } else {
+      formData.append("itemImage", {
+        uri: payload.imageUri,
+        name: fileName,
+        type: fileType,
+      } as any);
+    }
   }
 
   formData.append("category", payload.category);

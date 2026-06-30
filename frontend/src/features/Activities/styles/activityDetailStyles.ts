@@ -43,11 +43,11 @@ export const activityDetailStyles = StyleSheet.create({
   },
   metaCard: {
     marginTop: 18,
-    backgroundColor: Colors.surface,
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: "rgba(255, 255, 255, 0.82)",
     gap: 12,
   },
   metaRow: {
@@ -182,6 +182,24 @@ export const activityDetailStyles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textTertiary,
     textAlign: "center",
+  },
+  imageCard: {
+    marginTop: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.82)",
+    borderRadius: 16,
+    padding: 8,
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+  },
+  activityImage: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   loadingOverlay: {
     position: "absolute",

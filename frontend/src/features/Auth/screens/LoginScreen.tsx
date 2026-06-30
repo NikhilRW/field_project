@@ -52,12 +52,12 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.formCard}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Email or Phone</Text>
           <View style={styles.inputWrap}>
             <Mail size={17} color={Colors.textTertiary} strokeWidth={1.6} />
             <TextInput
               style={styles.input}
-              placeholder="you@example.com"
+              placeholder="you@example.com or phone"
               placeholderTextColor={Colors.textTertiary}
               value={email}
               onChangeText={setEmail}
