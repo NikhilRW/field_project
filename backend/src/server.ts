@@ -39,7 +39,10 @@ app.set("io", io);
 const PORT = parseInt(process.env.PORT || "5000", 10);
 
 app.use(morgan("dev"));
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:8081", "https://helpingshands.org", /\.helpingshands\.org$/],
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);

@@ -17,7 +17,7 @@ export type DonationType = "all" | "money" | "clothes" | "books" | "grocery" | "
 export type GraphMetric = "total" | "newDonators" | "type";
 
 // Set to true to use generated data instead of API
-export const USE_MOCK_DATA = true;
+export const USE_MOCK_DATA = false;
 
 export type UseAnalyticsReturn = {
   loading: boolean;
