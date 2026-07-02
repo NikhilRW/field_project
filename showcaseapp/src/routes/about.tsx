@@ -1,20 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Eye, HeartHandshake, Lightbulb, ShieldCheck, Target, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
-import { ImagePlaceholder } from "@/components/site/ImagePlaceholder";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us — Helping Hands · Samajik Seva Sanstha" },
+      { title: "About Us — Helping Hands" },
       {
         name: "description",
         content:
-          "Learn about Helping Hands (Samajik Seva Sanstha) — our mission, vision, values, journey and the team transforming communities across India since 2010.",
+          "Learn about Helping Hands (Samajik Seva Sanstha) — our mission, vision, values, journey and the team transforming communities across India since 2018.",
       },
       { property: "og:title", content: "About Us — Helping Hands" },
-      { property: "og:description", content: "Our mission, vision, values and 15-year journey." },
+      { property: "og:description", content: "Our mission, vision, values and 8-year journey." },
       { property: "og:url", content: "/about" },
     ],
     links: [{ rel: "canonical", href: "/about" }],
@@ -30,19 +30,39 @@ const values = [
   { icon: Lightbulb, label: "Innovation", text: "Simple, scalable solutions that work." },
 ];
 
+const posters = ["/ngo-poster.jpeg", "/ngo-poster-2.jpeg"];
+
 function AboutPage() {
+  const [posterIndex, setPosterIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setPosterIndex((i) => (i + 1) % posters.length), 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <>
       <PageHero
         eyebrow="About Us"
         title={
           <>
-            Fifteen years of <span className="text-gradient">standing beside</span> the underserved.
+            Eight years of <span className="text-gradient">standing beside</span> the underserved.
           </>
         }
         subtitle="Helping Hands (Samajik Seva Sanstha) is a registered non-profit working across education, healthcare, food security, women's empowerment and disaster relief in India."
-        imageLabel="NGO founding team with community members"
       />
+
+      <section className="pb-10">
+        <div className="container-page">
+          <img
+            src="/very-large-portrait-of-multiple-donations.jpeg"
+            alt="Helping Hands community work"
+            loading="lazy"
+            className="w-full rounded-3xl object-contain shadow-[var(--shadow-lift)]"
+            style={{ height: "160dvh" }}
+          />
+        </div>
+      </section>
 
       <section className="py-20">
         <div className="container-page grid gap-8 md:grid-cols-2">
@@ -101,8 +121,7 @@ function AboutPage() {
               <span className="text-sm font-bold uppercase tracking-widest text-primary">Team</span>
               <h2 className="mt-3 text-4xl md:text-5xl">A team rooted in the communities we serve</h2>
               <p className="mt-4 text-muted-foreground leading-relaxed">
-                Our 800+ volunteers include teachers, doctors, engineers, students and retired
-                professionals from every corner of India. Together with 12 full-time staff, they
+                Our 5+ volunteers from across Maharashtra. Together with 3 full-time staff, they
                 power every program on the ground.
               </p>
               <Link
@@ -114,7 +133,18 @@ function AboutPage() {
             </div>
           </Reveal>
           <Reveal delay={150}>
-            <ImagePlaceholder label="NGO team group photo at annual gathering" aspect="aspect-[4/3]" />
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
+              {posters.map((src, i) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt="NGO team with community"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
+                  style={{ opacity: i === posterIndex ? 1 : 0 }}
+                />
+              ))}
+            </div>
           </Reveal>
         </div>
       </section>

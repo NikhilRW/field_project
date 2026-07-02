@@ -569,3 +569,50 @@ export const createMoneyDonation = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+export const getPublicDonations = async (req: any, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 12));
+    const offset = (page - 1) * limit;
+
+    const rows = await db
+      .select()
+      .from(donations)
+      .where(
+        and(
+          eq(donations.type, "incoming"),
+          eq(donations.verificationStatus, "verified"),
+        ),
+      )
+      .orderBy(desc(donations.date))
+      .limit(limit)
+      .offset(offset);
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(donations)
+      .where(
+        and(
+          eq(donations.type, "incoming"),
+          eq(donations.verificationStatus, "verified"),
+        ),
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: rows.map(mapDonationRow),
+      pagination: {
+        page,
+        limit,
+        total: Number(count),
+        hasMore: offset + limit < Number(count),
+      },
+    });
+  } catch (error) {
+    console.error("Failed to fetch public donations", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch donations" });
+  }
+};

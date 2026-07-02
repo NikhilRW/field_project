@@ -74,7 +74,8 @@ export const getActivities = async (req: AuthRequest, res: Response) => {
     const rows = await db
       .select(selectFields)
       .from(activities)
-      .orderBy(desc(activities.date));
+      .orderBy(desc(activities.date))
+      .limit(6);
 
     const data = rows.map((row) => ({
       id: row.id,

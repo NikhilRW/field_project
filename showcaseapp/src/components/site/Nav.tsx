@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -13,6 +13,8 @@ const navLinks = [
 ] as const;
 
 export function Nav() {
+  const router = useRouter();
+  const isHome = router.state.location.pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -26,7 +28,7 @@ export function Nav() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled
+        scrolled || !isHome
           ? "bg-background/85 shadow-[var(--shadow-soft)] backdrop-blur-xl"
           : "bg-transparent"
       }`}
@@ -41,10 +43,10 @@ export function Nav() {
             <img src="/icon.png" alt="Helping Hands" className="size-11 object-contain" />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-base font-extrabold tracking-tight text-foreground">
+            <span className={`text-base font-extrabold tracking-tight ${scrolled || !isHome ? "text-foreground" : "text-white"}`}>
               Helping Hands
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+            <span className={`text-[10px] font-medium uppercase tracking-widest ${scrolled || !isHome ? "text-muted-foreground" : "text-white/60"}`}>
               Samajik Seva Sanstha
             </span>
           </span>
@@ -55,8 +57,12 @@ export function Nav() {
             <Link
               key={l.to}
               to={l.to}
-              className="rounded-full px-4 py-2 text-sm font-semibold text-foreground/75 transition-colors hover:bg-primary/10 hover:text-primary"
-              activeProps={{ className: "bg-primary/10 text-primary" }}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                scrolled || !isHome
+                  ? "text-foreground/75 hover:bg-primary/10 hover:text-primary"
+                  : "text-white/80 hover:bg-white/15 hover:text-white"
+              }`}
+              activeProps={{ className: scrolled || !isHome ? "bg-primary/10 text-primary" : "bg-white/20 text-white" }}
               activeOptions={{ exact: l.to === "/" }}
             >
               {l.label}
@@ -72,7 +78,9 @@ export function Nav() {
             Donate Now
           </Link>
           <button
-            className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary lg:hidden"
+            className={`grid size-10 place-items-center rounded-full lg:hidden ${
+              scrolled || !isHome ? "bg-primary/10 text-primary" : "bg-white/15 text-white"
+            }`}
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
           >

@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
-import { ImagePlaceholder } from "@/components/site/ImagePlaceholder";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
-      { title: "Impact Gallery — Helping Hands · Samajik Seva Sanstha" },
+      { title: "Impact Gallery — Helping Hands" },
       { name: "description", content: "Photographs from Helping Hands programs and community moments across India." },
       { property: "og:title", content: "Impact Gallery — Helping Hands" },
       { property: "og:url", content: "/gallery" },
@@ -17,18 +16,18 @@ export const Route = createFileRoute("/gallery")({
 });
 
 const items = [
-  { label: "children studying in a village classroom", aspect: "aspect-[3/4]" },
-  { label: "women's tailoring training workshop", aspect: "aspect-square" },
-  { label: "community kitchen preparing meals", aspect: "aspect-[4/5]" },
-  { label: "volunteers cleaning a public park", aspect: "aspect-[3/4]" },
-  { label: "free rural health camp in progress", aspect: "aspect-square" },
-  { label: "tree plantation event with students", aspect: "aspect-[4/5]" },
-  { label: "smiling elderly beneficiary receiving support", aspect: "aspect-[3/4]" },
-  { label: "NGO annual gathering group photo", aspect: "aspect-square" },
-  { label: "volunteer teaching computer skills", aspect: "aspect-[4/5]" },
-  { label: "disaster relief distribution camp", aspect: "aspect-[3/4]" },
-  { label: "blood donation drive", aspect: "aspect-square" },
-  { label: "children receiving school supplies", aspect: "aspect-[4/5]" },
+  { label: "children studying in a village classroom", aspect: "aspect-[3/4]", img: "/small-kids-photo.jpeg" },
+  { label: "women's tailoring training workshop", aspect: "aspect-square", img: "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg" },
+  { label: "community kitchen preparing meals", aspect: "aspect-[4/5]", img: "/utensils-donation.jpeg" },
+  { label: "volunteers cleaning a public park", aspect: "aspect-[3/4]", img: "/ngo-volunteer-donating-water.jpeg" },
+  { label: "free rural health camp in progress", aspect: "aspect-square", img: "/image-beneficiary-getting-water.jpeg" },
+  { label: "tree plantation event with students", aspect: "aspect-[4/5]", img: "/school-kids-photo.jpeg" },
+  { label: "children playing and learning together", aspect: "aspect-[3/4]", img: "/small-kids-photos.jpeg" },
+  { label: "NGO annual gathering group photo", aspect: "aspect-square", img: "/very-large-portrait-of-multiple-donations.jpeg" },
+  { label: "volunteer teaching computer skills", aspect: "aspect-[4/5]", img: "/small-kids-smiling-after-getting-donation.jpeg" },
+  { label: "disaster relief distribution camp", aspect: "aspect-[3/4]", img: "/donation-at-village.jpeg" },
+  { label: "blood donation drive", aspect: "aspect-square", img: "/ngo-founder-donating-water.jpeg" },
+  { label: "children receiving school supplies", aspect: "aspect-[4/5]", img: "/ngo-bag-donated-to-school-kids.jpeg" },
 ];
 
 function GalleryPage() {
@@ -37,8 +36,7 @@ function GalleryPage() {
       <PageHero
         eyebrow="Gallery"
         title={<>Moments from <span className="text-gradient">the field</span>.</>}
-        subtitle="Real people. Real programs. Real change — captured across our work in 120+ communities."
-        imageLabel="collage of NGO activities across India"
+        subtitle="Real people. Real programs. Real change — captured across our work in 50+ communities."
       />
       <section className="py-14">
         <div className="container-page">
@@ -46,7 +44,12 @@ function GalleryPage() {
             {items.map((g, i) => (
               <Reveal key={i} delay={(i % 4) * 60}>
                 <div className="mb-4 break-inside-avoid image-zoom card-lift overflow-hidden rounded-2xl border border-border bg-card">
-                  <ImagePlaceholder label={g.label} aspect={g.aspect} />
+                  <img
+                    src={g.img}
+                    alt={g.label}
+                    loading="lazy"
+                    className={`${g.aspect} w-full object-cover`}
+                  />
                 </div>
               </Reveal>
             ))}

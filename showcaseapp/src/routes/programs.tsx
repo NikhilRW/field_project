@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Droplet, Home, Sparkles, Stethoscope, Utensils } from "lucide-react";
+import { ArrowRight, BookOpen, Droplet, Home, ShoppingBag, Sparkles, Stethoscope, Utensils } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
-import { ImagePlaceholder } from "@/components/site/ImagePlaceholder";
 
 export const Route = createFileRoute("/programs")({
   head: () => ({
     meta: [
-      { title: "Our Programs — Helping Hands · Samajik Seva Sanstha" },
+      { title: "Our Programs — Helping Hands" },
       {
         name: "description",
         content:
@@ -22,12 +21,12 @@ export const Route = createFileRoute("/programs")({
 });
 
 const programs = [
-  { icon: BookOpen, title: "Education Drives", text: "Scholarships, learning centers and school kits.", imageLabel: "volunteers teaching children" },
-  { icon: Stethoscope, title: "Health Camps", text: "Free medical checkups and specialist consultations.", imageLabel: "free medical camp" },
-  { icon: Utensils, title: "Food Distribution", text: "Meals and monthly ration kits for vulnerable families.", imageLabel: "food packet distribution" },
-  { icon: Sparkles, title: "Women Empowerment", text: "Skill workshops and self-help groups.", imageLabel: "women skill training" },
-  { icon: Droplet, title: "Disaster Relief", text: "Rapid response, shelter and rehabilitation.", imageLabel: "disaster relief distribution" },
-  { icon: Home, title: "Community Development", text: "Sanitation, clean water and public infrastructure.", imageLabel: "community sanitation drive" },
+  { icon: BookOpen, title: "Education Drives", text: "Scholarships, learning centers and school kits.", img: "/school-kids-photo.jpeg" },
+  { icon: Droplet, title: "Water donation", text: "Access to clean water for underserved communities.", img: "/image-beneficiary-getting-water.jpeg" },
+  { icon: Utensils, title: "Food Distribution", text: "Meals and monthly ration kits for vulnerable families.", img: "/again-village-people-getting-donation.jpeg" },
+  { icon: Sparkles, title: "Women Empowerment", text: "Skill workshops and self-help groups.", img: "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg" },
+  { icon: ShoppingBag, title: "Goods Distribution", text: "Essential items and supplies for villages.", img: "/donation-at-village.jpeg" },
+  { icon: Home, title: "Community Development", text: "Sanitation, clean water and public infrastructure.", img: "/ngo-founder-donating-water.jpeg" },
 ];
 
 function ProgramsPage() {
@@ -37,7 +36,7 @@ function ProgramsPage() {
         eyebrow="Programs"
         title={<>Six focused programs. <span className="text-gradient">One shared purpose.</span></>}
         subtitle="Every program is co-designed with community leaders and measured on real, long-term outcomes."
-        imageLabel="NGO programs collage — teaching, health camp, food drive"
+        imageSrc="/again-village-people-getting-donation-portrait-multiple.jpeg"
       />
       <section className="py-20">
         <div className="container-page grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -45,7 +44,12 @@ function ProgramsPage() {
             <Reveal key={p.title} delay={i * 60}>
               <article className="card-lift flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card">
                 <div className="image-zoom">
-                  <ImagePlaceholder label={p.imageLabel} aspect="aspect-[16/10]" />
+                  <img
+                    src={p.img}
+                    alt={p.title}
+                    loading="lazy"
+                    className="aspect-[16/10] w-full object-cover"
+                  />
                 </div>
                 <div className="flex flex-1 flex-col p-6">
                   <div className="mb-3 inline-flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">

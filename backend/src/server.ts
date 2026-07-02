@@ -7,7 +7,9 @@ import express from "express";
 import morgan from "morgan";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import multer from "multer";
 import authRoutes from "./routes/authRoutes";
+import showcaseRoutes from "./routes/showcaseRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import beneficiaryRoutes from "./routes/beneficiaryRoutes";
@@ -39,13 +41,15 @@ app.set("io", io);
 const PORT = parseInt(process.env.PORT || "5000", 10);
 
 app.use(morgan("dev"));
+
 app.use(cors({
   origin: ["http://localhost:8081", "https://helpingshands.org", /\.helpingshands\.org$/],
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/public", showcaseRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/beneficiaries", beneficiaryRoutes);
@@ -66,7 +70,6 @@ app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
 });
-
 httpServer.listen(PORT, "0.0.0.0", () => {
   console.log("Server listening on port http://localhost:" + PORT);
 });

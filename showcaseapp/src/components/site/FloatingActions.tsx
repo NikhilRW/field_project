@@ -1,5 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowUp, Heart } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function FloatingActions() {
@@ -22,14 +21,6 @@ export function FloatingActions() {
           <ArrowUp className="size-5" />
         </button>
       )}
-      <Link
-        to="/donate"
-        aria-label="Donate now"
-        className="pointer-events-auto flex items-center gap-2 rounded-full bg-[image:var(--gradient-warm)] px-5 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-lift)] transition-transform hover:-translate-y-0.5 animate-[float_6s_ease-in-out_infinite]"
-      >
-        <Heart className="size-4 fill-current" />
-        Donate
-      </Link>
     </div>
   );
 }

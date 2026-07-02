@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter, Youtube } from "lucide-react";
+import { Instagram, Mail, MapPin, Phone, Youtube } from "lucide-react";
 
 export function Footer() {
   return (
@@ -22,10 +22,15 @@ export function Footer() {
             long-term community development across rural and urban India.
           </p>
           <div className="mt-5 flex items-center gap-2">
-            {[Facebook, Instagram, Twitter, Youtube, Linkedin].map((Icon, i) => (
+            {[
+              [Instagram, "https://www.instagram.com/Helpinghand7887/"],
+              [Youtube, "https://www.youtube.com/@helpinghandsamajiksevasans9500"],
+            ].map(([Icon, href], i) => (
               <a
                 key={i}
-                href="#"
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Social link"
                 className="grid size-9 place-items-center rounded-full bg-white/8 text-white/80 transition-colors hover:bg-primary hover:text-primary-foreground"
               >
@@ -70,15 +75,15 @@ export function Footer() {
           <ul className="space-y-3 text-sm text-white/65">
             <li className="flex gap-3">
               <MapPin className="mt-0.5 size-4 shrink-0 text-primary-glow" />
-              <span>112 Community Lane, Andheri West, Mumbai 400058, India</span>
+              <span>Near Manali Palace, Kalyan West, Maharashtra</span>
             </li>
             <li className="flex gap-3">
               <Phone className="mt-0.5 size-4 shrink-0 text-primary-glow" />
-              <span>+91 98200 12345</span>
+              <span>+91 88982 35366</span>
             </li>
             <li className="flex gap-3">
               <Mail className="mt-0.5 size-4 shrink-0 text-primary-glow" />
-              <span>hello@helpinghands.org</span>
+              <span>sachindilipraut@gmail.com</span>
             </li>
           </ul>
         </div>
@@ -88,8 +93,6 @@ export function Footer() {
         <div className="container-page flex flex-col items-center justify-between gap-3 py-5 text-xs text-white/50 sm:flex-row">
           <p>© {new Date().getFullYear()} Helping Hands · Samajik Seva Sanstha. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <a href="#" className="hover:text-white">Privacy Policy</a>
-            <a href="#" className="hover:text-white">Terms</a>
             <span>Designed with <span className="text-primary-glow">♥</span> for social impact</span>
           </div>
         </div>

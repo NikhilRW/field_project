@@ -19,6 +19,7 @@ export const useOnboardingCarousel = () => {
 
   const contentAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value,
+    marginBottom: 10,
   }));
 
   const animateToSlide = (nextIndex: number) => {

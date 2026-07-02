@@ -1,15 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck } from "lucide-react";
-import { useState } from "react";
-import donateImg from "@/assets/donate.jpg";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { HelpingHand } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
-import { ImagePlaceholder } from "@/components/site/ImagePlaceholder";
+import { fetchDonations } from "@/lib/api";
 
 export const Route = createFileRoute("/donate")({
   head: () => ({
     meta: [
-      { title: "Donate — Helping Hands · Samajik Seva Sanstha" },
+      { title: "Donate — Helping Hands" },
       { name: "description", content: "Support Helping Hands. All donations are eligible for tax benefits under section 80G." },
       { property: "og:title", content: "Donate — Helping Hands" },
       { property: "og:url", content: "/donate" },
@@ -19,91 +18,68 @@ export const Route = createFileRoute("/donate")({
   component: DonatePage,
 });
 
-const amounts = [500, 1000, 2500, 5000, 10000, 25000];
-const methods = ["UPI", "Credit Card", "Debit Card", "Net Banking"];
-
 const impact = [
   { amt: "₹500", text: "One month of school supplies for a child" },
-  { amt: "₹2,500", text: "Nutritious meals for a family of five for a month" },
-  { amt: "₹10,000", text: "A full village health camp for 300+ people" },
+  { amt: "₹5,000", text: "Nutritious meals for a family of five for a month" },
+  { amt: "₹20,000", text: "A full village health camp for 300+ people" },
 ];
 
+const categoryLabel: Record<string, string> = {
+  money: "Monetary",
+  books: "Books",
+  clothes: "Clothes",
+  grocery: "Grocery",
+  other_items: "Other Items",
+};
+
+const PAGE_SIZE = 6;
+const MAX_PAGES = 4;
+
 function DonatePage() {
-  const [amount, setAmount] = useState(1000);
-  const [method, setMethod] = useState("UPI");
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["donations"],
+    queryFn: ({ pageParam }) => fetchDonations(pageParam, PAGE_SIZE),
+    initialPageParam: 1,
+    getNextPageParam: (last) =>
+      last.pagination.hasMore ? last.pagination.page + 1 : undefined,
+  });
+
+  const pages = data?.pages ?? [];
+  const donations = pages.flatMap((p) => p.data);
+  const loading = isLoading;
+  const pageCount = pages.length;
+  const showCTA = !hasNextPage || pageCount >= MAX_PAGES;
+
   return (
     <>
       <PageHero
         eyebrow="Donate"
         title={<>Your support creates <span className="text-gradient">lasting change</span>.</>}
         subtitle="100% secure. Instant 80G tax-benefit receipt. Full transparency on every rupee spent."
-        imageLabel="smiling child holding new school materials"
       />
 
       <section className="py-16">
         <div className="container-page grid gap-10 lg:grid-cols-[1.1fr_1fr]">
           <Reveal>
-            <div className="rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-soft)] md:p-10">
-              <h2 className="text-2xl">Choose an amount</h2>
-              <div className="mt-5 grid grid-cols-3 gap-3">
-                {amounts.map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => setAmount(a)}
-                    className={`rounded-2xl border-2 py-4 text-center font-bold transition-all ${
-                      amount === a
-                        ? "border-primary bg-primary/10 text-primary shadow-[var(--shadow-soft)]"
-                        : "border-border bg-card hover:border-primary/40"
-                    }`}
-                  >
-                    ₹{a.toLocaleString()}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-5">
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom amount</label>
-                <div className="mt-2 flex overflow-hidden rounded-2xl border-2 border-border bg-card focus-within:border-primary">
-                  <span className="grid place-items-center bg-primary/10 px-4 font-bold text-primary">₹</span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value) || 0)}
-                    className="w-full bg-transparent px-4 py-3.5 text-base font-semibold outline-none"
-                  />
-                </div>
-              </div>
-
-              <h3 className="mt-8 text-lg">Payment method</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {methods.map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMethod(m)}
-                    className={`rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all ${
-                      method === m ? "border-primary bg-primary/10 text-primary" : "border-border bg-card hover:border-primary/40"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 sm:flex-row">
-                <div className="grid size-24 shrink-0 place-items-center rounded-xl bg-card" role="img" aria-label="Donation UPI QR code" data-image-placeholder="Donation UPI QR code">
-                  <span className="text-[10px] font-bold text-muted-foreground text-center leading-tight">[INSERT<br/>QR CODE]</span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold">Scan to donate via UPI</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Any UPI app · Instant confirmation · Auto-generated 80G receipt</p>
-                </div>
-              </div>
-
-              <button className="btn-primary mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-base font-bold">
-                Donate ₹{amount.toLocaleString()} securely <ArrowRight className="size-4" />
-              </button>
-              <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="size-4 text-success" /> All donations are eligible for tax benefits under applicable laws (Sec. 80G).
+            <div className="flex flex-col items-center rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-soft)] md:p-10">
+              <h2 className="text-2xl">Scan to donate</h2>
+              <p className="mt-2 text-center text-muted-foreground">
+                All donations are eligible for tax benefits under section 80G of the Income Tax Act, 1961.
+              </p>
+              <img
+                src="/qr-code-2.png"
+                alt="Donation QR code"
+                loading="lazy"
+                className="mt-6 w-72 rounded-2xl shadow-[var(--shadow-lift)]"
+              />
+              <p className="mt-4 text-sm text-muted-foreground">
+                Any UPI app · Instant confirmation · Auto-generated 80G receipt
               </p>
             </div>
           </Reveal>
@@ -111,8 +87,8 @@ function DonatePage() {
           <Reveal delay={150}>
             <div className="grid gap-5">
               <img
-                src={donateImg}
-                alt="Smiling child holding new school supplies"
+                src="/small-kids-smiling-after-getting-donation.jpeg"
+                alt="Smiling children after receiving donations"
                 loading="lazy"
                 width={1280}
                 height={1280}
@@ -137,7 +113,78 @@ function DonatePage() {
       <section className="pb-20">
         <div className="container-page">
           <Reveal>
-            <ImagePlaceholder label="beneficiaries with donated supplies" aspect="aspect-[21/9]" />
+            <div className="rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-soft)]">
+              <h2 className="text-2xl">Recent donations</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Every contribution — monetary, books, clothes, or grocery — fuels our mission.
+              </p>
+              {loading ? (
+                <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-32 animate-pulse rounded-2xl bg-muted" />
+                  ))}
+                </div>
+              ) : donations.length === 0 ? (
+                <div className="mt-8 flex flex-col items-center py-10 text-center">
+                  <p className="text-sm text-muted-foreground">No donations yet. Be the first to contribute!</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {donations.map((d) => (
+                      <div key={d.id} className="rounded-2xl border border-border bg-card p-5 card-lift">
+                        <div className="flex items-start gap-3">
+                          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                            {d.imageUrl ? (
+                              <img src={d.imageUrl} alt="" className="size-10 rounded-xl object-cover" />
+                            ) : (
+                              <HelpingHand className="size-5" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold">{d.donor}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">{d.date}</p>
+                          </div>
+                          {d.category === "money" && (
+                            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                              ₹{d.amount.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        {d.purpose && (
+                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground line-clamp-2">{d.purpose}</p>
+                        )}
+                        <span className="mt-2 inline-block rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {categoryLabel[d.category] || d.category}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {hasNextPage && (
+                    <div className="mt-8 flex justify-center">
+                      {showCTA ? (
+                        <a
+                          href="https://app.helpingshands.org"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-warm)] px-6 py-3 text-sm font-bold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"
+                        >
+                          Create account to see more donations
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => fetchNextPage()}
+                          disabled={isFetchingNextPage}
+                          className="inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-warm)] px-6 py-3 text-sm font-bold text-primary-foreground shadow transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+                        >
+                          {isFetchingNextPage ? "Loading..." : "Show more"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </Reveal>
         </div>
       </section>
