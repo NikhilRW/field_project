@@ -8,7 +8,7 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Contact Us — Helping Hands" },
-      { name: "description", content: "Get in touch with Helping Hands — office address, phone, email and volunteer inquiries." },
+      { name: "description", content: "Contact Helping Hands (Samajik Seva Sanstha) NGO in Kalyan West, Maharashtra. Reach us for donations, volunteering or community programs." },
       { property: "og:title", content: "Contact Us — Helping Hands" },
       { property: "og:url", content: "/contact" },
     ],

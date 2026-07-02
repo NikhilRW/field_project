@@ -9,7 +9,7 @@ export const Route = createFileRoute("/donate")({
   head: () => ({
     meta: [
       { title: "Donate — Helping Hands" },
-      { name: "description", content: "Support Helping Hands. All donations are eligible for tax benefits under section 80G." },
+      { name: "description", content: "Donate to Helping Hands NGO in Kalyan, Maharashtra. 80G tax benefits. Transparent donations for education, health camps and community programs." },
       { property: "og:title", content: "Donate — Helping Hands" },
       { property: "og:url", content: "/donate" },
     ],

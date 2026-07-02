@@ -9,7 +9,7 @@ export const Route = createFileRoute("/activities")({
   head: () => ({
     meta: [
       { title: "Community Activities — Helping Hands" },
-      { name: "description", content: "Recent community activities — education drives, health camps, tree plantation, blood donation, blanket distribution and more." },
+      { name: "description", content: "Recent activities by Helping Hands NGO in Kalyan, Maharashtra — community drives, health camps, education programs and relief work." },
       { property: "og:title", content: "Community Activities — Helping Hands" },
       { property: "og:url", content: "/activities" },
     ],

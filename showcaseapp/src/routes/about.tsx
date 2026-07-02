@@ -11,7 +11,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Learn about Helping Hands (Samajik Seva Sanstha) — our mission, vision, values, journey and the team transforming communities across India since 2018.",
+          "About Helping Hands (Samajik Seva Sanstha) — a registered NGO in Kalyan West, Maharashtra working across education, healthcare and food security since 2018.",
       },
       { property: "og:title", content: "About Us — Helping Hands" },
       { property: "og:description", content: "Our mission, vision, values and 8-year journey." },

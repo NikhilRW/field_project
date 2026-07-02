@@ -10,7 +10,7 @@ export const Route = createFileRoute("/programs")({
       {
         name: "description",
         content:
-          "Explore our programs — education drives, health camps, food distribution, women empowerment, disaster relief and sustainable community development.",
+          "Explore Helping Hands NGO programs in Kalyan, Maharashtra — education drives, health camps, food distribution, women empowerment and disaster relief.",
       },
       { property: "og:title", content: "Our Programs — Helping Hands" },
       { property: "og:url", content: "/programs" },

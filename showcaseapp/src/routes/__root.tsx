@@ -77,7 +77,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Helping Hands (Samajik Seva Sanstha) is a registered NGO transforming lives through education, healthcare, food distribution, women empowerment and community development across India.",
+          "Helping Hands (Samajik Seva Sanstha) — a registered NGO in Kalyan, Maharashtra providing education, health camps, food distribution, women empowerment and community support since 2018.",
       },
       { name: "author", content: "Helping Hands · Samajik Seva Sanstha" },
       { name: "theme-color", content: "#E8880C" },
@@ -89,11 +89,46 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Helping Hands" },
+      { property: "og:image", content: "/landscape-photo-all-people-in-view.jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Helping Hands · Samajik Seva Sanstha" },
       {
         name: "twitter:description",
         content: "Empowering communities through education, healthcare, food and hope.",
+      },
+      { name: "twitter:image", content: "/landscape-photo-all-people-in-view.jpeg" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        innerHTML: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "NGO",
+          name: "Helping Hands (Samajik Seva Sanstha)",
+          url: "https://www.helpingshands.org",
+          logo: "https://www.helpingshands.org/icon.png",
+          description: "Registered NGO in Kalyan, Maharashtra providing education, health camps, food distribution and community support since 2018.",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Near Manali Palace",
+            addressLocality: "Kalyan West",
+            addressRegion: "Maharashtra",
+            postalCode: "421301",
+            addressCountry: "IN",
+          },
+          contactPoint: {
+            "@type": "ContactPoint",
+            telephone: "+91-8898235366",
+            contactType: "customer service",
+          },
+          sameAs: ["https://www.youtube.com/@helpingshands"],
+          areaServed: {
+            "@type": "State",
+            name: "Maharashtra",
+          },
+        }),
       },
     ],
     links: [
