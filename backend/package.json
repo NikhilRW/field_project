@@ -18,7 +18,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "ts-node -r tsconfig-paths/register src/scripts/addMockData.ts",
-    "db:seed-donations": "bun run src/scripts/seedDonations.ts"
+    "db:seed-donations": "bun run src/scripts/seedDonations.ts",
+    "db:unseed-donations": "bun run src/scripts/unseedDonations.ts",
+    "import:contacts": "bun run src/scripts/importContacts.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -67,6 +69,7 @@
     "pm2-runtime": "^5.4.1",
     "socket.io": "^4.8.3",
     "tsc-alias": "^1.8.16",
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.1",
+    "xlsx": "^0.18.5"
   }
 }

@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
+  Backpack,
   BookOpen,
+  Cake,
   CheckCircle2,
   ChevronDown,
   Compass,
   Eye,
+  Gift,
   Handshake,
   HeartHandshake,
   Leaf,
@@ -15,6 +18,7 @@ import {
   Sparkles,
   Stethoscope,
   Target,
+  ToyBrick,
   Users,
   Utensils,
 } from "lucide-react";
@@ -105,6 +109,18 @@ const programs = [
     title: "Women Empowerment",
     text: "Giving gifts to women in need",
     imageLabel: "women's tailoring and skill development workshop",
+  },
+  {
+    icon: Cake,
+    title: "Celebrations",
+    text: "Celebrating special moments with children in need.",
+    imageLabel: "cake cutting celebration with kids",
+  },
+  {
+    icon: ToyBrick,
+    title: "Toy donation drives",
+    text: "Bringing joy to children through toy donations.",
+    imageLabel: "toy donation drive event",
   },
 ];
 
@@ -428,6 +444,9 @@ function Home() {
                         "/image-beneficiary-getting-water.jpeg",
                         "/again-village-people-getting-donation.jpeg",
                         "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg",
+                        "/cake_cutting_with_kids.jpeg",
+                        "/toy_distribution.jpeg",
+                        "/bag_donation_to_students.jpeg",
                       ][i]}
                       alt={p.title}
                       loading="lazy"
@@ -530,16 +549,20 @@ function Home() {
               <Reveal key={i} delay={(i % 4) * 80}>
                 <div className="mb-4 break-inside-avoid image-zoom card-lift overflow-hidden rounded-2xl border border-border bg-card">
                   <img
-                    src={[
-                      "/small-kids-photo.jpeg",
-                      "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg",
-                      "/utensils-donation.jpeg",
-                      "/ngo-volunteer-donating-water.jpeg",
-                      "/image-beneficiary-getting-water.jpeg",
-                      "/school-kids-photo.jpeg",
-                      "/elders-getting-donation.jpeg",
-                      "/very-large-portrait-of-multiple-donations.jpeg",
-                    ][i % 8]}
+                      src={[
+                        "/small-kids-photo.jpeg",
+                        "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg",
+                        "/utensils-donation.jpeg",
+                        "/ngo-volunteer-donating-water.jpeg",
+                        "/image-beneficiary-getting-water.jpeg",
+                        "/school-kids-photo.jpeg",
+                        "/elders-getting-donation.jpeg",
+                        "/very-large-portrait-of-multiple-donations.jpeg",
+                        "/shools_kids_new_photos.jpeg",
+                        "/school_bag_distribution_new_photo.jpeg",
+                        "/toy_distribution.jpeg",
+                        "/bag_donation_to_students.jpeg",
+                      ][i % 12]}
                     alt={g.label}
                     loading="lazy"
                     className={`${g.aspect} w-full object-cover`}

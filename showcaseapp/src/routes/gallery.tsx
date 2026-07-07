@@ -38,6 +38,14 @@ const items = [
   { label: "village people receiving donations", aspect: "aspect-[4/5]", img: "/again-village-people-getting-donation.jpeg" },
   { label: "multiple portrait donations", aspect: "aspect-[3/4]", img: "/again-village-people-getting-donation-portrait-multiple.jpeg" },
   { label: "single woman receiving donation", aspect: "aspect-square", img: "/a-single-women-in-ngo-getting-donation.jpeg" },
+  { label: "bag distribution with school administration", aspect: "aspect-[4/5]", img: "/bag_distribution_photos_with_school_adminstration.jpeg" },
+  { label: "bag donation to students", aspect: "aspect-[3/4]", img: "/bag_donation_to_students.jpeg" },
+  { label: "cake cutting with kids celebration", aspect: "aspect-square", img: "/cake_cutting_with_kids.jpeg" },
+  { label: "school bag distribution event", aspect: "aspect-[4/5]", img: "/school_bag_distribution.jpeg" },
+  { label: "new school bag distribution photo", aspect: "aspect-[3/4]", img: "/school_bag_distribution_new_photo.jpeg" },
+  { label: "school kids group photo", aspect: "aspect-square", img: "/school_kids_new_photos_2.jpeg" },
+  { label: "school kids smiling together", aspect: "aspect-[4/5]", img: "/shools_kids_new_photos.jpeg" },
+  { label: "toy distribution to children", aspect: "aspect-[3/4]", img: "/toy_distribution.jpeg" },
 ];
 
 function GalleryPage() {
@@ -50,7 +58,7 @@ function GalleryPage() {
       />
       <section className="py-14">
         <div className="container-page">
-          <div className="columns-2 gap-4 md:columns-3 lg:columns-4 [column-fill:_balance]">
+          <div className="columns-2 gap-4 md:columns-3 [column-fill:_balance]">
             {items.map((g, i) => (
               <Reveal key={i} delay={(i % 4) * 60}>
                 <div className="mb-4 break-inside-avoid image-zoom card-lift overflow-hidden rounded-2xl border border-border bg-card">

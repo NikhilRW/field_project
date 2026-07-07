@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Droplet, Home, ShoppingBag, Sparkles, Stethoscope, Utensils } from "lucide-react";
+import { ArrowRight, Backpack, BookOpen, Cake, Droplet, Gift, Home, ShoppingBag, Sparkles, Stethoscope, Utensils } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
 
@@ -27,6 +27,10 @@ const programs = [
   { icon: Sparkles, title: "Women Empowerment", text: "Skill workshops and self-help groups.", img: "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg" },
   { icon: ShoppingBag, title: "Goods Distribution", text: "Essential items and supplies for villages.", img: "/donation-at-village.jpeg" },
   { icon: Home, title: "Community Development", text: "Sanitation, clean water and public infrastructure.", img: "/ngo-founder-donating-water.jpeg" },
+  { icon: ShoppingBag, title: "Bag Distribution", text: "School bags and stationery for underprivileged students.", img: "/bag_distribution_photos_with_school_adminstration.jpeg" },
+  { icon: Gift, title: "Toy Distribution", text: "Bringing smiles through toy donations to children.", img: "/toy_distribution.jpeg" },
+  { icon: Cake, title: "Celebrations", text: "Celebrating special moments with children in need.", img: "/cake_cutting_with_kids.jpeg" },
+  { icon: Backpack, title: "School Kit Drive", text: "Complete school kits for children in rural areas.", img: "/school_bag_distribution.jpeg" },
 ];
 
 function ProgramsPage() {
