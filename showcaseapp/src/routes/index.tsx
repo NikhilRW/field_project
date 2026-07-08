@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Backpack,
   BookOpen,
-  Cake,
   CheckCircle2,
   ChevronDown,
   Compass,
@@ -15,10 +13,10 @@ import {
   Lightbulb,
   MapPin,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Stethoscope,
   Target,
-  ToyBrick,
   Users,
   Utensils,
 } from "lucide-react";
@@ -111,13 +109,13 @@ const programs = [
     imageLabel: "women's tailoring and skill development workshop",
   },
   {
-    icon: Cake,
-    title: "Celebrations",
-    text: "Celebrating special moments with children in need.",
-    imageLabel: "cake cutting celebration with kids",
+    icon: ShoppingBag,
+    title: "Bag Distribution",
+    text: "School bags and stationery for underprivileged students.",
+    imageLabel: "bag distribution program with school administration",
   },
   {
-    icon: ToyBrick,
+    icon: Gift,
     title: "Toy donation drives",
     text: "Bringing joy to children through toy donations.",
     imageLabel: "toy donation drive event",
@@ -444,9 +442,8 @@ function Home() {
                         "/image-beneficiary-getting-water.jpeg",
                         "/again-village-people-getting-donation.jpeg",
                         "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg",
-                        "/cake_cutting_with_kids.jpeg",
-                        "/toy_distribution.jpeg",
                         "/bag_donation_to_students.jpeg",
+                        "/toy_distribution.jpeg",
                       ][i]}
                       alt={p.title}
                       loading="lazy"
