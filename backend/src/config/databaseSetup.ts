@@ -19,7 +19,7 @@ import fs from "fs";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set");
+  console.warn("DATABASE_URL is not set, falling back to individual connection params");
 }
 
 export const userRoleEnum = pgEnum("user_role", ["Admin", "User"]);
@@ -354,6 +354,27 @@ export const surveysRelations = relations(surveys, ({ one }) => ({
   }),
 }));
 
+export const galleryImages = pgTable(
+  "gallery_images",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    imageUrl: text("image_url").notNull(),
+    caption: text("caption"),
+    altText: text("alt_text"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    createdAtIdx: index("gallery_images_created_at_idx").on(table.createdAt),
+  }),
+);
+
+export const galleryImagesRelations = relations(galleryImages, () => ({}));
+
 export const schema = {
   users,
   beneficiaries,
@@ -366,6 +387,7 @@ export const schema = {
   refreshTokens,
   draftDonations,
   notifications,
+  galleryImages,
 };
 
 export const pool = new Pool({

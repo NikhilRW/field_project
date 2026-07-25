@@ -3,6 +3,7 @@ import {
   Users,
   LogOut,
   UserPen,
+  ImagePlus,
 } from "lucide-react-native";
 import { Colors } from "@/shared/constants/color";
 import type { ProfileSettingsItem } from "../types/settings";
@@ -12,6 +13,7 @@ export const buildProfileSettingsItems = (
   isAdmin: boolean,
   onEditName?: () => void,
   onManageUsers?: () => void,
+  onGallery?: () => void,
 ): ProfileSettingsItem[] => [
   ...(isAdmin
     ? [
@@ -21,6 +23,13 @@ export const buildProfileSettingsItems = (
           sub: "Admins, users & donors",
           iconBg: Colors.secondaryLight,
           onPress: onManageUsers,
+        },
+        {
+          icon: <ImagePlus size={16} color={Colors.accent} strokeWidth={1.8} />,
+          label: "Gallery Images",
+          sub: "Manage showcase gallery",
+          iconBg: Colors.accentLight,
+          onPress: onGallery,
         },
       ]
     : []),

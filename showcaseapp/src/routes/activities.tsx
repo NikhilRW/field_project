@@ -9,7 +9,11 @@ export const Route = createFileRoute("/activities")({
   head: () => ({
     meta: [
       { title: "Community Activities — Helping Hands" },
-      { name: "description", content: "Recent activities by Helping Hands NGO in Kalyan, Maharashtra — community drives, health camps, education programs and relief work." },
+      {
+        name: "description",
+        content:
+          "Recent activities by Helping Hands NGO in Kalyan, Maharashtra — community drives, health camps, education programs and relief work.",
+      },
       { property: "og:title", content: "Community Activities — Helping Hands" },
       { property: "og:url", content: "/activities" },
     ],
@@ -19,8 +23,18 @@ export const Route = createFileRoute("/activities")({
 });
 
 function ActivitiesPage() {
-  const [activities, setActivities] = useState<Array<{ title: string; date: string; location: string; participants: string; category: string; text: string; img: string }>>([]);
-  const [loading, setLoading] = useState(true);
+  const [activities, setActivities] = useState<
+    Array<{
+      title: string;
+      date: string;
+      location: string;
+      participants: string;
+      category: string;
+      text: string;
+      img: string;
+    }>
+  >([]);
+  const [_loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchActivities()
@@ -45,18 +59,25 @@ function ActivitiesPage() {
     <>
       <PageHero
         eyebrow="Activities"
-        title={<>Community <span className="text-gradient">activities</span> from the NGO.</>}
+        title={
+          <>
+            Community <span className="text-gradient">activities</span> from the NGO.
+          </>
+        }
         subtitle="A living log of the drives, camps and workshops we run every week across India."
         imageSrc="/landscape-photo-all-people-in-view.jpeg"
       />
       <section className="py-14">
         <div className="container-page">
-
           <div className="mt-10">
             {activities.length === 0 ? (
               <div className="flex flex-col items-center py-20 text-center">
-                <p className="text-lg font-semibold text-muted-foreground">No upcoming activities yet</p>
-                <p className="mt-1 text-sm text-muted-foreground/60">Check back soon for new updates from the NGO.</p>
+                <p className="text-lg font-semibold text-muted-foreground">
+                  No upcoming activities yet
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground/60">
+                  Check back soon for new updates from the NGO.
+                </p>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,12 +105,27 @@ function ActivitiesPage() {
                       </div>
                       <div className="flex flex-1 flex-col p-6">
                         <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-muted-foreground">
-                          <span className="inline-flex items-center gap-1"><Clock className="size-3.5" />{a.date}</span>
-                          {a.location && <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" />{a.location}</span>}
-                          {a.participants && <span className="inline-flex items-center gap-1"><Users className="size-3.5" />{a.participants}</span>}
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="size-3.5" />
+                            {a.date}
+                          </span>
+                          {a.location && (
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="size-3.5" />
+                              {a.location}
+                            </span>
+                          )}
+                          {a.participants && (
+                            <span className="inline-flex items-center gap-1">
+                              <Users className="size-3.5" />
+                              {a.participants}
+                            </span>
+                          )}
                         </div>
                         <h3 className="mt-3 text-lg leading-tight">{a.title}</h3>
-                        <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{a.text}</p>
+                        <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                          {a.text}
+                        </p>
                       </div>
                     </article>
                   </Reveal>

@@ -5,7 +5,12 @@ import { randomUUID } from "crypto";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 
-ffmpeg.setFfmpegPath(ffmpegPath);
+let ffmpegAvailable = true;
+try {
+  ffmpeg.setFfmpegPath(ffmpegPath);
+} catch {
+  ffmpegAvailable = false;
+}
 
 const cleanup = (...paths: string[]) => {
   for (const p of paths) {
@@ -16,6 +21,10 @@ const cleanup = (...paths: string[]) => {
 };
 
 export const compressImageBuffer = (buffer: Buffer): Promise<Buffer> => {
+  if (!ffmpegAvailable) {
+    return Promise.resolve(buffer);
+  }
+
   const inputPath = join(tmpdir(), randomUUID());
   const outputPath = join(tmpdir(), `${randomUUID()}.jpg`);
 

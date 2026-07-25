@@ -12,6 +12,7 @@ import { useLogoutMutation } from "@/features/Auth/hooks/useAuthMutations";
 import { buildProfileSettingsItems } from "../constants/settingsItems";
 import { profileStyles as styles } from "../styles/profileStyles";
 import EditNameModal from "../components/EditNameModal";
+import GalleryModal from "../components/GalleryModal";
 
 const getInitials = (name?: string | null) =>
   name
@@ -28,6 +29,7 @@ export default function ProfileScreen() {
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const setUser = useAuthStore((state) => state.setUser);
   const [editNameVisible, setEditNameVisible] = useState(false);
+  const [galleryVisible, setGalleryVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -43,12 +45,14 @@ export default function ProfileScreen() {
 
   const handleEditName = () => setEditNameVisible(true);
   const handleManageUsers = () => router.push("/(main)/manage-users");
+  const handleGallery = () => setGalleryVisible(true);
 
   const settingsItems = buildProfileSettingsItems(
     handleLogout,
     isAdmin,
     handleEditName,
     handleManageUsers,
+    handleGallery,
   );
 
   return (
@@ -215,6 +219,10 @@ export default function ProfileScreen() {
           visible={editNameVisible}
           currentName={user?.name ?? ""}
           onClose={() => setEditNameVisible(false)}
+        />
+        <GalleryModal
+          visible={galleryVisible}
+          onClose={() => setGalleryVisible(false)}
         />
       </View>
     </MeshGradientBackground>

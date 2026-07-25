@@ -10,6 +10,7 @@ declare global {
       };
       s3Url?: string;
       s3Key?: string;
+      s3Urls?: string[];
     }
   }
 }

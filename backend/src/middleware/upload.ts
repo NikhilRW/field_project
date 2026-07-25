@@ -104,3 +104,37 @@ export const uploadActivityImageOptional = async (
     });
   }
 };
+
+export const uploadGalleryImages = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const files = req.files as Express.Multer.File[] | undefined;
+
+    if (!files || files.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "At least one gallery image is required." });
+    }
+
+    const urls: string[] = [];
+
+    for (const file of files) {
+      const compressed = await compressImageBuffer(file.buffer);
+      const result = await uploadImageToS3(compressed, "helping-hands/gallery");
+      urls.push(result.url);
+    }
+
+    req.s3Urls = urls;
+
+    return next();
+  } catch (error: any) {
+    console.error("Failed to upload gallery images", error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message ?? "Failed to upload gallery images.",
+    });
+  }
+};

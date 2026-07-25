@@ -140,6 +140,35 @@ const galleryLabels = [
   { label: "tree plantation event with students", aspect: "aspect-[4/5]" },
   { label: "smiling elderly beneficiary receiving support", aspect: "aspect-[3/4]" },
   { label: "NGO annual gathering group photo", aspect: "aspect-square" },
+  { label: "all students with bags and founder", aspect: "aspect-[4/5]" },
+  { label: "all students with bags group photo", aspect: "aspect-square" },
+  { label: "founder giving biscuits to children", aspect: "aspect-[3/4]" },
+  { label: "kids going from stairs happy after receiving bags", aspect: "aspect-[4/5]" },
+  { label: "kids smiling after receiving bags", aspect: "aspect-square" },
+  { label: "small kids holding bags", aspect: "aspect-[3/4]" },
+  { label: "volunteer giving biscuits", aspect: "aspect-[4/5]" },
+];
+
+const homeStaticImages = [
+  "/small-kids-photo.jpeg",
+  "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg",
+  "/utensils-donation.jpeg",
+  "/ngo-volunteer-donating-water.jpeg",
+  "/image-beneficiary-getting-water.jpeg",
+  "/school-kids-photo.jpeg",
+  "/elders-getting-donation.jpeg",
+  "/very-large-portrait-of-multiple-donations.jpeg",
+  "/shools_kids_new_photos.jpeg",
+  "/school_bag_distribution_new_photo.jpeg",
+  "/toy_distribution.jpeg",
+  "/bag_donation_to_students.jpeg",
+  "/all-students-with-bags-and-founder-in-photo.jpeg",
+  "/all-students-with-bags.jpeg",
+  "/founder-giving-biscuits-to-children.jpeg",
+  "/kids-going-from-stairs-being-happy-after-getting-bags.jpeg",
+  "/kids-smilling-after-receiving-bags.jpeg",
+  "/small-kids-holding-bags.jpeg",
+  "/volunteer-giving-biscuits.jpeg",
 ];
 
 const testimonials = [
@@ -546,20 +575,7 @@ function Home() {
               <Reveal key={i} delay={(i % 4) * 80}>
                 <div className="mb-4 break-inside-avoid image-zoom card-lift overflow-hidden rounded-2xl border border-border bg-card">
                   <img
-                      src={[
-                        "/small-kids-photo.jpeg",
-                        "/volunteers-giving-saree-to-womes-on-deviji-puja.jpeg",
-                        "/utensils-donation.jpeg",
-                        "/ngo-volunteer-donating-water.jpeg",
-                        "/image-beneficiary-getting-water.jpeg",
-                        "/school-kids-photo.jpeg",
-                        "/elders-getting-donation.jpeg",
-                        "/very-large-portrait-of-multiple-donations.jpeg",
-                        "/shools_kids_new_photos.jpeg",
-                        "/school_bag_distribution_new_photo.jpeg",
-                        "/toy_distribution.jpeg",
-                        "/bag_donation_to_students.jpeg",
-                      ][i % 12]}
+                    src={homeStaticImages[i % homeStaticImages.length]}
                     alt={g.label}
                     loading="lazy"
                     className={`${g.aspect} w-full object-cover`}

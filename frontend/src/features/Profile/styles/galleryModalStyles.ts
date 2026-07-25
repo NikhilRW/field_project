@@ -1,0 +1,126 @@
+import { StyleSheet } from "react-native-unistyles";
+import { Colors } from "@/shared/constants/color";
+
+export const galleryModalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  modal: {
+    width: "100%",
+    maxHeight: "85%",
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: Colors.textPrimary,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    marginTop: 2,
+    marginBottom: 12,
+  },
+  imageList: {
+    maxHeight: 320,
+  },
+  imageListContent: {
+    paddingVertical: 4,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  imageItem: {
+    width: "31%",
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  imageThumb: {
+    width: "100%",
+    aspectRatio: 1,
+    backgroundColor: Colors.borderLight,
+  },
+  imageCaption: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  deleteBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(220,38,38,0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    textAlign: "center",
+    paddingVertical: 40,
+  },
+  addSection: {
+    gap: 8,
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    paddingTop: 12,
+  },
+  input: {
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  addBtn: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  addBtnDisabled: {
+    opacity: 0.6,
+  },
+  addBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  closeBtn: {
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    marginTop: 8,
+  },
+  closeText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.textSecondary,
+  },
+});

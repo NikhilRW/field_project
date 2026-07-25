@@ -34,11 +34,25 @@ type PaginatedResponse<T> = {
   pagination: { page: number; limit: number; total: number; hasMore: boolean };
 };
 
+export async function fetchGalleryImages() {
+  const res = await fetch(`${API_BASE}/api/public/gallery`, {
+    headers: { "x-api-key": API_KEY },
+  });
+  if (!res.ok) throw new Error("Failed to fetch gallery images");
+  const json = await res.json();
+  return json.data as Array<{
+    id: string;
+    imageUrl: string;
+    caption: string | null;
+    altText: string | null;
+    createdAt: string;
+  }>;
+}
+
 export async function fetchDonations(page = 1, limit = 12) {
-  const res = await fetch(
-    `${API_BASE}/api/public/donations?page=${page}&limit=${limit}`,
-    { headers: { "x-api-key": API_KEY } },
-  );
+  const res = await fetch(`${API_BASE}/api/public/donations?page=${page}&limit=${limit}`, {
+    headers: { "x-api-key": API_KEY },
+  });
   if (!res.ok) throw new Error("Failed to fetch donations");
   const json: PaginatedResponse<Donation> = await res.json();
   return json;

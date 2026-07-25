@@ -1,6 +1,3 @@
-try {
-  require("tsconfig-paths/register");
-} catch {}
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
@@ -19,6 +16,7 @@ import surveyRoutes from "./routes/surveyRoutes";
 import userRoutes from "./routes/userRoutes";
 import analyticsRoutes from "./routes/analyticsRoutes";
 import draftRoutes from "./routes/draftRoutes";
+import galleryRoutes from "./routes/galleryRoutes";
 import {
   sendBulkTestNotification,
   sendTestNotification,
@@ -42,10 +40,16 @@ const PORT = parseInt(process.env.PORT || "5000", 10);
 
 app.use(morgan("dev"));
 
-app.use(cors({
-  origin: ["http://localhost:8081", "https://helpingshands.org", /\.helpingshands\.org$/],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      "https://helpingshands.org",
+      /\.helpingshands\.org$/,
+      /^http:\/\/localhost:\d+$/,
+    ],
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: "50mb" }));
 
 app.use("/api/auth", authRoutes);
@@ -59,6 +63,7 @@ app.use("/api/surveys", surveyRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/donations/drafts", draftRoutes);
+app.use("/api/gallery", galleryRoutes);
 app.post("/test/send", sendTestNotification);
 app.post("/test/send-bulk", sendBulkTestNotification);
 app.get("/", (_, res) => {
@@ -70,9 +75,16 @@ app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
 });
-httpServer.listen(PORT, "0.0.0.0", () => {
-  console.log("Server listening on port http://localhost:" + PORT);
+
+app.use((_req, res) => {
+  res.status(404).json({ error: "Not found" });
 });
+
+if (!process.env.VERCEL) {
+  httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log("Server listening on port http://localhost:" + PORT);
+  });
+}
 
 schedule(
   "0 */3 * * *",
@@ -86,3 +98,5 @@ schedule(
   },
   {},
 );
+
+export default app;

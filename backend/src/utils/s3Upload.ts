@@ -1,6 +1,6 @@
+import crypto from "crypto";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../config/s3";
-import { v4 as uuid } from "uuid";
 import { S3_KEY_PREFIX } from "../constants/s3";
 
 const CLOUDFRONT_URL = process.env.AWS_CLOUDFRONT_URL?.replace(/\/$/, "");
@@ -10,7 +10,7 @@ export const uploadImageToS3 = async (
   buffer: Buffer,
   folder: string,
 ): Promise<{ url: string; key: string }> => {
-  const key = `${folder}/${uuid()}.jpg`;
+  const key = `${folder}/${crypto.randomUUID()}.jpg`;
   const folderWithoutRoot = folder.slice(folder.indexOf("/") + 1);
 
   await s3.send(

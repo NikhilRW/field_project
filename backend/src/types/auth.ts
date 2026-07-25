@@ -12,4 +12,5 @@ export interface AuthRequest extends Request {
   user?: AuthUser;
   s3Url?: string;
   s3Key?: string;
+  s3Urls?: string[];
 }
