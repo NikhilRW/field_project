@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Backpack, BookOpen, Cake, Droplet, Gift, Home, ShoppingBag, Sparkles, Stethoscope, Utensils } from "lucide-react";
+import { ArrowRight, Backpack, BookOpen, Cake, Droplet, Gift, Heart, Home, ShoppingBag, Sparkles, Stethoscope, Utensils } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Reveal } from "@/components/site/Reveal";
 
@@ -31,6 +31,7 @@ const programs = [
   { icon: Gift, title: "Toy Distribution", text: "Bringing smiles through toy donations to children.", img: "/toy_distribution.jpeg" },
   { icon: Cake, title: "Celebrations", text: "Celebrating special moments with children in need.", img: "/cake_cutting_with_kids.jpeg" },
   { icon: Backpack, title: "School Kit Drive", text: "Complete school kits for children in rural areas.", img: "/school_bag_distribution.jpeg" },
+  { icon: Heart, title: "Old Age Home", text: "Care, companionship and essentials for elderly residents.", img: "/old_age_home_2.jpeg" },
 ];
 
 function ProgramsPage() {
@@ -38,9 +39,9 @@ function ProgramsPage() {
     <>
       <PageHero
         eyebrow="Programs"
-        title={<>Six focused programs. <span className="text-gradient">One shared purpose.</span></>}
+        title={<>Many focused programs. <span className="text-gradient">One shared purpose.</span></>}
         subtitle="Every program is co-designed with community leaders and measured on real, long-term outcomes."
-        imageSrc="/again-village-people-getting-donation-portrait-multiple.jpeg"
+        imageSrc="/old_age_home_2.jpeg"
       />
       <section className="py-20">
         <div className="container-page grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -52,7 +53,7 @@ function ProgramsPage() {
                     src={p.img}
                     alt={p.title}
                     loading="lazy"
-                    className="aspect-[16/10] w-full object-cover"
+                    className={`aspect-[16/10] w-full ${p.title === "Old Age Home" ? "object-contain" : "object-cover"}`}
                   />
                 </div>
                 <div className="flex flex-1 flex-col p-6">

@@ -187,6 +187,10 @@ const items = [
     aspect: "aspect-[4/5]",
     img: "/volunteer-giving-biscuits.jpeg",
   },
+  { label: "old age home residents group", aspect: "aspect-[4/5]", img: "/old_age_home_1.jpeg" },
+  { label: "old age home care and companionship", aspect: "aspect-square", img: "/old_age_home_2.jpeg" },
+  { label: "old age home activities", aspect: "aspect-[3/4]", img: "/old_age_home_3.jpeg" },
+  { label: "old age home visit", aspect: "aspect-[4/5]", img: "/old_age_home_4.jpeg" },
 ];
 
 function GalleryPage() {
